@@ -1055,7 +1055,7 @@ class World3 {
 //    return lifeExpectancy.k;
 //  }
 
-  var mortality45To64 =
+  val mortality45To64 =
     Table(
       "mortality45To64",
       12,
@@ -1068,36 +1068,73 @@ class World3 {
       updateFn = () => { lifeExpectancy.k.get }
     )
 
-//
 //  var maturationsPerYear64to65 = new Rate("maturationsPerYear64to65", 13);
 //  maturationsPerYear64to65.units = "persons per year";
 //  maturationsPerYear64to65.updateFn = function() {
 //    return population45To64.k * (1 - mortality45To64.k) / 20;
 //  }
-//
+
+  val maturationsPerYear64to65 =
+    Rate(
+      "maturationsPerYear64to65",
+      13,
+      units = "persons per year",
+      updateFn = () => { population45To64.k.get * (1 - mortality45To64.k.get) / 20 }
+    )
+
 //  var population65AndOver = new Level("population65AndOver", 14, 6.0e7);
 //  population65AndOver.units = "persons";
 //  population65AndOver.updateFn = function() {
 //    return population65AndOver.j + dt *
 //      (maturationsPerYear64to65.j - deathsPerYear65AndOver.j);
 //  }
-//
-//  var deathsPerYear65AndOver = new Rate("deathsPerYear65AndOver", 15);
+
+  val population65AndOver =
+    Level(
+      "population65AndOver",
+      14,
+      6.0e7,
+      units = "persons",
+      updateFn = () => { population65AndOver.j.get + dt * (maturationsPerYear64to65.j.get - deathsPerYear65AndOver.j.get) }
+    )
+
+
+  //  var deathsPerYear65AndOver = new Rate("deathsPerYear65AndOver", 15);
 //  deathsPerYear65AndOver.units = "persons per year";
 //  deathsPerYear65AndOver.updateFn = function() {
 //    return population65AndOver.k * mortality65AndOver.k;
 //  }
-//
+
+  val deathsPerYear65AndOver =
+    Rate(
+      "deathsPerYear65AndOver",
+      15,
+      units = "persons per year",
+      updateFn = () => { population65AndOver.k.get * mortality65AndOver.k.get }
+    )
+
+
 //  var mortality65AndOver = new Table("mortality65AndOver", 16, [0.13, 0.11, 0.09, 0.07, 0.06, 0.05, 0.04], 20, 80, 10);
 //  mortality65AndOver.units = "deaths per person-year";
 //  mortality65AndOver.dependencies = ["lifeExpectancy"];
 //  mortality65AndOver.updateFn = function() {
 //    return lifeExpectancy.k;
 //  }
-//
-//
-//
-//
+
+  val mortality65AndOver =
+    Table(
+      "mortality65AndOver",
+      16,
+      Vector(0.13, 0.11, 0.09, 0.07, 0.06, 0.05, 0.04),
+      20,
+      80,
+      10,
+      units = "deaths per person-year",
+      dependencies = Vector("lifeExpectancy"),
+      updateFn = () => { lifeExpectancy.k.get }
+    )
+
+
 //  // The Death-Rate Subsector
 //
 //  var deathsPerYear = new Aux("deathsPerYear", 17);
@@ -1108,7 +1145,15 @@ class World3 {
 //      deathsPerYear45To64.j +
 //      deathsPerYear65AndOver.j;
 //  }
-//
+
+  val deathsPerYear =
+    Aux(
+      "deathsPerYear",
+      17,
+      units = "persons per year",
+      updateFn = () => { deathsPerYear0To14.j.get + deathsPerYear15To44.j.get + deathsPerYear45To64.j.get + deathsPerYear65AndOver.j.get }
+    )
+
 //  var crudeDeathRate = new Aux("crudeDeathRate", 18);
 //  crudeDeathRate.units = "deaths per 1000 person-years";
 //  crudeDeathRate.dependencies = ["deathsPerYear", "population"]
@@ -1118,7 +1163,17 @@ class World3 {
 //  crudeDeathRate.updateFn = function() {
 //    return 1000 * deathsPerYear.k / population.k;
 //  }
-//
+
+
+  val crudeDeathRate =
+    Aux(
+      "crudeDeathRate",
+      18,
+      units = "deaths per 1000 person-years",
+      dependencies = Vector("deathsPerYear", "population"),
+      updateFn = () => { 1000 * deathsPerYear.k.get / population.k.get }
+    )
+
 //  var lifeExpectancy = new Aux("lifeExpectancy", 19);
 //  lifeExpectancy.units = "years";
 //  lifeExpectancy.plotColor = "#666666";
@@ -1133,23 +1188,62 @@ class World3 {
 //      lifetimeMultiplierFromPollution.k *
 //      lifetimeMultiplierFromCrowding.k;
 //  }
-//
-//  var subsistenceFoodPerCapitaK = 230;  // kilograms per person-year, used in eqns 20, 127
-//
+
+  val lifeExpectancy =
+    Aux(
+      "lifeExpectancy",
+      19,
+      units = "years",
+      dependencies = Vector("lifetimeMultiplierFromFood", "lifetimeMultiplierFromHealthServices", "lifetimeMultiplierFromPollution", "lifetimeMultiplierFromCrowding"),
+      updateFn = () => {
+       Constants.lifeExpectancyNormal *
+        lifetimeMultiplierFromFood.k.get *
+        lifetimeMultiplierFromHealthServices.k.get *
+        lifetimeMultiplierFromPollution.k.get *
+        lifetimeMultiplierFromCrowding.k.get }
+    )
+
 //  var lifetimeMultiplierFromFood = new Table("lifetimeMultiplierFromFood", 20, [0, 1, 1.2, 1.3, 1.35, 1.4], 0, 5, 1);
 //  lifetimeMultiplierFromFood.units = "dimensionless";
 //  lifetimeMultiplierFromFood.dependencies = ["foodPerCapita"];
 //  lifetimeMultiplierFromFood.updateFn = function() {
 //    return foodPerCapita.k / subsistenceFoodPerCapitaK;
 //  }
-//
+
+  val lifetimeMultiplierFromFood =
+    Table(
+      "lifetimeMultiplierFromFood",
+      20,
+      Vector(0, 1, 1.2, 1.3, 1.35, 1.4),
+      0,
+      5,
+      1,
+      units = "dimensionless",
+      dependencies = Vector("foodPerCapita"),
+      updateFn = () => { foodPerCapita.k.get / Constants.subsistenceFoodPerCapitaK }
+    )
+
 //  var healthServicesAllocationsPerCapita = new Table("healthServicesAllocationsPerCapita", 21, [0, 20, 50, 95, 140, 175, 200, 220, 230], 0, 2000, 250);
 //  healthServicesAllocationsPerCapita.units = "dollars per person-year";
 //  healthServicesAllocationsPerCapita.dependencies = ["serviceOutputPerCapita"];
 //  healthServicesAllocationsPerCapita.updateFn = function() {
 //    return serviceOutputPerCapita.k;
 //  }
-//
+
+  val healthServicesAllocationsPerCapita =
+    Table(
+      "healthServicesAllocationsPerCapita",
+      21,
+      Vector(0, 20, 50, 95, 140, 175, 200, 220, 230),
+      0,
+      2000,
+      250,
+      units = "dollars per person-year",
+      dependencies = Vector("serviceOutputPerCapita"),
+      updateFn = () => { serviceOutputPerCapita.k.get }
+    )
+
+
 //  var effectiveHealthServicesPerCapitaImpactDelay = 20; // years, used in eqn 22
 //
 //  var effectiveHealthServicesPerCapita = new Smooth("effectiveHealthServicesPerCapita", 22, effectiveHealthServicesPerCapitaImpactDelay);
@@ -2261,10 +2355,11 @@ val indexOfPersistentPollution = Aux(
   )
 
   object Constants {
-    val assimilationHalfLifeValueIn1970 = 1.5, // years, used in eqn 146
-    val industrialOutput.valueIn1970 = 7.9e11, // for eqns 106 and 107
+    val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
+    val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
     val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
-
+    val lifeExpectancyNormal = 32 // used in eqn 19
+    val subsistenceFoodPerCapitaK = 230;  // kilograms per person-year, used in eqns 20, 127
   }
 //
 //  // ENTRY POINT: called by body.onload
