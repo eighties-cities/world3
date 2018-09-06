@@ -390,65 +390,114 @@ class World3 {
   //    auxArray.push(this);
   //  }
 
-  class Delay3(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double, val dimension: String) {
-    val qType = "Delay3"
-    var j: Option[Double] = None
-    var k: Option[Double] = None
-    var theInput: Option[All] = None
-    var firstCall = true
+  object Delay3 {
 
-    def init() = {
-      theInput = Some(initFn())
-      j = theInput.get.k
-      k = theInput.get.k
+    case class JK(j: Option[Double], k: Option[Double])
 
+    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless") = {
+      val d = new Delay3(qName, qNumber, initFn, units, delay)
+      qArray(qNumber) = d
+      auxArray += d
+      d
     }
 
   }
 
 
-//
-//  Delay3.prototype.init = function() {
-//    this.theInput = this.initFn();
-//    this.j = this.k = this.theInput.k;
-//    this.alpha.j = this.alpha.k = this.theInput.j;
-//    this.beta.j  = this.beta.k  = this.theInput.j;
-//    this.gamma.j = this.gamma.k = this.theInput.j;
-//  }
-//
-//
-//  Delay3.prototype.reset = function() {
-//    this.firstCall = true;
-//    this.j = this.k = null;
-//    this.alpha = { j: null, k: null };
-//    this.beta  = { j: null, k: null };
-//    this.gamma = { j: null, k: null };
-//  }
-//
-//  Delay3.prototype.update = function() {
-//    if (this.firstCall) {
-//      this.j = this.k = this.theInput.k;
-//      this.alpha.j = this.alpha.k = this.theInput.k;
-//      this.beta.j  = this.beta.k  = this.theInput.k;
-//      this.gamma.j = this.gamma.k = this.theInput.k;
-//      this.firstCall = false;
-//      return this.k;
-//    }
-//    else {
-//      this.alpha.k = this.alpha.j + dt * (this.theInput.j - this.alpha.j) / this.delayPerStage;
-//      this.beta.k  = this.beta.j  + dt * (this.alpha.j    - this.beta.j)  / this.delayPerStage;
-//      this.gamma.k = this.gamma.j + dt * (this.beta.j     - this.gamma.j) / this.delayPerStage;
-//      this.alpha.j = this.alpha.k
-//      this.beta.j  = this.beta.k
-//      this.gamma.j = this.gamma.k
-//      this.k = this.gamma.k
-//      return this.k;
-//    }
-//  }
-//
-//  Delay3.prototype.warmup = Delay3.prototype.init;
-//
-//  Delay3.prototype.tick = Level.prototype.tick;
+  class Delay3(val qName: String, val qNumber: Int, initFn: () => All, val units: String, val delay: Double) extends All {
+    val qType = "Delay3"
+    var j: Option[Double] = None
+    var k: Option[Double] = None
+    var firstCall = true
+
+    val delayPerStage = delay / 3
+
+    var alpha: Option[Delay3.JK] = None
+    var beta: Option[Delay3.JK] = None
+    var gama: Option[Delay3.JK] = None
+
+    //  Delay3.prototype.init = function() {
+    //    this.theInput = this.initFn();
+    //    this.j = this.k = this.theInput.k;
+    //    this.alpha.j = this.alpha.k = this.theInput.j;
+    //    this.beta.j  = this.beta.k  = this.theInput.j;
+    //    this.gamma.j = this.gamma.k = this.theInput.j;
+    //  }
+    def init() = {
+      val theInput = Some(initFn())
+      j = theInput.get.k
+      k = theInput.get.k
+    }
+
+    //  Delay3.prototype.reset = function() {
+    //    this.firstCall = true;
+    //    this.j = this.k = null;
+    //    this.alpha = { j: null, k: null };
+    //    this.beta  = { j: null, k: null };
+    //    this.gamma = { j: null, k: null };
+    //  }
+    def reset() = {
+      firstCall = true
+      j = None
+      k = None
+      alpha = None
+      beta = None
+      gama = None
+    }
+
+    //  Delay3.prototype.update = function() {
+    //    if (this.firstCall) {
+    //      this.j = this.k = this.theInput.k;
+    //      this.alpha.j = this.alpha.k = this.theInput.k;
+    //      this.beta.j  = this.beta.k  = this.theInput.k;
+    //      this.gamma.j = this.gamma.k = this.theInput.k;
+    //      this.firstCall = false;
+    //      return this.k;
+    //    }
+    //    else {
+    //      this.alpha.k = this.alpha.j + dt * (this.theInput.j - this.alpha.j) / this.delayPerStage;
+    //      this.beta.k  = this.beta.j  + dt * (this.alpha.j    - this.beta.j)  / this.delayPerStage;
+    //      this.gamma.k = this.gamma.j + dt * (this.beta.j     - this.gamma.j) / this.delayPerStage;
+    //      this.alpha.j = this.alpha.k
+    //      this.beta.j  = this.beta.k
+    //      this.gamma.j = this.gamma.k
+    //      this.k = this.gamma.k
+    //      return this.k;
+    //    }
+    //  }
+    def update = {
+      val theInput = initFn()
+      if(firstCall) {
+        j = theInput.k
+        k = theInput.k
+        alpha = Some(Delay3.JK(j = theInput.k, k = theInput.k))
+        beta = Some(Delay3.JK(j = theInput.k, k = theInput.k))
+        gama = Some(Delay3.JK(j = theInput.k, k = theInput.k))
+        firstCall = false
+        k.get
+      } else {
+        val alphaK = alpha.get.j.get + dt * (theInput.j.get - alpha.get.j.get) / delayPerStage
+        val betaK = beta.get.j.get + dt * (alpha.get.j.get - beta.get.j.get) / delayPerStage
+        val gamaK = gama.get.j.get + dt * (beta.get.j.get - gama.get.j.get) / delayPerStage
+
+        alpha = Some(Delay3.JK(j = Some(alphaK), k = Some(alphaK)))
+        beta = Some(Delay3.JK(j = Some(betaK), k = Some(betaK)))
+        gama = Some(Delay3.JK(j = Some(gamaK), k = Some(gamaK)))
+
+        k = Some(gamaK)
+        k.get
+      }
+    }
+    
+    //  Delay3.prototype.warmup = Delay3.prototype.init;
+    def warmup() = init()
+
+    //  Delay3.prototype.tick = Level.prototype.tick;
+    def tick() = { j = k }
+  }
+
+
+
 //
 //
 //  // constructor for Table objects
