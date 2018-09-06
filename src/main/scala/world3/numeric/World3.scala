@@ -2511,12 +2511,19 @@ val foodPerCapita = Aux(
 //  landDevelopmentRate.updateFn = function() {
 //    return totalAgriculturalInvestment.k * fractionOfInputsAllocatedToLandDevelopment.k / developmentCostPerHectare.k;
 //  }
+  var landDevelopmentRate = new Rate("landDevelopmentRate", 96, units = "hectares per year",
+  updateFn = () => {totalAgriculturalInvestment.k.get * fractionOfInputsAllocatedToLandDevelopment.k.get / developmentCostPerHectare.k.get}
+)
 //
 //  var developmentCostPerHectare = new Table("developmentCostPerHectare", 97, [100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50], 0, 1.0, 0.1)
 //  developmentCostPerHectare.units = "dollars per hectare";
 //  developmentCostPerHectare.updateFn = function() {
 //    return potentiallyArableLand.k / landFractionCultivated.potentiallyArableLandTotal;
 //  }
+  var developmentCostPerHectare = new Table("developmentCostPerHectare", 97,
+  data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
+  updateFn = () => {potentiallyArableLand.k.get / Constants.potentiallyArableLandTotal}
+)
 //
 //
 //  // Loop 2: Food from Investment in Agricultural Inputs
@@ -3273,6 +3280,7 @@ val indexOfPersistentPollution = Aux(
     val lifeExpectancyNormal = 32 // used in eqn 19
     val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
+    val potentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
     val averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
     val socialDiscount = 0.07 // eqn 109
