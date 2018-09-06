@@ -287,31 +287,42 @@ class World3 {
 
   }
 
-  
+
+  //
+  //  // constructor for Smooth objects
+  //
+  //  var Smooth = function(qName, qNumber, delay) {
+  //    this.qName = qName;
+  //    this.qNumber = qNumber;
+  //    this.qType = "Aux";
+  //    this.units = "dimensionless";
+  //    this.dependencies = [];
+  //    this.del = delay;
+  //    this.firstCall = true;
+  //    this.j = this.k = null;
+  //    qArray[qNumber] = this;
+  //    auxArray.push(this);
+  //  }
+
+  class Smooth(val qName: String, val qNumber: Int, updateFn: () => Double, val units: String, val delay: Double, theInput: () => All) {
+    val qType = "Smooth"
+    var j: Option[Double] = None
+    var k: Option[Double] = None
+    var firstCall = true
+
+    //  Smooth.prototype.init = function() {
+    //    this.theInput = this.initFn();
+    //    this.j = this.k = this.theInput.k || this.initVal;
+    //  }
+    def init  = {
+      j =
+    }
+  }
 
 
+
 //
-//
-//
-//  // constructor for Smooth objects
-//
-//  var Smooth = function(qName, qNumber, delay) {
-//    this.qName = qName;
-//    this.qNumber = qNumber;
-//    this.qType = "Aux";
-//    this.units = "dimensionless";
-//    this.dependencies = [];
-//    this.del = delay;
-//    this.firstCall = true;
-//    this.j = this.k = null;
-//    qArray[qNumber] = this;
-//    auxArray.push(this);
-//  }
-//
-//  Smooth.prototype.init = function() {
-//    this.theInput = this.initFn();
-//    this.j = this.k = this.theInput.k || this.initVal;
-//  }
+
 //
 //  Smooth.prototype.reset = function() {
 //    this.firstCall = true;
