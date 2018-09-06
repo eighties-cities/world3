@@ -3,9 +3,6 @@ package world3.numeric
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class World3 {
-
-  val dt = 1.0
-
   /*  Limits to Growth: This is a re-implementation in JavaScript
     of World3, the social-economic-environmental model created by
     Dennis and Donella Meadows and others circa 1970. The results
@@ -15,23 +12,18 @@ class World3 {
 
 */
 
-
-
-  // The DYNAMO clip function, a poor-man's
-  // conditional expression.
-//  function clip(a, b, x, y) {
-//    if (x >= y)
-//      return a;
-//    else
-//      return b
-//  }
-
-  def function_clip[A, B](a: => A, b: => B, x: Double, y: Double) =
-    if(x  >= y) a else b
+  // The DYNAMO clip function, a poor-man's conditional expression.
+  //  function clip(a, b, x, y) {
+  //    if (x >= y)
+  //      return a;
+  //    else
+  //      return b
+  //  }
+  def function_clip[A, B](a: => A, b: => B, x: Double, y: Double) = if(x >= y) a else b
 
   // when we create an Equation with qNumber n, it becomes element qArray[n]
   // note that there is no qArray[0]
-  var qArray = Array.ofDim[All](1000)
+  var qArray = Array.ofDim[All](150)
 
   // Equations with qClass "Level" are pushed onto this Array
   val levelArray = ListBuffer[Level]()
@@ -39,14 +31,12 @@ class World3 {
   // Equations with qClass "Rate" are pushed onto this Array
   var rateArray = ListBuffer[Rate]()
 
-  //  // Equations with qClass "Aux" are pushed onto this Array
+  // Equations with qClass "Aux" are pushed onto this Array
   var auxArray = ListBuffer[All]()
 
   //
-  //  // construtor for Level objects
+  // construtor for Level objects
   //
-
-
 
   //  var Level = function(qName, qNumber, initVal) {
   //    this.qName = qName;
@@ -64,22 +54,18 @@ class World3 {
   //    levelArray.push(this);
   //  }
 
-
-
   sealed trait All {
     def j: Option[Double]
     def k: Option[Double]
   }
 
   object Level {
-
     def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val l = new Level(qName, qNumber, initVal, updateFn, units, dependencies)
       levelArray += l
       qArray(qNumber) = l
       l
     }
-
   }
 
   class Level(
@@ -93,7 +79,6 @@ class World3 {
     val qType = "Level"
     var j = Some(initVal)
     var k = Some(initVal)
-
     //  Level.prototype.reset = function() {
     //    this.j = this.k = this.initVal;
     //    this.data = [ {x: startTime, y: this.k} ];
@@ -102,15 +87,12 @@ class World3 {
       k = Some(initVal)
       j = Some(initVal)
     }
-
     //  Level.prototype.warmup = function() {
     //    this.k = this.updateFn();
     //  }
-
     def warmup() = {
       k = Some(updateFn())
     }
-
     //  Level.prototype.update = function() {
     //    this.k = this.updateFn();
     //    if (this.plotThisVar) {
@@ -119,20 +101,16 @@ class World3 {
     //    }
     //    return this.k;
     //  }
-
     def update() = {
       k = Some(updateFn())
       k.get
     }
-
     //  Level.prototype.tick = function() {
     //    this.j = this.k;
     //  }
-
     def tick() = {
       j = k
     }
-
     //  Level.prototype.plot = function() {
     //    var cvx = document.getElementById("cv").getContext("2d");
     //    cvx.strokeStyle = this.plotColor;
@@ -147,7 +125,6 @@ class World3 {
     //    cvx.stroke();
     //    cvx.closePath();
     //  }
-
   }
 
   //
@@ -193,7 +170,6 @@ class World3 {
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
-
     //  Rate.prototype.reset = function() {
     //    this.j = this.k = null;
     //    this.data = [];
@@ -202,59 +178,38 @@ class World3 {
       j = None
       k = None
     }
-
-
     //  Rate.prototype.warmup = Level.prototype.warmup;
     def warmup() = {
       k = Some(updateFn())
     }
-
     //  Rate.prototype.update = Level.prototype.update;
     def update() = {
       k = Some(updateFn())
       k.get
     }
-
     //  Rate.prototype.tick = Level.prototype.tick;
     def tick() = {
       j = k
     }
-
     //
     //  Rate.prototype.plot = Level.prototype.plot;
-
   }
-
-
-
-
-
-
-//
-//
-//
-//
-//  // constructor for Aux objects
-//
-//  var Aux = function(qName, qNumber) {
-//    this.qName = qName;
-//    this.qNumber = qNumber;
-//    this.qType = "Aux";
-//    this.units = "dimensionless";
-//    this.dependencies = [];
-//    this.j = this.k = null;
-//    this.plotColor = "transparent";  // default to be overridden
-//    this.plotMin = 0;         // default to be overridden
-//    this.plotMax = 1000;      // default to be overridden
-//    this.data = [];
-//    qArray[qNumber] = this;
-//    auxArray.push(this);
-//  }
-//
-
-  //  Aux.prototype.reset = function() {
+  //
+  //  // constructor for Aux objects
+  //
+  //  var Aux = function(qName, qNumber) {
+  //    this.qName = qName;
+  //    this.qNumber = qNumber;
+  //    this.qType = "Aux";
+  //    this.units = "dimensionless";
+  //    this.dependencies = [];
   //    this.j = this.k = null;
+  //    this.plotColor = "transparent";  // default to be overridden
+  //    this.plotMin = 0;         // default to be overridden
+  //    this.plotMax = 1000;      // default to be overridden
   //    this.data = [];
+  //    qArray[qNumber] = this;
+  //    auxArray.push(this);
   //  }
   //
   //  Aux.prototype.warmup = Level.prototype.warmup;
@@ -265,7 +220,6 @@ class World3 {
   //
   //  Aux.prototype.plot = Level.prototype.plot;
   //
-
   object Aux {
     def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val a = new Aux(qName, qNumber, updateFn, units, dependencies)
@@ -282,34 +236,31 @@ class World3 {
     val updateFn: () => Double,
     val units: String,
     val dependencies: Vector[String]) extends All {
-
     val qType = "Aux"
     var j: Option[Double] = None
     var k: Option[Double] = None
-
+    //  Aux.prototype.reset = function() {
+    //    this.j = this.k = null;
+    //    this.data = [];
+    //  }
     def reset() = {
       j = None
       k = None
     }
-
     //  Rate.prototype.warmup = Level.prototype.warmup;
     def warmup() = {
       k = Some(updateFn())
     }
-
     //  Rate.prototype.update = Level.prototype.update;
     def update() = {
       k = Some(updateFn())
       k.get
     }
-
     //  Rate.prototype.tick = Level.prototype.tick;
     def tick() = {
       j = k
     }
-
   }
-
 
   object Smooth {
     def apply(
@@ -356,7 +307,6 @@ class World3 {
     var j: Option[Double] = None
     var k: Option[Double] = None
     var firstCall = true
-
     //  Smooth.prototype.init = function() {
     //    this.theInput = this.initFn();
     //    this.j = this.k = this.theInput.k || this.initVal;
@@ -364,7 +314,6 @@ class World3 {
     def init  = {
       j = Some(initFn().k.getOrElse(initVal))
     }
-
     //  Smooth.prototype.reset = function() {
     //    this.firstCall = true;
     //    this.j = this.k = this.null;
@@ -375,7 +324,6 @@ class World3 {
       j = None
       k = None
     }
-
     //  Smooth.prototype.update = function() {
     //    if (this.firstCall) {
     //      this.j = this.k = this.theInput.k || this.initVal;
@@ -400,10 +348,8 @@ class World3 {
         k.get
       }
     }
-
     //  Smooth.prototype.warmup = Smooth.prototype.init;
     def warmup = init
-
     //  Smooth.prototype.tick = Level.prototype.tick;
     def tick() = { j = k }
   }
@@ -427,9 +373,7 @@ class World3 {
   //    qArray[qNumber] = this;
   //    auxArray.push(this);
   //  }
-
   object Delay3 {
-
     case class JK(j: Option[Double], k: Option[Double])
 
     def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String]) = {
@@ -438,9 +382,7 @@ class World3 {
       auxArray += d
       d
     }
-
   }
-
 
   class Delay3(
     val qName: String,
@@ -449,7 +391,6 @@ class World3 {
     val units: String,
     val delay: Double,
     val dependencies: Vector[String]) extends All {
-
     val qType = "Delay3"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -472,8 +413,10 @@ class World3 {
       val theInput = Some(initFn())
       j = theInput.get.k
       k = theInput.get.k
+//      alpha.j = alpha.k = theInput.get.j;//?
+//      beta.j  = beta.k  = theInput.get.j;//?
+//      gamma.j = gamma.k = theInput.get.j;//?
     }
-
     //  Delay3.prototype.reset = function() {
     //    this.firstCall = true;
     //    this.j = this.k = null;
@@ -489,7 +432,6 @@ class World3 {
       beta = None
       gama = None
     }
-
     //  Delay3.prototype.update = function() {
     //    if (this.firstCall) {
     //      this.j = this.k = this.theInput.k;
@@ -540,8 +482,6 @@ class World3 {
     //  Delay3.prototype.tick = Level.prototype.tick;
     def tick() = { j = k }
   }
-
-
 
   //
   //
@@ -732,7 +672,7 @@ class World3 {
 //  var startTime = 1900;
 //  var stopTime = 2100;
 //  var t = 1900;
-//  var dt = 1.0;
+  val dt = 1.0;
 //  var policyYear = 1975;                 // eqn 150.1
 //  var plotInterval = Math.max(dt, 1);
 //
@@ -2455,33 +2395,4 @@ class World3 {
 //
 //
 //
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
