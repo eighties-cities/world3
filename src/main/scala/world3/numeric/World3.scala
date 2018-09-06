@@ -669,10 +669,11 @@ class World3 {
 //
 //  var startTime = 1900;
 //  var stopTime = 2100;
+
   var t = 1900
   val dt = 1.0
+  var policyYear = 1975;                 // eqn 150.1
 
-  //  var policyYear = 1975;                 // eqn 150.1
 //  var plotInterval = Math.max(dt, 1);
 //
 //  var resetModel = function() {
@@ -1582,7 +1583,7 @@ class World3 {
 //    return delayedIndustrialOutputPerCapita.k;
 //  }
 
-  var socialFamilySizeNorm =
+  val socialFamilySizeNorm =
     Table(
       "socialFamilySizeNorm",
       39,
@@ -1595,76 +1596,163 @@ class World3 {
       updateFn = () => { delayedIndustrialOutputPerCapita.k.get }
     )
 
-//
-//  var socialAdjustmentDelayK = 20;    // years, used in eqn 40
-//
 //  var delayedIndustrialOutputPerCapita = new Delay3("delayedIndustrialOutputPerCapita", 40, socialAdjustmentDelayK);
 //  delayedIndustrialOutputPerCapita.units = "dollars per person-year";
 //  delayedIndustrialOutputPerCapita.dependencies = ["industrialOutputPerCapita"];
 //  delayedIndustrialOutputPerCapita.initFn = function() { return industrialOutputPerCapita; }
-//
-//
+
+  val delayedIndustrialOutputPerCapita =
+    Delay3(
+      "delayedIndustrialOutputPerCapita",
+      40,
+      Constants.socialAdjustmentDelayK,
+      units = "dollars per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      initFn = () => { industrialOutputPerCapita }
+    )
+
 //  var familyResponseToSocialNorm = new Table("familyResponseToSocialNorm", 41, [0.5, 0.6, 0.7, 0.85, 1.0], -0.2, 0.2, 0.1);
 //  familyResponseToSocialNorm.units = "dimensionless";
 //  familyResponseToSocialNorm.dependencies = ["familyIncomeExpectation"];
 //  familyResponseToSocialNorm.updateFn = function() {
 //    return familyIncomeExpectation.k;
 //  }
-//
+
+  val familyResponseToSocialNorm =
+    Table(
+      "familyResponseToSocialNorm",
+      41,
+      Vector(0.5, 0.6, 0.7, 0.85, 1.0),
+      -0.2,
+      0.2,
+      0.1,
+      units = "dimensionless",
+      dependencies = Vector("familyIncomeExpectation"),
+      updateFn = () => { familyIncomeExpectation.k.get }
+    )
+
+
 //  var familyIncomeExpectation = new Aux("familyIncomeExpectation", 42);
 //  familyIncomeExpectation.units = "dimensionless";
 //  familyIncomeExpectation.dependencies = ["industrialOutputPerCapita", "averageIndustrialOutputPerCapita"];
 //  familyIncomeExpectation.updateFn = function() {
 //    return (industrialOutputPerCapita.k - averageIndustrialOutputPerCapita.k) / averageIndustrialOutputPerCapita.k;
 //  }
-//
-//  var incomeExpectationAveragingTimeK = 3; // years, used in eqn 43
-//
+
+  val familyIncomeExpectation =
+    Aux(
+      "familyIncomeExpectation",
+      42,
+      units = "dimensionless",
+      dependencies = Vector("industrialOutputPerCapita", "averageIndustrialOutputPerCapita"),
+      updateFn = () => { (industrialOutputPerCapita.k.get - averageIndustrialOutputPerCapita.k.get) / averageIndustrialOutputPerCapita.k.get }
+    )
+
 //  var averageIndustrialOutputPerCapita = new Smooth("averageIndustrialOutputPerCapita", 43, incomeExpectationAveragingTimeK);
 //  averageIndustrialOutputPerCapita.units = "dollars per person-year";
 //  averageIndustrialOutputPerCapita.dependencies = ["industrialOutputPerCapita"];
 //  averageIndustrialOutputPerCapita.initFn = function() { return industrialOutputPerCapita; }
-//
-//
+
+  var averageIndustrialOutputPerCapita =
+    Smooth(
+      "averageIndustrialOutputPerCapita",
+      43,
+      Constants.incomeExpectationAveragingTimeK,
+      units = "dollars per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      initFn = () => { industrialOutputPerCapita }
+    )
+
 //  var needForFertilityControl = new Aux("needForFertilityControl", 44);
 //  needForFertilityControl.units = "dimensionless";
 //  needForFertilityControl.dependencies = ["maxTotalFertility", "desiredTotalFertility"];
 //  needForFertilityControl.updateFn = function() {
 //    return (maxTotalFertility.k / desiredTotalFertility.k) - 1;
 //  }
-//
+
+  val needForFertilityControl =
+    Aux(
+      "needForFertilityControl",
+      44,
+      units = "dimensionless",
+      dependencies = Vector("maxTotalFertility", "desiredTotalFertility"),
+      updateFn = () => { (maxTotalFertility.k.get / desiredTotalFertility.k.get) - 1 }
+    )
+
 //  var fertilityControlEffectiveness = new Table("fertilityControlEffectiveness", 45, [0.75, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0], 0, 3, 0.5 );
 //  fertilityControlEffectiveness.units = "dimensionless";
 //  fertilityControlEffectiveness.dependencies = ["fertilityControlFacilitiesPerCapita"];
 //  fertilityControlEffectiveness.updateFn = function() {
 //    return fertilityControlFacilitiesPerCapita.k;
 //  }
-//
-//  var healthServicesImpactDelayK = 20;    // years, for eqn 46
-//
+
+  val fertilityControlEffectiveness =
+    Table(
+      "fertilityControlEffectiveness",
+      45,
+      Vector(0.75, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0),
+      0,
+      3,
+      0.5,
+      units = "dimensionless",
+      dependencies = Vector("fertilityControlFacilitiesPerCapita"),
+      updateFn = () => { fertilityControlFacilitiesPerCapita.k.get }
+    )
+
 //  var fertilityControlFacilitiesPerCapita = new Delay3("fertilityControlFacilitiesPerCapita", 46, healthServicesImpactDelayK);
 //  fertilityControlFacilitiesPerCapita.units = "dollars per person-year";
 //  fertilityControlFacilitiesPerCapita.dependencies = ["fertilityControlAllocationPerCapita"];
 //  fertilityControlFacilitiesPerCapita.initFn = function() { return fertilityControlAllocationPerCapita; }
-//
-//
+
+  val fertilityControlFacilitiesPerCapita =
+    Delay3(
+      "fertilityControlFacilitiesPerCapita",
+      46,
+      Constants.healthServicesImpactDelayK,
+      units = "dollars per person-year",
+      dependencies = Vector("fertilityControlAllocationPerCapita"),
+      initFn = () => { fertilityControlAllocationPerCapita }
+    )
+
+
 //  var fertilityControlAllocationPerCapita = new Aux("fertilityControlAllocationPerCapita", 47);
 //  fertilityControlAllocationPerCapita.units = "dollars per person-year";
 //  fertilityControlAllocationPerCapita.dependencies = ["serviceOutputPerCapita", "fractionOfServicesAllocatedToFertilityControl"];
 //  fertilityControlAllocationPerCapita.updateFn = function() {
 //    return fractionOfServicesAllocatedToFertilityControl.k * serviceOutputPerCapita.k;
 //  }
-//
+
+  val fertilityControlAllocationPerCapita =
+    Aux(
+      "fertilityControlAllocationPerCapita",
+      47,
+      units = "dollars per person-year",
+      dependencies = Vector("serviceOutputPerCapita", "fractionOfServicesAllocatedToFertilityControl"),
+      updateFn = () => { fractionOfServicesAllocatedToFertilityControl.k.get * serviceOutputPerCapita.k.get }
+    )
+
+
 //  var fractionOfServicesAllocatedToFertilityControl = new Table("fractionOfServicesAllocatedToFertilityControl", 48, [0.0, 0.005, 0.015, 0.025, 0.030, 0.035], 0, 10, 2);
 //  fractionOfServicesAllocatedToFertilityControl.units = "dimensionless";
 //  fractionOfServicesAllocatedToFertilityControl.dependencies = ["needForFertilityControl"];
 //  fractionOfServicesAllocatedToFertilityControl.updateFn = function() {
 //    return needForFertilityControl.k;
 //  }
-//
-//
-//
-//
+
+  val fractionOfServicesAllocatedToFertilityControl =
+    Table(
+      "fractionOfServicesAllocatedToFertilityControl",
+      48,
+      Vector(0.0, 0.005, 0.015, 0.025, 0.030, 0.035),
+      0,
+      10,
+      2,
+      units = "dimensionless",
+      dependencies = Vector("needForFertilityControl"),
+      updateFn = () => { needForFertilityControl.k.get }
+    )
+
+
 //  // THE CAPITAL SECTOR
 //
 //  // The Industrial Subsector
@@ -1679,7 +1767,16 @@ class World3 {
 //  industrialOutputPerCapita.updateFn = function() {
 //    return industrialOutput.k / population.k;
 //  }
-//
+
+  val industrialOutputPerCapita =
+    Aux(
+      "industrialOutputPerCapita",
+      49,
+      units = "dollars per person-year",
+      dependencies = Vector("industrialOutput", "population"),
+      updateFn = () => { industrialOutput.k.get / population.k }
+    )
+
 //  var industrialOutput = new Aux("industrialOutput", 50);
 //  industrialOutput.units = "dollars per year";
 //  industrialOutput.valueIn1970 = 7.9e11;   // for eqns 106 and 107
@@ -1687,7 +1784,16 @@ class World3 {
 //  industrialOutput.updateFn = function() {
 //    return industrialCapital.k * (1 - fractionOfCapitalAllocatedToObtainingResources.k) * capitalUtilizationFraction.k / industrialCapitalOutputRatio.k;
 //  }
-//
+
+  val industrialOutput =
+    Aux(
+      "industrialOutput",
+      50,
+      units = "dollars per year",
+      dependencies = Vector("fractionOfCapitalAllocatedToObtainingResources", "capitalUtilizationFraction", "industrialCapitalOutputRatio")
+      updateFn = () => { industrialCapital.k.get * (1 - fractionOfCapitalAllocatedToObtainingResources.k.get) * capitalUtilizationFraction.k.get / industrialCapitalOutputRatio.k.get }
+    )
+
 //  var industrialCapitalOutputRatio = new Aux("industrialCapitalOutputRatio", 51);
 //  industrialCapitalOutputRatio.units = "years";
 //  industrialCapitalOutputRatio.before = 3;
@@ -1695,20 +1801,45 @@ class World3 {
 //  industrialCapitalOutputRatio.updateFn = function() {
 //    return clip(industrialCapitalOutputRatio.after, industrialCapitalOutputRatio.before, t, policyYear);
 //  }
-//
+
+  var industrialCapitalOutputRatio =
+    Aux(
+      "industrialCapitalOutputRatio",
+      51,
+      units = "years",
+      updateFn = clip(() => Constants.industrialCapitalOutputRatioAfter, () => Constants.industrialCapitalOutputRatioBefore, t, policyYear)
+    )
+
 //  var industrialCapital = new Level("industrialCapital", 52, 2.1e11);
 //  industrialCapital.units = "dollars";
 //  industrialCapital.updateFn = function() {
 //    return industrialCapital.j + dt *
 //      (industrialCapitalInvestmentRate.j - industrialCapitalDepreciationRate.j);
 //  }
-//
+
+  var industrialCapital: Level =
+    Level(
+      "industrialCapital",
+      52,
+      2.1e11,
+      units = "dollars",
+      updateFn = () => { industrialCapital.j.get + dt * (industrialCapitalInvestmentRate.j.get - industrialCapitalDepreciationRate.j.get) }
+    )
+
 //  var industrialCapitalDepreciationRate = new Rate("industrialCapitalDepreciationRate", 53);
 //  industrialCapitalDepreciationRate.units = "dollars per year";
 //  industrialCapitalDepreciationRate.updateFn = function() {
 //    return industrialCapital.k / averageLifetimeOfIndustrialCapital.k;
 //  }
-//
+
+  var industrialCapitalDepreciationRate =
+    Rate(
+      "industrialCapitalDepreciationRate",
+      53,
+      units = "dollars per year",
+      updateFn = () => { industrialCapital.k.get / averageLifetimeOfIndustrialCapital.k.get }
+    )
+
 //  var averageLifetimeOfIndustrialCapital = new Aux("averageLifetimeOfIndustrialCapital", 54);
 //  averageLifetimeOfIndustrialCapital.units = "years";
 //  averageLifetimeOfIndustrialCapital.before = 14;
@@ -1716,20 +1847,53 @@ class World3 {
 //  averageLifetimeOfIndustrialCapital.updateFn = function() {
 //    return clip(averageLifetimeOfIndustrialCapital.after, averageLifetimeOfIndustrialCapital.before, t, policyYear);
 //  }
-//
+
+  var averageLifetimeOfIndustrialCapital =
+    Aux(
+      "averageLifetimeOfIndustrialCapital",
+      54,
+      units = "years",
+      updateFn =
+        clip(
+          () => Constants.averageLifetimeOfIndustrialCapitalAfter,
+          () => Constants.averageLifetimeOfIndustrialCapitalBefore,
+          t,
+          policyYear)
+    )
+
+
 //  var industrialCapitalInvestmentRate = new Rate("industrialCapitalInvestmentRate", 55);
 //  industrialCapitalInvestmentRate.units = "dollars per year";
 //  industrialCapitalInvestmentRate.updateFn = function() {
 //    return industrialOutput.k * fractionOfIndustrialOutputAllocatedToIndustry.k;
 //  }
-//
-//  var fractionOfIndustrialOutputAllocatedToIndustry = new Aux("fractionOfIndustrialOutputAllocatedToIndustry", 56);
+
+
+  var industrialCapitalInvestmentRate =
+    Rate(
+      "industrialCapitalInvestmentRate",
+      55,
+      units = "dollars per year",
+      updateFn = () => { industrialOutput.k.get * fractionOfIndustrialOutputAllocatedToIndustry.k.get }
+    )
+
+
+  //  var fractionOfIndustrialOutputAllocatedToIndustry = new Aux("fractionOfIndustrialOutputAllocatedToIndustry", 56);
 //  fractionOfIndustrialOutputAllocatedToIndustry.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToIndustry.dependencies = ["fractionOfIndustrialOutputAllocatedToAgriculture", "fractionOfIndustrialOutputAllocatedToServices", "fractionOfIndustrialOutputAllocatedToConsumption"];
 //  fractionOfIndustrialOutputAllocatedToIndustry.updateFn = function() {
 //    return 1 - fractionOfIndustrialOutputAllocatedToAgriculture.k - fractionOfIndustrialOutputAllocatedToServices.k - fractionOfIndustrialOutputAllocatedToConsumption.k;
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToIndustry =
+    Aux(
+      "fractionOfIndustrialOutputAllocatedToIndustry",
+      56,
+      units = "dimensionless",
+      dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgriculture", "fractionOfIndustrialOutputAllocatedToServices", "fractionOfIndustrialOutputAllocatedToConsumption"),
+      updateFn = () => { 1 - fractionOfIndustrialOutputAllocatedToAgriculture.k.get - fractionOfIndustrialOutputAllocatedToServices.k.get - fractionOfIndustrialOutputAllocatedToConsumption.k.get }
+    )
+
 //  var fractionOfIndustrialOutputAllocatedToConsumption = new Aux("fractionOfIndustrialOutputAllocatedToConsumption", 57);
 //  fractionOfIndustrialOutputAllocatedToConsumption.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToConsumption.dependencies = ["fractionOfIndustrialOutputAllocatedToConsumptionVariable"];
@@ -1737,23 +1901,60 @@ class World3 {
 //  fractionOfIndustrialOutputAllocatedToConsumption.updateFn = function() {
 //    return clip(fractionOfIndustrialOutputAllocatedToConsumptionVariable.k, fractionOfIndustrialOutputAllocatedToConsumptionConstant.k, t, fractionOfIndustrialOutputAllocatedToConsumption.industrialEquilibriumTime);
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToConsumption =
+    Aux(
+      "fractionOfIndustrialOutputAllocatedToConsumption",
+      57,
+      units = "dimensionless",
+      dependencies = Vector("fractionOfIndustrialOutputAllocatedToConsumptionVariable"),
+      updateFn = clip(
+        () => fractionOfIndustrialOutputAllocatedToConsumptionVariable.k.get,
+        () => fractionOfIndustrialOutputAllocatedToConsumptionConstant.k.get,
+        t,
+        Constants.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime)
+    )
+
+
 //  var fractionOfIndustrialOutputAllocatedToConsumptionConstant = new Aux("fractionOfIndustrialOutputAllocatedToConsumptionConstant", 58);
 //  fractionOfIndustrialOutputAllocatedToConsumptionConstant.units = "dimensionless";
-//  fractionOfIndustrialOutputAllocatedToConsumptionConstant.before = 0.43;
-//  fractionOfIndustrialOutputAllocatedToConsumptionConstant.after = 0.43;
 //  fractionOfIndustrialOutputAllocatedToConsumptionConstant.updateFn = function() {
 //    return clip(fractionOfIndustrialOutputAllocatedToConsumptionConstant.after, fractionOfIndustrialOutputAllocatedToConsumptionConstant.before, t, policyYear);
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToConsumptionConstant =
+    Aux(
+      "fractionOfIndustrialOutputAllocatedToConsumptionConstant",
+      58,
+      units = "dimensionless",
+      updateFn =
+        clip(
+          () => Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter,
+          () => Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore,
+          t,
+          policyYear)
+    )
+
+
 //  var fractionOfIndustrialOutputAllocatedToConsumptionVariable = new Table("fractionOfIndustrialOutputAllocatedToConsumptionVariable", 59, [0.3, 0.32, 0.34, 0.36, 0.38, 0.43, 0.73, 0.77, 0.81, 0.82, 0.83], 0, 2, 0.2);
 //  fractionOfIndustrialOutputAllocatedToConsumptionVariable.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToConsumptionVariable.dependencies = ["industrialOutputPerCapita"];
-//  fractionOfIndustrialOutputAllocatedToConsumptionVariable.industrialOutputPerCapitaDesired = 400;
 //  fractionOfIndustrialOutputAllocatedToConsumptionVariable.updateFn = function() {
 //    return industrialOutputPerCapita.k / fractionOfIndustrialOutputAllocatedToConsumptionVariable.industrialOutputPerCapitaDesired;
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToConsumptionVariable =
+    Table(
+      "fractionOfIndustrialOutputAllocatedToConsumptionVariable",
+      59,
+      Vector(0.3, 0.32, 0.34, 0.36, 0.38, 0.43, 0.73, 0.77, 0.81, 0.82, 0.83),
+      0, 2,
+      0.2,
+      units = "dimensionless",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get / Constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
+    )
+
 //
 //  // The Service Subsector
 //
@@ -1763,61 +1964,165 @@ class World3 {
 //  indicatedServiceOutputPerCapita.updateFn = function() {
 //    return clip(indicatedServiceOutputPerCapitaAfter.k, indicatedServiceOutputPerCapitaBefore.k, t, policyYear);
 //  }
-//
+
+
+  var indicatedServiceOutputPerCapita =
+    Aux(
+      "indicatedServiceOutputPerCapita",
+      60,
+      units = "dollars per person-year",
+      dependencies = Vector("indicatedServiceOutputPerCapitaAfter", "indicatedServiceOutputPerCapitaBefore"),
+      updateFn =
+        clip(() => indicatedServiceOutputPerCapitaAfter.k.get, () => indicatedServiceOutputPerCapitaBefore.k.get, t, policyYear)
+    )
+
 //  var indicatedServiceOutputPerCapitaBefore = new Table("indicatedServiceOutputPerCapitaBefore", 61, [40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000], 0, 1600, 200);
 //  indicatedServiceOutputPerCapitaBefore.units = "dollars per person-year";
 //  indicatedServiceOutputPerCapitaBefore.dependencies = ["industrialOutputPerCapita"];
 //  indicatedServiceOutputPerCapitaBefore.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+
+  var indicatedServiceOutputPerCapitaBefore =
+    Table(
+      "indicatedServiceOutputPerCapitaBefore",
+      61,
+      Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+      0,
+      1600,
+      200,
+      units = "dollars per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get }
+    )
+
 //  var indicatedServiceOutputPerCapitaAfter = new Table("indicatedServiceOutputPerCapitaAfter", 62, [40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000], 0, 1600, 200);
 //  indicatedServiceOutputPerCapitaAfter.units = "dollars per person-year";
 //  indicatedServiceOutputPerCapitaAfter.dependencies = ["industrialOutputPerCapita"];
 //  indicatedServiceOutputPerCapitaAfter.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+
+
+  var indicatedServiceOutputPerCapitaAfter =
+    Table(
+      "indicatedServiceOutputPerCapitaAfter",
+      62,
+      Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+      0,
+      1600,
+      200,
+      units = "dollars per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get }
+    )
+
 //  var fractionOfIndustrialOutputAllocatedToServices = new Aux("fractionOfIndustrialOutputAllocatedToServices", 63);
 //  fractionOfIndustrialOutputAllocatedToServices.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToServices.dependencies = ["fractionOfIndustrialOutputAllocatedToServicesBefore", "fractionOfIndustrialOutputAllocatedToServicesAfter"];
 //  fractionOfIndustrialOutputAllocatedToServices.updateFn = function() {
 //    return clip(fractionOfIndustrialOutputAllocatedToServicesAfter.k, fractionOfIndustrialOutputAllocatedToServicesBefore.k, t, policyYear);
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToServices =
+    Aux(
+      "fractionOfIndustrialOutputAllocatedToServices",
+      63,
+      units = "dimensionless",
+      dependencies = Vector("fractionOfIndustrialOutputAllocatedToServicesBefore", "fractionOfIndustrialOutputAllocatedToServicesAfter"),
+      updateFn = clip(
+        () => fractionOfIndustrialOutputAllocatedToServicesAfter.k.get,
+        () => fractionOfIndustrialOutputAllocatedToServicesBefore.k.get,
+        t,
+        policyYear)
+    )
+
+
 //  var fractionOfIndustrialOutputAllocatedToServicesBefore = new Table("fractionOfIndustrialOutputAllocatedToServicesBefore", 64, [0.3, 0.2, 0.1, 0.05, 0], 0, 2, 0.5);
 //  fractionOfIndustrialOutputAllocatedToServicesBefore.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToServicesBefore.dependencies = ["serviceOutputPerCapita", "indicatedServiceOutputPerCapita"];
 //  fractionOfIndustrialOutputAllocatedToServicesBefore.updateFn = function() {
 //    return serviceOutputPerCapita.k / indicatedServiceOutputPerCapita.k;
 //  }
-//
-//  var fractionOfIndustrialOutputAllocatedToServicesAfter = new Table("fractionOfIndustrialOutputAllocatedToServicesAfter", 65, [0.3, 0.2, 0.1, 0.05, 0], 0, 2, 0.5);
+
+  var fractionOfIndustrialOutputAllocatedToServicesBefore =
+    Table(
+      "fractionOfIndustrialOutputAllocatedToServicesBefore",
+      64,
+      Vector(0.3, 0.2, 0.1, 0.05, 0),
+      0,
+      2,
+      0.5,
+      units = "dimensionless",
+      dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
+      updateFn = () => { serviceOutputPerCapita.k.get / indicatedServiceOutputPerCapita.k.get }
+    )
+
+  //  var fractionOfIndustrialOutputAllocatedToServicesAfter = new Table("fractionOfIndustrialOutputAllocatedToServicesAfter", 65, [0.3, 0.2, 0.1, 0.05, 0], 0, 2, 0.5);
 //  fractionOfIndustrialOutputAllocatedToServicesAfter.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToServicesAfter.dependencies = ["serviceOutputPerCapita", "indicatedServiceOutputPerCapita"];
 //  fractionOfIndustrialOutputAllocatedToServicesAfter.updateFn = function() {
 //    return serviceOutputPerCapita.k / indicatedServiceOutputPerCapita.k;
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToServicesAfter =
+    Table(
+      "fractionOfIndustrialOutputAllocatedToServicesAfter",
+      65,
+      Vector(0.3, 0.2, 0.1, 0.05, 0),
+      0,
+      2,
+      0.5,
+      units = "dimensionless",
+      dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
+      updateFn = () => { serviceOutputPerCapita.k.get / indicatedServiceOutputPerCapita.k.get }
+    )
+
 //  var serviceCapitalInvestmentRate = new Rate("serviceCapitalInvestmentRate", 66);
 //  serviceCapitalInvestmentRate.units = "dollars per year";
 //  serviceCapitalInvestmentRate.updateFn = function() {
 //    return industrialOutput.k * fractionOfIndustrialOutputAllocatedToServices.k;
 //  }
-//
+
+  var serviceCapitalInvestmentRate =
+    Rate(
+      "serviceCapitalInvestmentRate",
+      66,
+      units = "dollars per year",
+      updateFn = () => { industrialOutput.k.get * fractionOfIndustrialOutputAllocatedToServices.k.get }
+    )
+
 //  var serviceCapital = new Level("serviceCapital", 67, 1.44e11);
 //  serviceCapital.units = "dollars";
 //  serviceCapital.updateFn = function() {
 //    return serviceCapital.j + dt *
 //      (serviceCapitalInvestmentRate.j - serviceCapitalDepreciationRate.j);
 //  }
-//
+
+  var serviceCapital =
+    Level(
+      "serviceCapital",
+      67,
+      1.44e11,
+      units = "dollars",
+      updateFn = () => { serviceCapital.j.get + dt * (serviceCapitalInvestmentRate.j.get - serviceCapitalDepreciationRate.j.get) }
+    )
+
+
 //  var serviceCapitalDepreciationRate = new Rate("serviceCapitalDepreciationRate", 68);
 //  serviceCapitalDepreciationRate.units = "dollars per year";
 //  serviceCapitalDepreciationRate.updateFn = function() {
 //    return serviceCapital.k / averageLifetimeOfServiceCapital.k;
 //  }
-//
+
+  var serviceCapitalDepreciationRate =
+    Rate(
+      "serviceCapitalDepreciationRate",
+      68,
+      units = "dollars per year",
+      updateFn = () => { serviceCapital.k.get / averageLifetimeOfServiceCapital.k.get }
+    )
+
 //  var averageLifetimeOfServiceCapital = new Aux("averageLifetimeOfServiceCapital", 69);
 //  averageLifetimeOfServiceCapital.units = "years";
 //  averageLifetimeOfServiceCapital.before = 20;   // years
@@ -1825,7 +2130,21 @@ class World3 {
 //  averageLifetimeOfServiceCapital.updateFn = function() {
 //    return clip(averageLifetimeOfServiceCapital.after, averageLifetimeOfServiceCapital.before, t, policyYear);
 //  }
-//
+
+
+  var averageLifetimeOfServiceCapital =
+    Aux(
+      "averageLifetimeOfServiceCapital",
+      69,
+      units = "years",
+      updateFn =
+        clip(
+          () => Constants.averageLifetimeOfServiceCapitalAfter,
+          () => Constants.averageLifetimeOfServiceCapitalBefore,
+          t,
+          policyYear)
+    )
+
 //  var serviceOutput = new Aux("serviceOutput", 70);
 //  serviceOutput.units = "dollars per year";
 //  serviceOutput.plotColor = "#4a8a91";
@@ -1835,14 +2154,34 @@ class World3 {
 //  serviceOutput.updateFn = function() {
 //    return (serviceCapital.k * capitalUtilizationFraction.k) / serviceCapitalOutputRatio.k;
 //  }
-//
+
+
+  var serviceOutput =
+    Aux(
+      "serviceOutput",
+      70,
+      units = "dollars per year",
+      dependencies = Vector("capitalUtilizationFraction", "serviceCapitalOutputRatio"),
+      updateFn = () => { (serviceCapital.k.get * capitalUtilizationFraction.k.get) / serviceCapitalOutputRatio.k.get }
+    )
+
 //  var serviceOutputPerCapita = new Aux("serviceOutputPerCapita", 71);
 //  serviceOutputPerCapita.units = "dollars per person-year";
 //  serviceOutputPerCapita.dependencies = ["serviceOutput", "population"];
 //  serviceOutputPerCapita.updateFn = function() {
 //    return serviceOutput.k / population.k;
 //  }
-//
+
+  var serviceOutputPerCapita =
+    Aux(
+      "serviceOutputPerCapita",
+      71,
+      units = "dollars per person-year",
+      dependencies = Vector("serviceOutput", "population"),
+      updateFn = () => { serviceOutput.k.get / population.k.get }
+    )
+
+
 //  var serviceCapitalOutputRatio = new Aux("serviceCapitalOutputRatio", 72);
 //  serviceCapitalOutputRatio.units = "years";
 //  serviceCapitalOutputRatio.before = 1;
@@ -1850,8 +2189,20 @@ class World3 {
 //  serviceCapitalOutputRatio.updateFn = function() {
 //    return clip(serviceCapitalOutputRatio.after, serviceCapitalOutputRatio.before, t, policyYear);
 //  }
-//
-//
+
+  var serviceCapitalOutputRatio =
+    Aux(
+      "serviceCapitalOutputRatio",
+      72,
+      units = "years",
+      updateFn =
+        clip(
+          () => Constants.serviceCapitalOutputRatioAfter,
+          () => Constants.serviceCapitalOutputRatioBefore,
+          t,
+          policyYear)
+    )
+
 //  // The Jobs Subsector
 //
 //  var jobs = new Aux("jobs", 73)
@@ -1860,21 +2211,56 @@ class World3 {
 //  jobs.updateFn = function() {
 //    return potentialJobsInIndustrialSector.k + potentialJobsInAgriculturalSector.k + potentialJobsInServiceSector.k;
 //  }
-//
+
+  var jobs =
+    Aux(
+      "jobs",
+      73,
+      units = "persons",
+      dependencies = Vector("potentialJobsInIndustrialSector", "potentialJobsInAgriculturalSector", "potentialJobsInServiceSector"),
+      updateFn = () => { potentialJobsInIndustrialSector.k.get + potentialJobsInAgriculturalSector.k.get + potentialJobsInServiceSector.k.get }
+    )
+
+
 //  var potentialJobsInIndustrialSector = new Aux("potentialJobsInIndustrialSector", 74);
 //  potentialJobsInIndustrialSector.units = "persons";
 //  potentialJobsInIndustrialSector.dependencies = ["jobsPerIndustrialCapitalUnit"];
 //  potentialJobsInIndustrialSector.updateFn = function() {
 //    return industrialCapital.k * jobsPerIndustrialCapitalUnit.k;
 //  }
-//
+
+  var potentialJobsInIndustrialSector =
+    Aux(
+      "potentialJobsInIndustrialSector",
+      74,
+      units = "persons",
+      dependencies = Vector("jobsPerIndustrialCapitalUnit"),
+      updateFn = () => { industrialCapital.k.get * jobsPerIndustrialCapitalUnit.k.get }
+    )
+
 //  var jobsPerIndustrialCapitalUnit = new Table("jobsPerIndustrialCapitalUnit", 75, [0.00037, 0.00018, 0.00012, 0.00009, 0.00007, 0.00006], 50, 800, 150);
 //  jobsPerIndustrialCapitalUnit.units = "persons per dollar";
 //  jobsPerIndustrialCapitalUnit.dependencies = ["industrialOutputPerCapita"];
 //  jobsPerIndustrialCapitalUnit.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+
+  var jobsPerIndustrialCapitalUnit =
+    Table(
+      "jobsPerIndustrialCapitalUnit",
+      75,
+      Vector(0.00037, 0.00018, 0.00012, 0.00009, 0.00007, 0.00006),
+      50,
+      800,
+      150,
+      units = "persons per dollar",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get }
+    )
+
+
+
+  //
 //  var potentialJobsInServiceSector = new Aux("potentialJobsInServiceSector", 76);
 //  potentialJobsInServiceSector.units = "persons";
 //  potentialJobsInServiceSector.dependencies = ["jobsPerServiceCapitalUnit"];
@@ -2663,6 +3049,24 @@ val indexOfPersistentPollution = Aux(
     val desiredCompletedFamilySizeNormal = 4.0
     val zeroPopulationGrowthTargetYear = 4000;
     val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
+    val socialAdjustmentDelayK = 20;    // years, used in eqn 40
+    val incomeExpectationAveragingTimeK = 3; // years, used in eqn 43
+    val healthServicesImpactDelayK = 20;    // years, for eqn 46
+    val industrialCapitalOutputRatioBefore = 3;
+    val industrialCapitalOutputRatioAfter = 3;
+    val averageLifetimeOfIndustrialCapitalBefore = 14;
+    val averageLifetimeOfIndustrialCapitalAfter = 14;
+
+    val fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime = 4000;  // year
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore = 0.43;
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter = 0.43;
+    val fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired = 400;
+
+    val averageLifetimeOfServiceCapitalBefore = 20;   // years
+    val averageLifetimeOfServiceCapitalAfter = 20;    // years
+
+    val serviceCapitalOutputRatioBefore = 1;
+    val serviceCapitalOutputRatioAfter = 1;
   }
 //
 //  // ENTRY POINT: called by body.onload
