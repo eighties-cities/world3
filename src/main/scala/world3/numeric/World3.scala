@@ -4,6 +4,8 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class World3 {
 
+  val dt = 1.0
+
   /*  Limits to Growth: This is a re-implementation in JavaScript
     of World3, the social-economic-environmental model created by
     Dennis and Donella Meadows and others circa 1970. The results
@@ -70,7 +72,10 @@ class World3 {
 
 
 
-  sealed trait All {}
+  sealed trait All {
+    def j: Option[Double]
+    def k: Option[Double]
+  }
 
   object Level {
 
@@ -85,16 +90,16 @@ class World3 {
 
   class Level(val qName: String, val qNumber: Int, val initVal: Double, updateFn: () => Double, val units: String) extends All {
     val qType = "Level"
-    var j = initVal
-    var k = initVal
+    var j = Some(initVal)
+    var k = Some(initVal)
 
     //  Level.prototype.reset = function() {
     //    this.j = this.k = this.initVal;
     //    this.data = [ {x: startTime, y: this.k} ];
     //  }
     def reset() = {
-      k = initVal
-      j = initVal
+      k = Some(initVal)
+      j = Some(initVal)
     }
 
     //  Level.prototype.warmup = function() {
@@ -102,7 +107,7 @@ class World3 {
     //  }
 
     def warmup() = {
-      k = updateFn()
+      k = Some(updateFn())
     }
 
     //  Level.prototype.update = function() {
@@ -115,8 +120,8 @@ class World3 {
     //  }
 
     def update() = {
-      k = updateFn()
-      k
+      k = Some(updateFn())
+      k.get
     }
 
     //  Level.prototype.tick = function() {
@@ -172,7 +177,7 @@ class World3 {
     }
   }
 
-  class Rate(val qName: String, val qNumber: Int, val units: String, val updateFn: () => Double) {
+  class Rate(val qName: String, val qNumber: Int, val units: String, val updateFn: () => Double) extends All {
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -304,10 +309,11 @@ class World3 {
   //    auxArray.push(this);
   //  }
 
-  class Smooth(val qName: String, val qNumber: Int, updateFn: () => Double, val units: String, val delay: Double, theInput: () => All) {
+  class Smooth(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double) extends All {
     val qType = "Smooth"
     var j: Option[Double] = None
     var k: Option[Double] = None
+    var theInput: All
     var firstCall = true
 
     //  Smooth.prototype.init = function() {
@@ -315,35 +321,55 @@ class World3 {
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
     def init  = {
-      j =
+      theInput = initFn()
+      j = Some(theInput.k.getOrElse(initVal))
+    }
+
+    //  Smooth.prototype.reset = function() {
+    //    this.firstCall = true;
+    //    this.j = this.k = this.null;
+    //  }
+
+    def reset() = {
+      firstCall = true
+      j = None
+      k = None
+    }
+
+    //  Smooth.prototype.update = function() {
+    //    if (this.firstCall) {
+    //      this.j = this.k = this.theInput.k || this.initVal;
+    //      this.firstCall = false;
+    //      return this.k;
+    //    }
+    //    else {
+    //      this.k = this.j + dt * (this.theInput.j - this.j) / this.del;
+    //      return this.k;
+    //    }
+    //  }
+
+    def update() =
+      if(firstCall) {
+        j = Some(theInput.k.getOrElse(initVal))
+        k =  Some(theInput.k.getOrElse(initVal))
+        firstCall = false
+        k.get
+      } else {
+        k = Some(j.get + dt * (theInput.j.get - j.get) / delay)
+        k.get
+      }
+
+    //  Smooth.prototype.warmup = Smooth.prototype.init;
+    def warmup = init
+
+    //  Smooth.prototype.tick = Level.prototype.tick;
+    def tick() = {
+      j = k
     }
   }
 
-
-
+  
 //
-
-//
-//  Smooth.prototype.reset = function() {
-//    this.firstCall = true;
-//    this.j = this.k = this.null;
-//  }
-//
-//  Smooth.prototype.update = function() {
-//    if (this.firstCall) {
-//      this.j = this.k = this.theInput.k || this.initVal;
-//      this.firstCall = false;
-//      return this.k;
-//    }
-//    else {
-//      this.k = this.j + dt * (this.theInput.j - this.j) / this.del;
-//      return this.k;
-//    }
-//  }
-//
-//  Smooth.prototype.warmup = Smooth.prototype.init;
-//
-//  Smooth.prototype.tick = Level.prototype.tick;
 //
 //
 //
