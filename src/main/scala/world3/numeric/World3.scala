@@ -267,7 +267,7 @@ class World3 {
   //
 
   object Aux {
-    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String]) = {
+    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val a = new Aux(qName, qNumber, updateFn, units, dependencies)
       auxArray += a
       qArray(qNumber) = a
@@ -596,7 +596,7 @@ class World3 {
     val updateFn: () => Double,
     val units: String,
     val dependencies: Vector[String]) extends All {
-    
+
     var j: Option[Double] = None
     var k: Option[Double] = None
 
@@ -934,7 +934,16 @@ class World3 {
 //      population45To64.k +
 //      population65AndOver.k;
 //  }
-//
+
+  val population =
+    Aux(
+      qName = "population",
+      qNumber = 1,
+      units = "persons",
+      updateFn = () => { population0To14.k + population15To44.k + population45To64.k + population65AndOver.k }
+    )
+
+  //
 //  var population0To14 = new Level("population0To14", 2, 6.5e8);
 //  population0To14.units = "persons";
 //  population0To14.updateFn = function() {
