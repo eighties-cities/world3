@@ -2414,7 +2414,16 @@ class World3 {
 //  landFractionCultivated.updateFn = function() {
 //    return arableLand.k / landFractionCultivated.potentiallyArableLandTotal;
 //  }
-//
+
+  var landFractionCultivated =
+    Aux(
+      "landFractionCultivated",
+      84,
+      units = "dimensionless",
+      updateFn = () => { arableLand.k.get / Constants.landFractionCultivatedPotentiallyArableLandTotal }
+    )
+
+
 //  var arableLand = new Level("arableLand", 85, 0.9e9);
 //  arableLand.units = "hectares";
 //  arableLand.plotColor = "#513210"
@@ -2424,13 +2433,31 @@ class World3 {
 //    return arableLand.j + dt *
 //      (landDevelopmentRate.j - landErosionRate.j - landRemovalForUrbanIndustrialUse.j);
 //  }
-//
+
+  var arableLand =
+    Level(
+      "arableLand",
+      85,
+      0.9e9,
+      units = "hectares",
+      updateFn = () => { arableLand.j.get + dt * (landDevelopmentRate.j.get - landErosionRate.j.get - landRemovalForUrbanIndustrialUse.j.get) }
+    )
+
 //  var potentiallyArableLand = new Level("potentiallyArableLand", 86, 2.3e9);
 //  potentiallyArableLand.units = "hectares";
 //  potentiallyArableLand.updateFn = function() {
 //    return potentiallyArableLand.j + dt * (-landDevelopmentRate.j)
 //  }
-//
+
+  var potentiallyArableLand =
+    Level(
+      "potentiallyArableLand",
+      86,
+      2.3e9,
+      units = "hectares",
+      updateFn = () => { potentiallyArableLand.j.get + dt * (-landDevelopmentRate.j.get) }
+    )
+
 //  var food = new Aux("food", 87);
 //  food.units = "kilograms per year";
 //  food.dependencies = ["landYield"];
@@ -2439,7 +2466,18 @@ class World3 {
 //  food.updateFn = function() {
 //    return landYield.k * arableLand.k * food.landFractionHarvestedK * (1 - food.processingLossK);
 //  }
-//
+
+  var food =
+    Aux(
+      "food",
+      87,
+      units = "kilograms per year",
+      dependencies = Vector("landYield"),
+      updateFn = () => { landYield.k * arableLand.k * Constants.foodLandFractionHarvestedK * (1 - Constants.foodProcessingLossK) }
+    )
+
+
+
 //  var foodPerCapita = new Aux("foodPerCapita", 88);
 //  foodPerCapita.units = "kilograms per person-year";
 //  foodPerCapita.dependencies = ["food", "population"];
@@ -2449,13 +2487,16 @@ class World3 {
 //  foodPerCapita.updateFn = function() {
 //    return food.k / population.k;
 //  }
-val foodPerCapita = Aux(
-  qName="foodPerCapita",
-  qNumber = 88,
-  units = "kilograms per person-year",
-  dependencies = Vector("food", "population"),
-  updateFn = ()=> {food.k.get / population.k.get}
-)
+
+  val foodPerCapita = Aux(
+    qName="foodPerCapita",
+    qNumber = 88,
+    units = "kilograms per person-year",
+    dependencies = Vector("food", "population"),
+    updateFn = ()=> {food.k.get / population.k.get}
+  )
+
+
 //
 //  var indicatedFoodPerCapita = new Aux("indicatedFoodPerCapita", 89);
 //  indicatedFoodPerCapita.units = "kilograms per person-year";
@@ -2463,49 +2504,144 @@ val foodPerCapita = Aux(
 //  indicatedFoodPerCapita.updateFn = function() {
 //    return clip(indicatedFoodPerCapitaAfter.k, indicatedFoodPerCapitaBefore.k, t, policyYear);
 //  }
-//
+
+  var indicatedFoodPerCapita =
+    Aux(
+      "indicatedFoodPerCapita",
+      89,
+      units = "kilograms per person-year",
+      dependencies = Vector("indicatedFoodPerCapitaBefore", "indicatedFoodPerCapitaAfter"),
+      updateFn = clip(() => indicatedFoodPerCapitaAfter.k.get, () => indicatedFoodPerCapitaBefore.k.get, t, policyYear)
+    )
+
+
+
 //  var indicatedFoodPerCapitaBefore = new Table("indicatedFoodPerCapitaBefore", 90, [230, 480, 690, 850, 970, 1070, 1150, 1210, 1250], 0, 1600, 200)
 //  indicatedFoodPerCapitaBefore.units = "kilograms per person-year";
 //  indicatedFoodPerCapitaBefore.dependencies = ["industrialOutputPerCapita"];
 //  indicatedFoodPerCapitaBefore.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+
+
+  var indicatedFoodPerCapitaBefore =
+    Table(
+      "indicatedFoodPerCapitaBefore",
+      90,
+      Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+      0,
+      1600,
+      200,
+      units = "kilograms per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get }
+    )
+
+
 //  var indicatedFoodPerCapitaAfter = new Table("indicatedFoodPerCapitaAfter", 91, [230, 480, 690, 850, 970, 1070, 1150, 1210, 1250], 0, 1600, 200)
 //  indicatedFoodPerCapitaAfter.units = "kilograms per person-year";
 //  indicatedFoodPerCapitaAfter.dependencies = ["industrialOutputPerCapita"];
 //  indicatedFoodPerCapitaAfter.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
-//  var totalAgriculturalInvestment = new Aux("totalAgriculturalInvestment", 92);
+
+
+  var indicatedFoodPerCapitaAfter =
+    Table(
+      "indicatedFoodPerCapitaAfter",
+      91,
+      Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+      0,
+      1600,
+      200,
+      units = "kilograms per person-year",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn = () => { industrialOutputPerCapita.k.get }
+    )
+
+
+  //  var totalAgriculturalInvestment = new Aux("totalAgriculturalInvestment", 92);
 //  totalAgriculturalInvestment.units = "dollars per year";
 //  totalAgriculturalInvestment.dependencies = ["industrialOutput", "fractionOfIndustrialOutputAllocatedToAgriculture"];
 //  totalAgriculturalInvestment.updateFn = function() {
 //    return industrialOutput.k * fractionOfIndustrialOutputAllocatedToAgriculture.k;
 //  }
-//
+
+
+  var totalAgriculturalInvestment =
+    Aux(
+      "totalAgriculturalInvestment",
+      92,
+      units = "dollars per year",
+      dependencies = Vector("industrialOutput", "fractionOfIndustrialOutputAllocatedToAgriculture"),
+      updateFn = () => { industrialOutput.k * fractionOfIndustrialOutputAllocatedToAgriculture.k }
+    )
+
+
 //  var fractionOfIndustrialOutputAllocatedToAgriculture = new Aux("fractionOfIndustrialOutputAllocatedToAgriculture", 93);
 //  fractionOfIndustrialOutputAllocatedToAgriculture.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToAgriculture.dependencies = ["fractionOfIndustrialOutputAllocatedToAgricultureBefore", "fractionOfIndustrialOutputAllocatedToAgricultureAfter"];
 //  fractionOfIndustrialOutputAllocatedToAgriculture.updateFn = function() {
 //    return clip(fractionOfIndustrialOutputAllocatedToAgricultureAfter.k, fractionOfIndustrialOutputAllocatedToAgricultureBefore.k, t, policyYear);
 //  }
-//
-//  var fractionOfIndustrialOutputAllocatedToAgricultureBefore = new Table("fractionOfIndustrialOutputAllocatedToAgricultureBefore", 94, [0.4, 0.2, 0.1, 0.025, 0, 0], 0, 2.5, 0.5)
+
+
+  var fractionOfIndustrialOutputAllocatedToAgriculture =
+    Aux(
+      "fractionOfIndustrialOutputAllocatedToAgriculture",
+      93,
+      units = "dimensionless",
+      dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgricultureBefore", "fractionOfIndustrialOutputAllocatedToAgricultureAfter"),
+      updateFn =
+        clip(
+          () => fractionOfIndustrialOutputAllocatedToAgricultureAfter.k.get,
+          () => fractionOfIndustrialOutputAllocatedToAgricultureBefore.k.get,
+          t,
+          policyYear)
+    )
+
+
+  //  var fractionOfIndustrialOutputAllocatedToAgricultureBefore = new Table("fractionOfIndustrialOutputAllocatedToAgricultureBefore", 94, [0.4, 0.2, 0.1, 0.025, 0, 0], 0, 2.5, 0.5)
 //  fractionOfIndustrialOutputAllocatedToAgricultureBefore.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToAgricultureBefore.dependencies = ["foodPerCapita", "indicatedFoodPerCapita"];
 //  fractionOfIndustrialOutputAllocatedToAgricultureBefore.updateFn = function() {
 //    return foodPerCapita.k / indicatedFoodPerCapita.k;
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToAgricultureBefore =
+    Table(
+      "fractionOfIndustrialOutputAllocatedToAgricultureBefore",
+      94,
+      Vector(0.4, 0.2, 0.1, 0.025, 0, 0),
+      0,
+      2.5,
+      0.5,
+      units = "dimensionless",
+      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
+      updateFn = () => { foodPerCapita.k.get / indicatedFoodPerCapita.k.get }
+    )
+
 //  var fractionOfIndustrialOutputAllocatedToAgricultureAfter = new Table("fractionOfIndustrialOutputAllocatedToAgricultureAfter", 95, [0.4, 0.2, 0.1, 0.025, 0, 0], 0, 2.5, 0.5)
 //  fractionOfIndustrialOutputAllocatedToAgricultureAfter.units = "dimensionless";
 //  fractionOfIndustrialOutputAllocatedToAgricultureAfter.dependencies = ["foodPerCapita", "indicatedFoodPerCapita"];
 //  fractionOfIndustrialOutputAllocatedToAgricultureAfter.updateFn = function() {
 //    return foodPerCapita.k / indicatedFoodPerCapita.k;
 //  }
-//
+
+  var fractionOfIndustrialOutputAllocatedToAgricultureAfter =
+    Table(
+      "fractionOfIndustrialOutputAllocatedToAgricultureAfter",
+      95,
+      Vector(0.4, 0.2, 0.1, 0.025, 0, 0),
+      0,
+      2.5,
+      0.5,
+      units = "dimensionless",
+      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
+      updateFn = () => { foodPerCapita.k.get / indicatedFoodPerCapita.k.get }
+    )
+
+  
 //  var landDevelopmentRate = new Rate("landDevelopmentRate", 96);
 //  landDevelopmentRate.units = "hectares per year";
 //  landDevelopmentRate.updateFn = function() {
@@ -3292,7 +3428,13 @@ val indexOfPersistentPollution = Aux(
     val serviceCapitalOutputRatioAfter = 1;
 
     val laborForceParticipationFraction = 0.75  // dimensionless
-    var laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
+    val laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
+
+    val landFractionCultivatedPotentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
+
+    val foodLandFractionHarvestedK = 0.7;   // dimensionless
+    val foodProcessingLossK = 0.1;          // dimensionless
+
 
   }
 //
