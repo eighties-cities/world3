@@ -315,7 +315,6 @@ class World3 {
     val qType = "Smooth"
     var j: Option[Double] = None
     var k: Option[Double] = None
-    var theInput: Option[All] = None
     var firstCall = true
 
     //  Smooth.prototype.init = function() {
@@ -323,8 +322,7 @@ class World3 {
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
     def init  = {
-      theInput = Some(initFn())
-      j = Some(theInput.get.k.getOrElse(initVal))
+      j = Some(initFn().k.getOrElse(initVal))
     }
 
     //  Smooth.prototype.reset = function() {
@@ -350,16 +348,18 @@ class World3 {
     //    }
     //  }
 
-    def update() =
-      if(firstCall) {
-        j = Some(theInput.get.k.getOrElse(initVal))
-        k =  Some(theInput.get.k.getOrElse(initVal))
+    def update() = {
+      val theInput = initFn()
+      if (firstCall) {
+        j = Some(theInput.k.getOrElse(initVal))
+        k = Some(theInput.k.getOrElse(initVal))
         firstCall = false
         k.get
       } else {
-        k = Some(j.get + dt * (theInput.get.j.get - j.get) / delay)
+        k = Some(j.get + dt * (theInput.j.get - j.get) / delay)
         k.get
       }
+    }
 
     //  Smooth.prototype.warmup = Smooth.prototype.init;
     def warmup = init
@@ -370,31 +370,43 @@ class World3 {
     }
   }
 
+  //  // constructor for Delay3 objects
+  //  // third-order exponential delay for Rate variables
+  //
+  //
+  //  var Delay3 = function(qName, qNumber, delay) {
+  //    this.qName = qName;
+  //    this.qNumber = qNumber;
+  //    this.qType = "Aux";
+  //    this.units = "dimensionless";
+  //    this.dependencies = [];
+  //    this.delayPerStage = delay / 3;
+  //    this.firstCall = true;
+  //    this.j = this.k = null;
+  //    this.alpha = { j: null, k: null };
+  //    this.beta  = { j: null, k: null };
+  //    this.gamma = { j: null, k: null };
+  //    qArray[qNumber] = this;
+  //    auxArray.push(this);
+  //  }
 
-//
-//
-//
-//
-//
-//  // constructor for Delay3 objects
-//  // third-order exponential delay for Rate variables
-//
-//
-//  var Delay3 = function(qName, qNumber, delay) {
-//    this.qName = qName;
-//    this.qNumber = qNumber;
-//    this.qType = "Aux";
-//    this.units = "dimensionless";
-//    this.dependencies = [];
-//    this.delayPerStage = delay / 3;
-//    this.firstCall = true;
-//    this.j = this.k = null;
-//    this.alpha = { j: null, k: null };
-//    this.beta  = { j: null, k: null };
-//    this.gamma = { j: null, k: null };
-//    qArray[qNumber] = this;
-//    auxArray.push(this);
-//  }
+  class Delay3(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double, val dimension: String) {
+    val qType = "Delay3"
+    var j: Option[Double] = None
+    var k: Option[Double] = None
+    var theInput: Option[All] = None
+    var firstCall = true
+
+    def init() = {
+      theInput = Some(initFn())
+      j = theInput.get.k
+      k = theInput.get.k
+
+    }
+
+  }
+
+
 //
 //  Delay3.prototype.init = function() {
 //    this.theInput = this.initFn();
