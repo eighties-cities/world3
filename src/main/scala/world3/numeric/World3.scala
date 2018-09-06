@@ -2259,65 +2259,151 @@ class World3 {
     )
 
 
-
-  //
 //  var potentialJobsInServiceSector = new Aux("potentialJobsInServiceSector", 76);
 //  potentialJobsInServiceSector.units = "persons";
 //  potentialJobsInServiceSector.dependencies = ["jobsPerServiceCapitalUnit"];
 //  potentialJobsInServiceSector.updateFn = function() {
 //    return serviceCapital.k * jobsPerServiceCapitalUnit.k;
 //  }
-//
+
+  var potentialJobsInServiceSector =
+    Aux(
+      "potentialJobsInServiceSector",
+      76,
+      units = "persons",
+      dependencies = Vector("jobsPerServiceCapitalUnit"),
+      updateFn = () => { serviceCapital.k.get * jobsPerServiceCapitalUnit.k.get }
+    )
+
 //  var jobsPerServiceCapitalUnit = new Table("jobsPerServiceCapitalUnit", 77, [.0011, 0.0006, 0.00035, 0.0002, 0.00015, 0.00015], 50, 800, 150);
 //  jobsPerServiceCapitalUnit.units = "persons per dollar";
 //  jobsPerServiceCapitalUnit.dependencies = ["serviceOutputPerCapita"];
 //  jobsPerServiceCapitalUnit.updateFn = function() {
 //    return serviceOutputPerCapita.k;
 //  }
-//
+
+  var jobsPerServiceCapitalUnit =
+    Table(
+      "jobsPerServiceCapitalUnit",
+      77,
+      Vector(0.0011, 0.0006, 0.00035, 0.0002, 0.00015, 0.00015),
+      50,
+      800,
+      150,
+      units = "persons per dollar",
+      dependencies = Vector("serviceOutputPerCapita"),
+      updateFn = () => { serviceOutputPerCapita.k.get }
+    )
+
 //  var potentialJobsInAgriculturalSector = new Aux("potentialJobsInAgriculturalSector", 78);
 //  potentialJobsInAgriculturalSector.units = "persons";
 //  potentialJobsInAgriculturalSector.dependencies = ["jobsPerHectare"];
 //  potentialJobsInAgriculturalSector.updateFn = function() {
 //    return arableLand.k * jobsPerHectare.k;
 //  }
-//
+
+
+  var potentialJobsInAgriculturalSector =
+    Aux(
+      "potentialJobsInAgriculturalSector",
+      78,
+      units = "persons",
+      dependencies = Vector("jobsPerHectare"),
+      updateFn = () => { arableLand.k.get * jobsPerHectare.k.get }
+    )
+
+
 //  var jobsPerHectare = new Table("jobsPerHectare", 79, [2, 0.5, 0.4, 0.3, 0.27, 0.24, 0.2, 0.2], 2, 30, 4);
 //  jobsPerHectare.units = "persons per hectare";
 //  jobsPerHectare.dependencies = ["agriculturalInputsPerHectare"];
 //  jobsPerHectare.updateFn = function() {
 //    return agriculturalInputsPerHectare.k;
 //  }
-//
+
+  var jobsPerHectare =
+    Table(
+      "jobsPerHectare",
+      79,
+      Vector(2, 0.5, 0.4, 0.3, 0.27, 0.24, 0.2, 0.2),
+      2,
+      30,
+      4,
+      units = "persons per hectare",
+      dependencies = Vector("agriculturalInputsPerHectare"),
+      updateFn = () => { agriculturalInputsPerHectare.k.get }
+    )
+
 //  var laborForce = new Aux("laborForce", 80);
 //  laborForce.units = "persons";
 //  laborForce.participationFraction = 0.75  // dimensionless
 //  laborForce.updateFn = function() {
 //    return (population15To44.k + population45To64.k) * laborForce.participationFraction;
 //  }
-//
-//  var laborUtilizationFraction = new Aux("laborUtilizationFraction", 81);
+
+  var laborForce =
+    Aux(
+      "laborForce",
+      80,
+      units = "persons",
+      updateFn = () => { (population15To44.k.get + population45To64.k.get) * Constants.laborForceParticipationFraction }
+    )
+
+
+  //  var laborUtilizationFraction = new Aux("laborUtilizationFraction", 81);
 //  laborUtilizationFraction.units = "dimensionless";
 //  laborUtilizationFraction.dependencies = ["jobs", "laborForce"];
 //  laborUtilizationFraction.updateFn = function() {
 //    return jobs.k / laborForce.k;
 //  }
-//
-//  var laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
-//
+
+  var laborUtilizationFraction =
+    Aux(
+      "laborUtilizationFraction",
+      81,
+      units = "dimensionless",
+      dependencies = Vector("jobs", "laborForce"),
+      updateFn = () => { jobs.k.get / laborForce.k.get }
+    )
+
+
 //  var laborUtilizationFractionDelayed = new Smooth("laborUtilizationFractionDelayed", 82, laborUtilizationFractionDelayedDelayTime);
 //  laborUtilizationFractionDelayed.units = "dimensionless";
 //  laborUtilizationFractionDelayed.dependencies = ["laborUtilizationFraction"];
 //  laborUtilizationFractionDelayed.initFn = function() { return laborUtilizationFraction; }
-//
-//  var capitalUtilizationFraction = new Table("capitalUtilizationFraction", 83, [1.0, 0.9, 0.7, 0.3, 0.1, 0.1], 1, 11, 2);
+
+  var laborUtilizationFractionDelayed =
+    Smooth(
+      "laborUtilizationFractionDelayed",
+      82,
+      Constants.laborUtilizationFractionDelayedDelayTime,
+      units = "dimensionless",
+      dependencies = Vector("laborUtilizationFraction"),
+      initFn = () => { laborUtilizationFraction }
+    )
+
+
+
+  //  var capitalUtilizationFraction = new Table("capitalUtilizationFraction", 83, [1.0, 0.9, 0.7, 0.3, 0.1, 0.1], 1, 11, 2);
 //  capitalUtilizationFraction.units = "dimensionless";
 //  capitalUtilizationFraction.dependencies = [];   // "laborUtilizationFractionDelayed" removed to break cycle
 //  capitalUtilizationFraction.updateFn = function() {
 //    return laborUtilizationFractionDelayed.k || 1.0;   // to break circularity
 //  }
-//
-//
+
+  var capitalUtilizationFraction =
+    Table(
+      "capitalUtilizationFraction",
+      83,
+      Vector(1.0, 0.9, 0.7, 0.3, 0.1, 0.1),
+      1,
+      11,
+      2,
+      units = "dimensionless",
+      dependencies = Vector(),   // "laborUtilizationFractionDelayed" removed to break cycle
+      updateFn = () => { laborUtilizationFractionDelayed.k.getOrElse(1.0) } // to break circularity 
+    )
+
+
 //  // THE AGRICULTURAL SECTOR
 //
 //  // Loop 1: Food from Investment in Land Development
@@ -3166,6 +3252,10 @@ val indexOfPersistentPollution = Aux(
 
     val serviceCapitalOutputRatioBefore = 1;
     val serviceCapitalOutputRatioAfter = 1;
+
+    val laborForceParticipationFraction = 0.75  // dimensionless
+    var laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
+
   }
 //
 //  // ENTRY POINT: called by body.onload
