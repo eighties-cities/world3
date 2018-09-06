@@ -672,7 +672,7 @@ class World3 {
   var t = 1900
   val dt = 1.0
 
-  //  var policyYear = 1975;                 // eqn 150.1
+  var policyYear = 1975 // eqn 150.1
 //  var plotInterval = Math.max(dt, 1);
 //
 //  var resetModel = function() {
@@ -908,7 +908,7 @@ class World3 {
       qName = "deathsPerYear0To14",
       qNumber = 3,
       units = "persons per year",
-      updateFn = () => { population0To14.k.get * mortality0To14.k}
+      updateFn = () => { population0To14.k.get * mortality0To14.k.get}
     )
 
 //  var mortality0To14 = new Table("mortality0To14", 4, [0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010], 20, 80, 10);
@@ -974,7 +974,7 @@ class World3 {
       "deathsPerYear15To44",
       7,
       units = "persons per year",
-      updateFn = () => { population15To44.k.get * mortality15To44.k }
+      updateFn = () => { population15To44.k.get * mortality15To44.k.get }
     )
 
 //  var mortality15To44 = new Table("mortality15To44", 8, [0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008], 20, 80, 10);
@@ -1977,6 +1977,13 @@ class World3 {
 //  foodPerCapita.updateFn = function() {
 //    return food.k / population.k;
 //  }
+val foodPerCapita = Aux(
+  qName="foodPerCapita",
+  qNumber = 88,
+  units = "kilograms per person-year",
+  dependencies = Vector("food", "population"),
+  updateFn = ()=> {food.k.get / population.k.get}
+)
 //
 //  var indicatedFoodPerCapita = new Aux("indicatedFoodPerCapita", 89);
 //  indicatedFoodPerCapita.units = "kilograms per person-year";
@@ -2189,13 +2196,19 @@ class World3 {
 //  averageLifeOfLand.updateFn = function() {
 //    return averageLifeOfLand.normal * landLifeMultiplierFromYield.k;
 //  }
-//
+    val averageLifeOfLand = Aux("averageLifeOfLand", 112, units = "years", dependencies = Vector("landLifeMultiplierFromYield"),
+      updateFn = () => {Constants.averageLifeOfLandNormal * landLifeMultiplierFromYield.k.get}
+  )
 //  var landLifeMultiplierFromYield = new Aux("landLifeMultiplierFromYield", 113);
 //  landLifeMultiplierFromYield.units = "dimensionless";
 //  landLifeMultiplierFromYield.dependencies = ["landLifeMultiplierFromYieldBefore", "landLifeMultiplierFromYieldAfter"];
 //  landLifeMultiplierFromYield.updateFn = function() {
 //    return clip(landLifeMultiplierFromYieldAfter.k, landLifeMultiplierFromYieldBefore.k, t, policyYear);
 //  }
+  val landLifeMultiplierFromYield = Aux("landLifeMultiplierFromYield", 113,units = "dimensionless",
+  dependencies = Vector("landLifeMultiplierFromYieldBefore", "landLifeMultiplierFromYieldAfter"),
+  updateFn = clip(()=>landLifeMultiplierFromYieldAfter.k.get, ()=>landLifeMultiplierFromYieldBefore.k.get, t, policyYear)
+  )
 //
 //  var inherentLandFertilityK = 600;   // kilograms per hectare-year, used in eqns 114, 115 and 124
 //
@@ -2205,6 +2218,11 @@ class World3 {
 //  landLifeMultiplierFromYieldBefore.updateFn = function() {
 //    return landYield.k / inherentLandFertilityK;
 //  }
+  val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", 114,
+  data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01), iMin = 0, iMax = 9, iDelta = 1,units = "dimensionless",
+  dependencies = Vector("landYield"),
+  updateFn = () =>{landYield.k.get / inherentLandFertilityK}
+)
 //
 //  var landLifeMultiplierFromYieldAfter = new Table("landLifeMultiplierFromYieldAfter", 115, [1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01], 0, 9, 1)
 //  landLifeMultiplierFromYieldAfter.units = "dimensionless";
@@ -2212,12 +2230,19 @@ class World3 {
 //  landLifeMultiplierFromYieldAfter.updateFn = function() {
 //    return landYield.k / inherentLandFertilityK;
 //  }
-//
+  val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", 115,
+  data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+  iMin = 0, iMax = 9, iDelta = 1, units = "dimensionless", dependencies = Vector("landYield"),
+  updateFn = () => {landYield.k.get / inherentLandFertilityK}
+  )
 //  var landErosionRate = new Rate("landErosionRate", 116);
 //  landErosionRate.units = "hectares per year";
 //  landErosionRate.updateFn = function() {
 //    return arableLand.k / averageLifeOfLand.k;
 //  }
+  val landErosionRate = Rate("landErosionRate", 116, units = "hectares per year",
+    updateFn = () => {arableLand.k.get/ averageLifeOfLand.k.get}
+  )
 //
 //  // 2016-08-09: Neil S. Grant reported an error in the table of values
 //  // for urbanIndustrialLandPerCapita. The third element of the array
@@ -2229,13 +2254,24 @@ class World3 {
 //  urbanIndustrialLandPerCapita.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+  val urbanIndustrialLandPerCapita = Table(
+    "urbanIndustrialLandPerCapita", 117,
+    data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
+    iMin = 0, iMax = 1600, iDelta = 200, units = "hectares per person",
+    dependencies = Vector("industrialOutputPerCapita"),
+    updateFn = () =>{industrialOutputPerCapita.k.get}
+  )
 //  var urbanIndustrialLandRequired = new Aux("urbanIndustrialLandRequired", 118);
 //  urbanIndustrialLandRequired.units = "hectares";
 //  urbanIndustrialLandRequired.dependencies = ["urbanIndustrialLandPerCapita", "population"];
 //  urbanIndustrialLandRequired.updateFn = function() {
 //    return urbanIndustrialLandPerCapita.k * population.k;
 //  }
+  val urbanIndustrialLandRequired = Aux("urbanIndustrialLandRequired", 118,
+    units = "hectares",
+    dependencies = Vector("urbanIndustrialLandPerCapita", "population"),
+    updateFn = () => {urbanIndustrialLandPerCapita.k.get * population.k.get}
+  )
 //
 //  var landRemovalForUrbanIndustrialUse = new Rate("landRemovalForUrbanIndustrialUse", 119);
 //  landRemovalForUrbanIndustrialUse.units = "hectares per year";
@@ -2243,13 +2279,23 @@ class World3 {
 //  landRemovalForUrbanIndustrialUse.updateFn = function() {
 //    return Math.max(0, (urbanIndustrialLandRequired.k - urbanIndustrialLand.k) / landRemovalForUrbanIndustrialUse.developmentTime);
 //  }
+  val landRemovalForUrbanIndustrialUse = Rate("landRemovalForUrbanIndustrialUse", 119, units = "hectares per year",
+    updateFn = () => {Math.max(0, (urbanIndustrialLandRequired.k.get - urbanIndustrialLand.k.get) / Constants.developmentTime)}
+  )
 //
 //  var urbanIndustrialLand = new Level("urbanIndustrialLand", 120, 8.2e6);
 //  urbanIndustrialLand.units = "hectares";
 //  urbanIndustrialLand.updateFn = function() {
 //    return urbanIndustrialLand.j + dt * landRemovalForUrbanIndustrialUse.j;
 //  }
-//
+  val urbanIndustrialLand: Level = Level(
+    "urbanIndustrialLand", 120,
+    initVal = 8.2e6,
+    units = "hectares",
+    updateFn = () => {urbanIndustrialLand.j.get + dt * landRemovalForUrbanIndustrialUse.j.get}
+  )
+
+  //
 //
 //  // Loop 4: Land fertility degradation
 //
@@ -2258,84 +2304,132 @@ class World3 {
 //  landFertility.updateFn = function() {
 //    return landFertility.j + dt * (landFertilityRegeneration.j - landFertilityDegradation.j);
 //  }
-//
+  var landFertility:Level = Level(
+    qName="landFertility",
+    qNumber = 121,
+    initVal = 600,
+    units = "kilograms per hectare-year",
+    updateFn = ()=> {landFertility.j.get + dt * (landFertilityRegeneration.j.get - landFertilityDegradation.j.get)}
+  )
 //  var landFertilityDegradationRate = new Table("landFertilityDegradationRate", 122, [0, 0.1, 0.3, 0.5], 0, 30, 10);
 //  landFertilityDegradationRate.units = "inverse years";
 //  landFertilityDegradationRate.dependencies = ["indexOfPersistentPollution"];
 //  landFertilityDegradationRate.updateFn = function() {
 //    return indexOfPersistentPollution.k;
 //  }
-//
+    val landFertilityDegradationRate = Table(
+      qName="landFertilityDegradationRate", qNumber=122, data=Vector(0, 0.1, 0.3, 0.5), iMin=0, iMax = 30, iDelta = 10,
+    units = "inverse years",
+    dependencies = Vector("indexOfPersistentPollution"),
+    updateFn = () => {indexOfPersistentPollution.k.get}
+    )
 //  var landFertilityDegradation = new Rate("landFertilityDegradation", 123);
 //  landFertilityDegradation.units = "kilograms per hectare-year-year";
 //  landFertilityDegradation.updateFn = function() {
 //    return landFertility.k * landFertilityDegradationRate.k;
 //  }
-//
-//
+  val landFertilityDegradation = Rate(
+    qName="landFertilityDegradation",
+    qNumber=123,
+    units = "kilograms per hectare-year-year",
+    updateFn = () => {landFertility.k.get * landFertilityDegradationRate.k.get}
+  )
 //
 //  // Loop 5: Land fertility regeneration
-//
 //
 //  var landFertilityRegeneration = new Rate("landFertilityRegeneration", 124);
 //  landFertilityRegeneration.units = "kilograms per hectare-year-year";
 //  landFertilityRegeneration.updateFn = function() {
 //    return (inherentLandFertilityK - landFertility.k) / landFertilityRegenerationTime.k;
 //  }
-//
+  val landFertilityRegeneration = Rate(
+    qName="landFertilityRegeneration",
+    qNumber=124,
+    units = "kilograms per hectare-year-year",
+    updateFn = () => {(Constants.inherentLandFertilityK - landFertility.k.get) / landFertilityRegenerationTime.k.get}
+  )
+
 //  var landFertilityRegenerationTime = new Table("landFertilityRegenerationTime", 125, [20, 13, 8, 4, 2, 2], 0, 0.1, 0.02);
 //  landFertilityRegenerationTime.units = "years";
 //  landFertilityRegenerationTime.dependencies = ["fractionOfInputsAllocatedToLandMaintenance"];
 //  landFertilityRegenerationTime.updateFn = function() {
 //    return fractionOfInputsAllocatedToLandMaintenance.k;
 //  }
-//
-//
-//  // Loop 6: Discontinuing land maintenance
-//
-//  var fractionOfInputsAllocatedToLandMaintenance = new Table("fractionOfInputsAllocatedToLandMaintenance", 126, [0, 0.04, 0.07, 0.09, 0.10], 0, 4, 1);
-//  fractionOfInputsAllocatedToLandMaintenance.units = "dimensionless";
-//  fractionOfInputsAllocatedToLandMaintenance.dependencies = ["perceivedFoodRatio"];
-//  fractionOfInputsAllocatedToLandMaintenance.updateFn = function() {
-//    return perceivedFoodRatio.k;
-//  }
-//
-//  var foodRatio = new Aux("foodRatio", 127);
-//  foodRatio.units = "dimensionless";
-//  foodRatio.dependencies = ["foodPerCapita"];
-//  foodRatio.updateFn = function() {
-//    return foodPerCapita.k / subsistenceFoodPerCapitaK;
-//  }
-//
-//  var foodShortagePerceptionDelayK = 2;  // years, used in eqn 128
-//
-//  var perceivedFoodRatio = new Smooth("perceivedFoodRatio", 128, foodShortagePerceptionDelayK);
-//  perceivedFoodRatio.units = "dimensionless";
-//  perceivedFoodRatio.dependencies = [];   // "foodRatio" removed to break cycle
-//  perceivedFoodRatio.initFn = function() { return foodRatio; }
-//  perceivedFoodRatio.initVal = 1.0;
-//
-//
-//  /*
-//  var perceivedFoodRatio = new Smooth("perceivedFoodRatio", 128, foodShortagePerceptionDelayK);
-//    perceivedFoodRatio.units = "dimensionless";
-//    perceivedFoodRatio.dependencies = [];   // "foodRatio" removed to break cycle
-//    perceivedFoodRatio.initFn = function() { return foodRatio; }
-//    perceivedFoodRatio.init = function() {
-//      perceivedFoodRatio.theInput = perceivedFoodRatio.initFn;
-//      perceivedFoodRatio.j = perceivedFoodRatio.k = 1.0;
-//    }
-//    perceivedFoodRatio.update = function() {
-//      if (perceivedFoodRatio.firstCall) {
-//        perceivedFoodRatio.firstCall = false;
-//        return perceivedFoodRatio.k;
-//      }
-//      else {
-//        perceivedFoodRatio.k = perceivedFoodRatio.j + dt * (perceivedFoodRatio.theInput.j - perceivedFoodRatio.j) / perceivedFoodRatio.del;
-//        return perceivedFoodRatio.k;
-//      }
-//    }
-//  */
+  val landFertilityRegenerationTime = Table(
+    qName= "landFertilityRegenerationTime", qNumber=125,
+    data = Vector(20, 13, 8, 4, 2, 2), iMin=0, iMax=0.1, iDelta=0.02,
+    units = "years",
+    dependencies = Vector("fractionOfInputsAllocatedToLandMaintenance"),
+    updateFn = () => {fractionOfInputsAllocatedToLandMaintenance.k.get}
+  )
+  //
+  //  // Loop 6: Discontinuing land maintenance
+  //
+  //  var fractionOfInputsAllocatedToLandMaintenance = new Table("fractionOfInputsAllocatedToLandMaintenance", 126, [0, 0.04, 0.07, 0.09, 0.10], 0, 4, 1);
+  //  fractionOfInputsAllocatedToLandMaintenance.units = "dimensionless";
+  //  fractionOfInputsAllocatedToLandMaintenance.dependencies = ["perceivedFoodRatio"];
+  //  fractionOfInputsAllocatedToLandMaintenance.updateFn = function() {
+  //    return perceivedFoodRatio.k;
+  //  }
+  val fractionOfInputsAllocatedToLandMaintenance = Table(
+    qName = "fractionOfInputsAllocatedToLandMaintenance",
+    qNumber = 126,
+    data = Vector(0, 0.04, 0.07, 0.09, 0.10),
+    iMin=0, iMax=4, iDelta=1,
+    units = "dimensionless",
+    dependencies = Vector("perceivedFoodRatio"),
+    updateFn = () => {perceivedFoodRatio.k.get}
+  )
+  //  var foodRatio = new Aux("foodRatio", 127);
+  //  foodRatio.units = "dimensionless";
+  //  foodRatio.dependencies = ["foodPerCapita"];
+  //  foodRatio.updateFn = function() {
+  //    return foodPerCapita.k / subsistenceFoodPerCapitaK;
+  //  }
+  val foodRatio = Aux(
+    qName = "foodRatio",
+    qNumber= 127,
+    units = "dimensionless",
+    dependencies = Vector("foodPerCapita"),
+    updateFn = () => {foodPerCapita.k.get / Constants.subsistenceFoodPerCapitaK}
+  )
+
+  //
+  //  var foodShortagePerceptionDelayK = 2;  // years, used in eqn 128
+  //
+  //  var perceivedFoodRatio = new Smooth("perceivedFoodRatio", 128, foodShortagePerceptionDelayK);
+  //  perceivedFoodRatio.units = "dimensionless";
+  //  perceivedFoodRatio.dependencies = [];   // "foodRatio" removed to break cycle
+  //  perceivedFoodRatio.initFn = function() { return foodRatio; }
+  //  perceivedFoodRatio.initVal = 1.0;
+  //
+  val perceivedFoodRatio = Smooth(
+    qName = "perceivedFoodRatio",
+    qNumber = 128,
+    delay= Constants.foodShortagePerceptionDelayK,
+    initVal = Some(1.0),
+    initFn = () => {foodRatio}
+  )
+  //  /*
+  //  var perceivedFoodRatio = new Smooth("perceivedFoodRatio", 128, foodShortagePerceptionDelayK);
+  //    perceivedFoodRatio.units = "dimensionless";
+  //    perceivedFoodRatio.dependencies = [];   // "foodRatio" removed to break cycle
+  //    perceivedFoodRatio.initFn = function() { return foodRatio; }
+  //    perceivedFoodRatio.init = function() {
+  //      perceivedFoodRatio.theInput = perceivedFoodRatio.initFn;
+  //      perceivedFoodRatio.j = perceivedFoodRatio.k = 1.0;
+  //    }
+  //    perceivedFoodRatio.update = function() {
+  //      if (perceivedFoodRatio.firstCall) {
+  //        perceivedFoodRatio.firstCall = false;
+  //        return perceivedFoodRatio.k;
+  //      }
+  //      else {
+  //        perceivedFoodRatio.k = perceivedFoodRatio.j + dt * (perceivedFoodRatio.theInput.j - perceivedFoodRatio.j) / perceivedFoodRatio.del;
+  //        return perceivedFoodRatio.k;
+  //      }
+  //    }
+  //  */
   //
   //
   //  // NONRENEWABLE RESOURCE SECTOR
@@ -2348,12 +2442,12 @@ class World3 {
   //  nonrenewableResources.updateFn = function() {
   //    return nonrenewableResources.j + dt * (-nonrenewableResourceUsageRate.j);
   //  }
-  val nonrenewableResources = Level(
+  val nonrenewableResources: Level = Level(
     qName = "nonrenewableResources",
     qNumber = 129,
     initVal = Constants.nonrenewableResourcesInitialK,
     units = "resource units",
-    updateFn = ()=> {nonrenewableResources.j + dt * (-nonrenewableResourceUsageRate.j)}
+    updateFn = ()=> {nonrenewableResources.j.get + dt * (-nonrenewableResourceUsageRate.j.get)}
   )
   //  var nonrenewableResourceUsageRate = new Rate("nonrenewableResourceUsageRate", 130);
   //  nonrenewableResourceUsageRate.units = "resource units per year";
@@ -2374,9 +2468,10 @@ class World3 {
   //    return clip(this.after, this.before, t, policyYear);
   //  }
   val nonrenewableResourceUsageFactor = Aux(
-    qName = "nonrenewableResourceUsageFactor",qNumber = 131,
+    qName = "nonrenewableResourceUsageFactor",
+    qNumber = 131,
     units = "dimensionless",
-    updateFn = () => {function_clip(1, 1, t, policyYear)}
+    updateFn = clip(()=>1.0, ()=>1.0, t, policyYear) // ???
   )
   //  var perCapitaResourceUsageMultiplier = new Table("perCapitaResourceUsageMultiplier", 132, [0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7], 0, 1600, 200);
   //  perCapitaResourceUsageMultiplier.units = "resource units per person-year";
@@ -2403,7 +2498,7 @@ class World3 {
     qName = "nonrenewableResourceFractionRemaining",
     qNumber = 133,
     unit = "dimensionless",
-    updateFn = () => {nonrenewableResources.k.get / nonrenewableResourcesInitialK}
+    updateFn = () => {nonrenewableResources.k.get / Constants.nonrenewableResourcesInitialK}
   )
   //  var fractionOfCapitalAllocatedToObtainingResources = new Aux("fractionOfCapitalAllocatedToObtainingResources", 134);
   //  fractionOfCapitalAllocatedToObtainingResources.units = "dimensionless";
@@ -2416,7 +2511,7 @@ class World3 {
     qNumber = 134,
     unit = "dimensionless",
     dependencies = Vector("fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"),
-    updateFn = () => {function_clip(fractionOfCapitalAllocatedToObtainingResourcesAfter.k.get, fractionOfCapitalAllocatedToObtainingResourcesBefore.k.get, t, policyYear)}
+    updateFn = clip(() => fractionOfCapitalAllocatedToObtainingResourcesAfter.k.get, () => fractionOfCapitalAllocatedToObtainingResourcesBefore.k.get, t, policyYear)
   )
   //  var fractionOfCapitalAllocatedToObtainingResourcesBefore = new Table("fractionOfCapitalAllocatedToObtainingResourcesBefore", 135, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
   //  fractionOfCapitalAllocatedToObtainingResourcesBefore.units = "dimensionless";
@@ -2477,7 +2572,7 @@ class World3 {
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
     units = "dimensionless",
-    updateFn = () => {function_clip(1,1,t,policyYear)}
+    updateFn = clip(()=>1.0,()=>1.0,t,policyYear)
   )
   //  var persistentPollutionGeneratedByIndustrialOutput = new Aux("persistentPollutionGeneratedByIndustrialOutput", 139);
   //  persistentPollutionGeneratedByIndustrialOutput.units = "pollution units per year";
@@ -2537,7 +2632,7 @@ class World3 {
     qNumber = 142,
     initVal = 2.5e7,
     units = "pollution units",
-    updateFn = () => {persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j)}
+    updateFn = () => {persistentPollution.j.get + dt * (persistenPollutionAppearanceRate.j.get - persistenPollutionAssimilationRate.j.get)}
   )
 //  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
 //  indexOfPersistentPollution.units = "dimensionless";
@@ -2552,7 +2647,7 @@ val indexOfPersistentPollution = Aux(
   qName = "indexOfPersistentPollution",
   qNumber = 143,
   units = "dimensionless",
-  updateFn = () => {persistentPollution.k / Constants.pollutionValueIn1970}
+  updateFn = () => {persistentPollution.k.get / Constants.pollutionValueIn1970}
 )
   //  var persistenPollutionAssimilationRate = new Rate("persistenPollutionAssimilationRate", 144);
   //  persistenPollutionAssimilationRate.units = "pollution units per year";
@@ -2563,7 +2658,7 @@ val indexOfPersistentPollution = Aux(
     qName = "persistenPollutionAssimilationRate",
     qNumber = 144,
     units = "pollution units per year",
-    updateFn = () => {persistentPollution.k / (assimilationHalfLife.k * 1.4)}
+    updateFn = () => {persistentPollution.k.get / (assimilationHalfLife.k.get * 1.4)}
   )
   //  var assimilationHalfLifeMultiplier = new Table("assimilationHalfLifeMultiplier", 145, [1, 11, 21, 31, 41], 1, 1001, 250);
   //  assimilationHalfLifeMultiplier.units = "dimensionless";
@@ -2576,7 +2671,7 @@ val indexOfPersistentPollution = Aux(
     qNumber = 145,
     units = "years",
     dependencies = Vector("indexOfPersistentPollution"),
-    updateFn = () => {indexOfPersistentPollution.k},
+    updateFn = () => {indexOfPersistentPollution.k.get},
     data = Vector(1, 11, 21, 31, 41),
     iMin = 1,
     iMax = 1001,
@@ -2594,7 +2689,7 @@ val indexOfPersistentPollution = Aux(
     qNumber = 146,
     units = "years",
     dependencies = Vector("assimilationHalfLifeMultiplier"),
-    updateFn = () => {assimilationHalfLifeMultiplier.k * Constants.assimilationHalfLifeValueIn1970}
+    updateFn = () => {assimilationHalfLifeMultiplier.k.get * Constants.assimilationHalfLifeValueIn1970}
   )
 
   //
@@ -2647,6 +2742,10 @@ val indexOfPersistentPollution = Aux(
     val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
+    val averageLifeOfLandNormal = 6000 // years, used in eqn 112
+    val inherentLandFertilityK = 600 // kilograms per hectare-year, used in eqns 114, 115 and 124
+    val developmentTime = 10;   // years, used in eqn 119
+    val foodShortagePerceptionDelayK = 2  // years, used in eqn 128
     val nonrenewableResourcesInitialK = 1.0e12 // resource units, used in eqns 129 and 133
     val fractionOfResourcesAsPersistentMaterial = 0.02 // dimensionless, used in eqn 139
     val industrialMaterialsEmissionFactor = 0.1 // dimensionless, used in eqn 139
