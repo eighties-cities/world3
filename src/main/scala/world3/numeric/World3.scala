@@ -73,8 +73,8 @@ class World3 {
 
   object Level {
 
-    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Double, units: String = "dimensionless") = {
-      val l = new Level(qName, qNumber, initVal, updateFn, units)
+    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
+      val l = new Level(qName, qNumber, initVal, updateFn, units, dependencies)
       levelArray += l
       qArray(qNumber) = l
       l
@@ -82,7 +82,14 @@ class World3 {
 
   }
 
-  class Level(val qName: String, val qNumber: Int, val initVal: Double, updateFn: () => Double, val units: String) extends All {
+  class Level(
+    val qName: String,
+    val qNumber: Int,
+    val initVal: Double,
+    val updateFn: () => Double,
+    val units: String,
+    val dependencies: Vector[String]) extends All {
+
     val qType = "Level"
     var j = Some(initVal)
     var k = Some(initVal)
@@ -163,15 +170,26 @@ class World3 {
   //  }
   //
   object Rate {
-    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless") = {
-      val r = new Rate(qName, qNumber, units, updateFn)
+    def apply(
+      qName: String,
+      qNumber: Int,
+      updateFn: () => Double,
+      units: String = "dimensionless",
+      dependencies: Vector[String] = Vector()) = {
+      val r = new Rate(qName, qNumber, units, updateFn, dependencies)
       rateArray += r
       qArray(qNumber) = r
       r
     }
   }
 
-  class Rate(val qName: String, val qNumber: Int, val units: String, val updateFn: () => Double) extends All {
+  class Rate(
+    val qName: String,
+    val qNumber: Int,
+    val units: String,
+    val updateFn: () => Double,
+    val dependencies: Vector[String]) extends All {
+
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -249,8 +267,8 @@ class World3 {
   //
 
   object Aux {
-    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless") = {
-      val a = new Aux(qName, qNumber, updateFn, units)
+    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String]) = {
+      val a = new Aux(qName, qNumber, updateFn, units, dependencies)
       auxArray += a
       qArray(qNumber) = a
       a
@@ -258,7 +276,13 @@ class World3 {
   }
 
 
-  class Aux(val qName: String, val qNumber: Int, updateFn: () => Double, val units: String) extends All {
+  class Aux(
+    val qName: String,
+    val qNumber: Int,
+    val updateFn: () => Double,
+    val units: String,
+    val dependencies: Vector[String]) extends All {
+
     val qType = "Aux"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -288,8 +312,16 @@ class World3 {
 
 
   object Smooth {
-    def apply(qName: String, qNumber: Int, initFn: () => All, initVal: Double, units: String, delay: Double, dimension: String = "dimensionless") = {
-      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dimension)
+    def apply(
+      qName: String,
+      qNumber: Int,
+      initFn: () => All,
+      initVal: Double,
+      units: String,
+      delay: Double,
+      dimension: String = "dimensionless",
+      dependencies: Vector[String] = Vector()) = {
+      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dimension, dependencies)
       auxArray += s
       qArray(qNumber) = s
       s
@@ -311,7 +343,15 @@ class World3 {
   //    auxArray.push(this);
   //  }
 
-  class Smooth(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double, val dimension: String) extends All {
+  class Smooth(
+    val qName: String,
+    val qNumber: Int,
+    val initFn: () => All,
+    val initVal: Double,
+    val units: String,
+    val delay: Double,
+    val dimension: String,
+    val dependencies: Vector[String]) extends All {
     val qType = "Smooth"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -365,9 +405,7 @@ class World3 {
     def warmup = init
 
     //  Smooth.prototype.tick = Level.prototype.tick;
-    def tick() = {
-      j = k
-    }
+    def tick() = { j = k }
   }
 
   //  // constructor for Delay3 objects
@@ -394,8 +432,8 @@ class World3 {
 
     case class JK(j: Option[Double], k: Option[Double])
 
-    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless") = {
-      val d = new Delay3(qName, qNumber, initFn, units, delay)
+    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String]) = {
+      val d = new Delay3(qName, qNumber, initFn, units, delay, dependencies)
       qArray(qNumber) = d
       auxArray += d
       d
@@ -404,7 +442,14 @@ class World3 {
   }
 
 
-  class Delay3(val qName: String, val qNumber: Int, initFn: () => All, val units: String, val delay: Double) extends All {
+  class Delay3(
+    val qName: String,
+    val qNumber: Int,
+    val initFn: () => All,
+    val units: String,
+    val delay: Double,
+    val dependencies: Vector[String]) extends All {
+
     val qType = "Delay3"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -523,16 +568,35 @@ class World3 {
 
   object Table {
 
-    def apply(qName: String, qNumber: Int, data: Vector[Double], iMin: Double, iMax: Double, iDelta: Double, updateFn: () => Double, units: String = "dimensionless") = {
-      val t = new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units)
+    def apply(
+      qName: String,
+      qNumber: Int,
+      data: Vector[Double],
+      iMin: Double,
+      iMax: Double,
+      iDelta: Double,
+      updateFn: () => Double,
+      units: String = "dimensionless",
+      dependencies: Vector[String] = Vector()) = {
+      val t = new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units, dependencies)
       qArray(qNumber) = t
       auxArray += t
       t
     }
-    
+
   }
 
-  class Table(qName: String, qNumber: Int, data: Vector[Double], iMin: Double, iMax: Double, iDelta: Double, updateFn: () => Double, units: String) extends All {
+  class Table(
+    val qName: String,
+    val qNumber: Int,
+    val data: Vector[Double],
+    val iMin: Double,
+    val iMax: Double,
+    val iDelta: Double,
+    val updateFn: () => Double,
+    val units: String,
+    val dependencies: Vector[String]) extends All {
+    
     var j: Option[Double] = None
     var k: Option[Double] = None
 
@@ -593,9 +657,6 @@ class World3 {
   }
 
 
-//
-//
-//
 //  // sort the Aux equations into an order such that each one will
 //  // not be executed until all of its dependencies have been satisfied
 //
