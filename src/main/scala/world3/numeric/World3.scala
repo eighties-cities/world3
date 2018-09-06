@@ -2239,18 +2239,32 @@ class World3 {
 //
 //  var persistentPollutionTransmissionDelayK = 20; // years, used in eqn 141
 //
-//  var persistenPollutionAppearanceRate = new Delay3("persistenPollutionAppearanceRate", 141, persistentPollutionTransmissionDelayK);
-//  persistenPollutionAppearanceRate.units = "pollution units per year";
-//  persistenPollutionAppearanceRate.initFn = function() {return persistentPollutionGenerationRate; }
-//  persistenPollutionAppearanceRate.qType = "Rate";
-//  rateArray.push(auxArray.pop());   // put this among the Rates, not the Auxes
-//
-//  var persistentPollution = new Level("persistentPollution", 142, 2.5e7);
-//  persistentPollution.units = "pollution units";
-//  persistentPollution.updateFn = function() {
-//    return persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j);
-//  }
-//
+  //  var persistenPollutionAppearanceRate = new Delay3("persistenPollutionAppearanceRate", 141, persistentPollutionTransmissionDelayK);
+  //  persistenPollutionAppearanceRate.units = "pollution units per year";
+  //  persistenPollutionAppearanceRate.initFn = function() {return persistentPollutionGenerationRate; }
+
+  // ??? WTF ???
+  //  persistenPollutionAppearanceRate.qType = "Rate";
+  //  rateArray.push(auxArray.pop());   // put this among the Rates, not the Auxes
+  val persistenPollutionAppearanceRate = Delay3(
+    qName = "persistenPollutionAppearanceRate",
+    qNumber = 141,
+    delay = persistentPollutionTransmissionDelayK,
+    units = "pollution units per year",
+    initFn = () => {persistentPollutionGenerationRate}
+  )
+  //  var persistentPollution = new Level("persistentPollution", 142, 2.5e7);
+  //  persistentPollution.units = "pollution units";
+  //  persistentPollution.updateFn = function() {
+  //    return persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j);
+  //  }
+  val persistentPollution = Level(
+    qName = "persistentPollution",
+    qNumber = 142,
+    initVal = 2.5e7,
+    units = "pollution units",
+    updateFn = () => {persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j)}
+  )
 //  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
 //  indexOfPersistentPollution.units = "dimensionless";
 //  indexOfPersistentPollution.pollutionValueIn1970 = 1.36e8; // pollution units, used in eqn 143
@@ -2359,7 +2373,8 @@ val indexOfPersistentPollution = Aux(
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
     val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
     val lifeExpectancyNormal = 32 // used in eqn 19
-    val subsistenceFoodPerCapitaK = 230;  // kilograms per person-year, used in eqns 20, 127
+    val subsistenceFoodPerCapitaK = 230  // kilograms per person-year, used in eqns 20, 127
+    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
   }
 //
 //  // ENTRY POINT: called by body.onload
