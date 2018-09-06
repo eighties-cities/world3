@@ -672,7 +672,7 @@ class World3 {
 //  var startTime = 1900;
 //  var stopTime = 2100;
 //  var t = 1900;
-  val dt = 1.0;
+  val dt = 1.0
 //  var policyYear = 1975;                 // eqn 150.1
 //  var plotInterval = Math.max(dt, 1);
 //
@@ -880,81 +880,194 @@ class World3 {
       qName = "population",
       qNumber = 1,
       units = "persons",
-      updateFn = () => { population0To14.k + population15To44.k + population45To64.k + population65AndOver.k }
+      updateFn = () => { population0To14.k.get + population15To44.k.get + population45To64.k.get + population65AndOver.k.get }
     )
 
-  //
 //  var population0To14 = new Level("population0To14", 2, 6.5e8);
 //  population0To14.units = "persons";
 //  population0To14.updateFn = function() {
 //    return population0To14.j + dt *
 //      (birthsPerYear.j - deathsPerYear0To14.j - maturationsPerYear14to15.j);
 //  }
-//
+
+  val population0To14: Level =
+    Level(
+      qName = "population0To14",
+      qNumber = 2,
+      initVal = 6.5e8,
+      units = "persons",
+      updateFn = () => { population0To14.j.get + dt * (birthsPerYear.j.get - deathsPerYear0To14.j.get - maturationsPerYear14to15.j.get) }
+    )
+
 //  var deathsPerYear0To14 = new Rate("deathsPerYear0To14", 3);
 //  deathsPerYear0To14.units = "persons per year";
 //  deathsPerYear0To14.updateFn = function() {
 //    return population0To14.k * mortality0To14.k;
 //  }
-//
+  val deathsPerYear0To14 =
+    Rate(
+      qName = "deathsPerYear0To14",
+      qNumber = 3,
+      units = "persons per year",
+      updateFn = () => { population0To14.k.get * mortality0To14.k}
+    )
+
 //  var mortality0To14 = new Table("mortality0To14", 4, [0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010], 20, 80, 10);
 //  mortality0To14.units = "deaths per person-year";
 //  mortality0To14.dependencies = ["lifeExpectancy"];
 //  mortality0To14.updateFn = function() {
 //    return lifeExpectancy.k;
 //  }
-//
-//  var maturationsPerYear14to15 = new Rate("maturationsPerYear14to15", 5);
+
+  val mortality0To14 =
+    Table(
+      qName = "mortality0To14",
+      qNumber = 4,
+      data = Vector(0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010),
+      iMin = 20,
+      iMax = 80,
+      iDelta = 10,
+      units =  "deaths per person-year",
+      dependencies = Vector("lifeExpectancy"),
+      updateFn = () => lifeExpectancy.k.get
+    )
+
+
+
+  //  var maturationsPerYear14to15 = new Rate("maturationsPerYear14to15", 5);
 //  maturationsPerYear14to15.units = "persons per year";
 //  maturationsPerYear14to15.updateFn = function() {
 //    return population0To14.k * (1 - mortality0To14.k) / 15;
 //  }
-//
+
+  val maturationsPerYear14to15 =
+    Rate(
+      qName = "maturationsPerYear14to15",
+      qNumber = 5,
+      units = "persons per year",
+      updateFn = () => { population0To14.k.get * (1 - mortality0To14.k.get) / 15 }
+    )
+
 //  var population15To44 = new Level("population15To44", 6, 7.0e8);
 //  population15To44.units = "persons";
 //  population15To44.updateFn = function() {
 //    return population15To44.j + dt *
 //      (maturationsPerYear14to15.j - deathsPerYear15To44.j - maturationsPerYear44to45.j);
 //  }
-//
+
+  val population15To44: Level =
+    Level(
+      "population15To44",
+      6,
+      7.0e8,
+      units = "persons",
+      updateFn = () => { population15To44.j.get + dt * (maturationsPerYear14to15.j - deathsPerYear15To44.j - maturationsPerYear44to45.j) }
+    )
+
 //  var deathsPerYear15To44 = new Rate("deathsPerYear15To44", 7);
 //  deathsPerYear15To44.units = "persons per year";
 //  deathsPerYear15To44.updateFn = function() {
 //    return population15To44.k * mortality15To44.k;
 //  }
-//
+
+  val deathsPerYear15To44: Rate =
+    Rate(
+      "deathsPerYear15To44",
+      7,
+      units = "persons per year",
+      updateFn = () => { population15To44.k.get * mortality15To44.k }
+    )
+
 //  var mortality15To44 = new Table("mortality15To44", 8, [0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008], 20, 80, 10);
 //  mortality15To44.units = "deaths per person-year";
 //  mortality15To44.dependencies = ["lifeExpectancy"];
 //  mortality15To44.updateFn = function() {
 //    return lifeExpectancy.k;
 //  }
-//
+
+  val mortality15To44 =
+    Table(
+      "mortality15To44",
+      8,
+      Vector(0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008),
+      20,
+      80,
+      10,
+      units = "deaths per person-year",
+      dependencies = Vector("lifeExpectancy"),
+      updateFn = () => { lifeExpectancy.k.get }
+    )
+
+
+
 //  var maturationsPerYear44to45 = new Rate("maturationsPerYear44to45", 9);
 //  maturationsPerYear44to45.units = "persons per year";
 //  maturationsPerYear44to45.updateFn = function() {
 //    return population15To44.k * (1 - mortality15To44.k) / 30;
 //  }
-//
+
+  val maturationsPerYear44to45 =
+    Rate(
+      "maturationsPerYear44to45",
+      9,
+      units = "persons per year",
+      updateFn = () => { population15To44.k.get * (1 - mortality15To44.k.get) / 30 }
+    )
+
+
+
 //  var population45To64 = new Level("population45To64", 10, 1.9e8);
 //  population45To64.units = "persons";
 //  population45To64.updateFn = function() {
 //    return population45To64.j + dt *
 //      (maturationsPerYear44to45.j - deathsPerYear45To64.j - maturationsPerYear64to65.j);
 //  }
-//
+
+
+  val population45To64 =
+    Level(
+      "population45To64",
+      10,
+      1.9e8,
+      units = "persons",
+      updateFn = () = { population45To64.j.get + dt * (maturationsPerYear44to45.j.get - deathsPerYear45To64.j.get - maturationsPerYear64to65.j.get) }
+    )
+
 //  var deathsPerYear45To64 = new Rate("deathsPerYear45To64", 11);
 //  deathsPerYear45To64.units = "persons per year";
 //  deathsPerYear45To64.updateFn = function() {
 //    return population45To64.k * mortality45To64.k;
 //  }
-//
+
+  val deathsPerYear45To64: Rate =
+    Rate(
+      "deathsPerYear45To64",
+      11,
+      units = "persons per year",
+      updateFn = () => { population45To64.k.get * mortality45To64.k.get }
+    )
+
+
 //  var mortality45To64 = new Table("mortality45To64", 12, [0.0562, 0.0373, 0.0252, 0.0171, 0.0118, 0.0083, 0.0060], 20, 80, 10);
 //  mortality45To64.units = "deaths per person-year";
 //  mortality45To64.dependencies = ["lifeExpectancy"];
 //  mortality45To64.updateFn = function() {
 //    return lifeExpectancy.k;
 //  }
+
+  var mortality45To64 =
+    Table(
+      "mortality45To64",
+      12,
+      Vector(0.0562, 0.0373, 0.0252, 0.0171, 0.0118, 0.0083, 0.0060),
+      20,
+      80,
+      10,
+      units = "deaths per person-year",
+      dependencies = Vector("lifeExpectancy"),
+      updateFn = () => { lifeExpectancy.k.get }
+    )
+
 //
 //  var maturationsPerYear64to65 = new Rate("maturationsPerYear64to65", 13);
 //  maturationsPerYear64to65.units = "persons per year";
