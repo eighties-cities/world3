@@ -2099,7 +2099,7 @@ class World3 {
 //      (serviceCapitalInvestmentRate.j - serviceCapitalDepreciationRate.j);
 //  }
 
-  var serviceCapital =
+  var serviceCapital:Level =
     Level(
       "serviceCapital",
       67,
@@ -2664,14 +2664,19 @@ class World3 {
 //  currentAgriculturalInputs.updateFn = function() {
 //    return totalAgriculturalInvestment.k * (1 - fractionOfInputsAllocatedToLandDevelopment.k);
 //  }
+  var currentAgriculturalInputs = new Aux("currentAgriculturalInputs", 98,
+  units = "dollars per year", dependencies = Vector("totalAgriculturalInvestment", "fractionOfInputsAllocatedToLandDevelopment"),
+  updateFn = () => {totalAgriculturalInvestment.k.get * (1 - fractionOfInputsAllocatedToLandDevelopment.k.get)}
+)
 //
 //  var averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
 //
-//  var agriculturalInputs = new Smooth("agriculturalInputs", 99, averageLifetimeOfAgriculturalInputsK);
-//  agriculturalInputs.units = "dollars per year";
-//  agriculturalInputs.dependencies = [];   // "currentAgriculturalInputs" removed to break cycle
-//  agriculturalInputs.initFn = function() { return currentAgriculturalInputs; }
-//  agriculturalInputs.initVal = 5.0e9;
+  var agriculturalInputs = Smooth("agriculturalInputs", 99, Constants.averageLifetimeOfAgriculturalInputsK,
+    units = "dollars per year",
+    dependencies = Vector(),   // "currentAgriculturalInputs" removed to break cycle
+    initFn = () => { currentAgriculturalInputs},
+    initVal = 5.0e9
+  )
 //
 //  /*
 //  var agriculturalInputs = new Smooth("agriculturalInputs", 99, averageLifetimeOfAgriculturalInputsK);
@@ -2704,21 +2709,33 @@ class World3 {
 //  averageLifetimeOfAgriculturalInputs.updateFn = function() {
 //    return clip(this.after, this.before, t, policyYear);
 //  }
-//
+    var averageLifetimeOfAgriculturalInputs = Aux("averageLifetimeOfAgriculturalInputs", 100, units = "years",
+  updateFn = clip(() => 2,()=>2 , t, policyYear)
+)
 //  var agriculturalInputsPerHectare = new Aux("agriculturalInputsPerHectare", 101);
 //  agriculturalInputsPerHectare.units = "dollars per hectare-year";
 //  agriculturalInputsPerHectare.dependencies = ["agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"];
 //  agriculturalInputsPerHectare.updateFn = function() {
 //    return agriculturalInputs.k * (1 - fractionOfInputsAllocatedToLandMaintenance.k) / arableLand.k;
 //  }
-//
+    var agriculturalInputsPerHectare = Aux("agriculturalInputsPerHectare", 101,
+    units = "dollars per hectare-year", dependencies = Vector("agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"),
+    updateFn = () => {agriculturalInputs.k.get * (1 - fractionOfInputsAllocatedToLandMaintenance.k.get) / arableLand.k.get}
+  )
 //  var landYieldMultiplierFromCapital = new Table("landYieldMultiplierFromCapital", 102, [1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10], 0, 1000, 40)
 //  landYieldMultiplierFromCapital.units = "dimensionless";
 //  landYieldMultiplierFromCapital.dependencies = ["agriculturalInputsPerHectare"];
 //  landYieldMultiplierFromCapital.updateFn = function() {
 //    return agriculturalInputsPerHectare.k;
 //  }
-//
+    var landYieldMultiplierFromCapital = Table(
+      "landYieldMultiplierFromCapital", 102,
+      data=Vector(1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10),
+    iMin = 0, iMax = 1000, iDelta = 40,
+    units = "dimensionless",
+    dependencies = Vector("agriculturalInputsPerHectare"),
+    updateFn = () => {agriculturalInputsPerHectare.k.get}
+  )
 //  var landYield = new Aux("landYield", 103);
 //  landYield.units = "kilograms per hectare-year";
 //  landYield.plotColor = "#185103";
@@ -2731,7 +2748,11 @@ class World3 {
 //      landYieldMultiplierFromCapital.k *
 //      landYieldMultiplierFromAirPollution.k;
 //  }
-//
+  var landYield = Aux(
+    "landYield", 103,
+    units = "kilograms per hectare-year", dependencies = Vector("landYieldFactor", "landYieldMultiplierFromCapital", "landYieldMultiplierFromAirPollution"),
+    updateFn = () => {landYieldFactor.k.get * landFertility.k.get * landYieldMultiplierFromCapital.k.get * landYieldMultiplierFromAirPollution.k.get}
+  )
 //  var landYieldFactor = new Aux("landYieldFactor", 104);
 //  landYieldFactor.units = "dimensionless";
 //  landYieldFactor.before = 1;
@@ -2739,6 +2760,9 @@ class World3 {
 //  landYieldFactor.updateFn = function() {
 //    return clip(this.after, this.before, t, policyYear);
 //  }
+  val landYieldFactor = Aux("landYieldFactor", 104, units = "dimensionless",
+    updateFn = clip(() => 1,() => 1, t, policyYear)
+  )
 //
 //  var landYieldMultiplierFromAirPollution = new Aux("landYieldMultiplierFromAirPollution", 105);
 //  landYieldMultiplierFromAirPollution.units = "dimensionless";
