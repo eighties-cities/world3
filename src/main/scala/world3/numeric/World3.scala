@@ -1087,7 +1087,7 @@ class World3 {
 //      (maturationsPerYear64to65.j - deathsPerYear65AndOver.j);
 //  }
 
-  val population65AndOver =
+  val population65AndOver: Level =
     Level(
       "population65AndOver",
       14,
@@ -2234,17 +2234,24 @@ class World3 {
 //    return perCapitaResourceUsageMultiplier.k * population.k * persistentPollutionGeneratedByIndustrialOutput.fractionOfResourcesAsPersistentMaterial * persistentPollutionGeneratedByIndustrialOutput.industrialMaterialsEmissionFactor * persistentPollutionGeneratedByIndustrialOutput.industrialMaterialsToxicityIndex;
 //  }
 //
-//  var persistentPollutionGeneratedByAgriculturalOutput = new Aux("persistentPollutionGeneratedByAgriculturalOutput", 140);
-//  persistentPollutionGeneratedByAgriculturalOutput.units = "pollution units per year";
-//  persistentPollutionGeneratedByAgriculturalOutput.fractionOfInputsAsPersistentMaterial = 0.001;  // dimensionless
-//  persistentPollutionGeneratedByAgriculturalOutput.agriculturalMaterialsToxicityIndex = 1;  // pollution units per dollar
-//  persistentPollutionGeneratedByAgriculturalOutput.dependencies = ["agriculturalInputsPerHectare"];
-//  persistentPollutionGeneratedByAgriculturalOutput.updateFn = function() {
-//    return agriculturalInputsPerHectare.k * arableLand.k * persistentPollutionGeneratedByAgriculturalOutput.fractionOfInputsAsPersistentMaterial * persistentPollutionGeneratedByAgriculturalOutput.agriculturalMaterialsToxicityIndex;
-//  }
-//
-//  var persistentPollutionTransmissionDelayK = 20; // years, used in eqn 141
-//
+  //  var persistentPollutionGeneratedByAgriculturalOutput = new Aux("persistentPollutionGeneratedByAgriculturalOutput", 140);
+  //  persistentPollutionGeneratedByAgriculturalOutput.units = "pollution units per year";
+  //  persistentPollutionGeneratedByAgriculturalOutput.fractionOfInputsAsPersistentMaterial = 0.001;  // dimensionless
+  //  persistentPollutionGeneratedByAgriculturalOutput.agriculturalMaterialsToxicityIndex = 1;  // pollution units per dollar
+  //  persistentPollutionGeneratedByAgriculturalOutput.dependencies = ["agriculturalInputsPerHectare"];
+  //  persistentPollutionGeneratedByAgriculturalOutput.updateFn = function() {
+  //    return agriculturalInputsPerHectare.k * arableLand.k * persistentPollutionGeneratedByAgriculturalOutput.fractionOfInputsAsPersistentMaterial * persistentPollutionGeneratedByAgriculturalOutput.agriculturalMaterialsToxicityIndex;
+  //  }
+  val persistentPollutionGeneratedByAgriculturalOutput = Aux(
+    qName = "persistentPollutionGeneratedByAgriculturalOutput",
+    qNumber = 140,
+    units = "pollution units per year",
+    dependencies = Vector("agriculturalInputsPerHectare"),
+    updateFn = () => {agriculturalInputsPerHectare.k * arableLand.k * Constants.fractionOfInputsAsPersistentMaterial * Constants.agriculturalMaterialsToxicityIndex}
+  )
+  //
+  //  var persistentPollutionTransmissionDelayK = 20; // years, used in eqn 141
+  //
   //  var persistenPollutionAppearanceRate = new Delay3("persistenPollutionAppearanceRate", 141, persistentPollutionTransmissionDelayK);
   //  persistenPollutionAppearanceRate.units = "pollution units per year";
   //  persistenPollutionAppearanceRate.initFn = function() {return persistentPollutionGenerationRate; }
@@ -2375,13 +2382,15 @@ val indexOfPersistentPollution = Aux(
   )
 
   object Constants {
-    val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
-    val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
-    val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
     val lifeExpectancyNormal = 32 // used in eqn 19
-    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
     val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
+    val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
+    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
+    val fractionOfInputsAsPersistentMaterial = 0.001;  // dimensionless, used in eqn 141
+    val agriculturalMaterialsToxicityIndex = 1;  // pollution units per dollar, used in eqn 141
+    val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
+    val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
   }
 //
 //  // ENTRY POINT: called by body.onload
