@@ -570,15 +570,15 @@ class World3 {
       if(v <= iMin) data(0)
       else if(v >= iMax) data(data.length - 1)
       else {
-        for((i, j) <- (iMin to iMax by iDelta).zipWithIndex) {
+        for ((i, j) <- (iMin to iMax by iDelta).zipWithIndex) {
           if(i >= v) return interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)
         }
+        ???
       }
     }
 
     //  Table.prototype.reset = function() { return null; }
     def reset() = {}
-
 
     //  Table.prototype.update = function() {
     //    this.k = this.lookup(this.updateFn());
@@ -1024,13 +1024,13 @@ class World3 {
 //  }
 
 
-  val population45To64 =
+  val population45To64: Level =
     Level(
       "population45To64",
       10,
       1.9e8,
       units = "persons",
-      updateFn = () = { population45To64.j.get + dt * (maturationsPerYear44to45.j.get - deathsPerYear45To64.j.get - maturationsPerYear64to65.j.get) }
+      updateFn = () => { population45To64.j.get + dt * (maturationsPerYear44to45.j.get - deathsPerYear45To64.j.get - maturationsPerYear64to65.j.get) }
     )
 
 //  var deathsPerYear45To64 = new Rate("deathsPerYear45To64", 11);
@@ -2166,53 +2166,106 @@ class World3 {
 //  indexOfPersistentPollution.updateFn = function() {
 //    return persistentPollution.k / indexOfPersistentPollution.pollutionValueIn1970;
 //  }
-//
-//  var persistenPollutionAssimilationRate = new Rate("persistenPollutionAssimilationRate", 144);
-//  persistenPollutionAssimilationRate.units = "pollution units per year";
-//  persistenPollutionAssimilationRate.updateFn = function() {
-//    return persistentPollution.k / (assimilationHalfLife.k * 1.4);
-//  }
-//
-//  var assimilationHalfLifeMultiplier = new Table("assimilationHalfLifeMultiplier", 145, [1, 11, 21, 31, 41], 1, 1001, 250);
-//  assimilationHalfLifeMultiplier.units = "dimensionless";
-//  assimilationHalfLifeMultiplier.dependencies = ["indexOfPersistentPollution"];
-//  assimilationHalfLifeMultiplier.updateFn = function() {
-//    return indexOfPersistentPollution.k;
-//  }
-//
-//  var assimilationHalfLife = new Aux("assimilationHalfLife", 146);
-//  assimilationHalfLife.units = "years";
-//  assimilationHalfLife.valueIn1970 = 1.5; // years
-//  assimilationHalfLife.dependencies = ["assimilationHalfLifeMultiplier"];
-//  assimilationHalfLife.updateFn = function() {
-//    return assimilationHalfLifeMultiplier.k * assimilationHalfLife.valueIn1970;
-//  }
-//
-//  // SUPPLEMENTARY EQUATIONS
-//
-//  var fractionOfOutputInAgriculture = new Aux("fractionOfOutputInAgriculture", 147);
-//  fractionOfOutputInAgriculture.units = "dimensionless";
-//  fractionOfOutputInAgriculture.dependencies = ["food", "serviceOutput", "industrialOutput"]
-//  fractionOfOutputInAgriculture.updateFn = function() {
-//    return 0.22 * food.k / ((0.22 * food.k) + serviceOutput.k + industrialOutput.k);
-//  }
-//
-//  var fractionOfOutputInIndustry = new Aux("fractionOfOutputInIndustry", 148);
-//  fractionOfOutputInIndustry.units = "dimensionless";
-//  fractionOfOutputInIndustry.dependencies = ["food", "serviceOutput", "industrialOutput"]
-//  fractionOfOutputInIndustry.updateFn = function() {
-//    return industrialOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k);
-//  }
-//
-//  var fractionOfOutputInServices = new Aux("fractionOfOutputInServices", 149);
-//  fractionOfOutputInServices.units = "dimensionless";
-//  fractionOfOutputInServices.dependencies = ["food", "serviceOutput", "industrialOutput"]
-//  fractionOfOutputInServices.updateFn = function() {
-//    return serviceOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k);
-//  }
-//
-//
-//
+val indexOfPersistentPollution = Aux(
+  qName = "indexOfPersistentPollution",
+  qNumber = 143,
+  units = "dimensionless",
+  updateFn = () => {persistentPollution.k / Constants.pollutionValueIn1970}
+)
+  //  var persistenPollutionAssimilationRate = new Rate("persistenPollutionAssimilationRate", 144);
+  //  persistenPollutionAssimilationRate.units = "pollution units per year";
+  //  persistenPollutionAssimilationRate.updateFn = function() {
+  //    return persistentPollution.k / (assimilationHalfLife.k * 1.4);
+  //  }
+  val persistenPollutionAssimilationRate = Rate(
+    qName = "persistenPollutionAssimilationRate",
+    qNumber = 144,
+    units = "pollution units per year",
+    updateFn = () => {persistentPollution.k / (assimilationHalfLife.k * 1.4)}
+  )
+  //  var assimilationHalfLifeMultiplier = new Table("assimilationHalfLifeMultiplier", 145, [1, 11, 21, 31, 41], 1, 1001, 250);
+  //  assimilationHalfLifeMultiplier.units = "dimensionless";
+  //  assimilationHalfLifeMultiplier.dependencies = ["indexOfPersistentPollution"];
+  //  assimilationHalfLifeMultiplier.updateFn = function() {
+  //    return indexOfPersistentPollution.k;
+  //  }
+  val assimilationHalfLifeMultiplier = Table(
+    qName = "assimilationHalfLifeMultiplier",
+    qNumber = 145,
+    units = "years",
+    dependencies = Vector("indexOfPersistentPollution"),
+    updateFn = () => {indexOfPersistentPollution.k},
+    data = Vector(1, 11, 21, 31, 41),
+    iMin = 1,
+    iMax = 1001,
+    iDelta = 250
+  )
+  //  var assimilationHalfLife = new Aux("assimilationHalfLife", 146);
+  //  assimilationHalfLife.units = "years";
+  //  assimilationHalfLife.valueIn1970 = 1.5; // years
+  //  assimilationHalfLife.dependencies = ["assimilationHalfLifeMultiplier"];
+  //  assimilationHalfLife.updateFn = function() {
+  //    return assimilationHalfLifeMultiplier.k * assimilationHalfLife.valueIn1970;
+  //  }
+  val assimilationHalfLife = Aux(
+    qName = "assimilationHalfLife",
+    qNumber = 146,
+    units = "years",
+    dependencies = Vector("assimilationHalfLifeMultiplier"),
+    updateFn = () => {assimilationHalfLifeMultiplier.k * Constants.assimilationHalfLifeValueIn1970}
+  )
+
+  //
+  //  // SUPPLEMENTARY EQUATIONS
+  //
+  //  var fractionOfOutputInAgriculture = new Aux("fractionOfOutputInAgriculture", 147);
+  //  fractionOfOutputInAgriculture.units = "dimensionless";
+  //  fractionOfOutputInAgriculture.dependencies = ["food", "serviceOutput", "industrialOutput"]
+  //  fractionOfOutputInAgriculture.updateFn = function() {
+  //    return 0.22 * food.k / ((0.22 * food.k) + serviceOutput.k + industrialOutput.k);
+  //  }
+  val fractionOfOutputInAgriculture = Aux(
+      qName = "fractionOfOutputInAgriculture",
+      qNumber = 147,
+      units = "dimensionless",
+      dependencies = Vector("food", "serviceOutput", "industrialOutput"),
+      updateFn = () => {0.22 * food.k / ((0.22 * food.k) + serviceOutput.k + industrialOutput.k)}
+    )
+
+  //  var fractionOfOutputInIndustry = new Aux("fractionOfOutputInIndustry", 148);
+  //  fractionOfOutputInIndustry.units = "dimensionless";
+  //  fractionOfOutputInIndustry.dependencies = ["food", "serviceOutput", "industrialOutput"]
+  //  fractionOfOutputInIndustry.updateFn = function() {
+  //    return industrialOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k);
+  //  }
+  val fractionOfOutputInIndustry = Aux(
+    qName = "fractionOfOutputInIndustry",
+    qNumber = 148,
+    units = "dimensionless",
+    dependencies = Vector("food", "serviceOutput", "industrialOutput"),
+    updateFn = () => {industrialOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k)}
+  )
+
+  //  var fractionOfOutputInServices = new Aux("fractionOfOutputInServices", 149);
+  //  fractionOfOutputInServices.units = "dimensionless";
+  //  fractionOfOutputInServices.dependencies = ["food", "serviceOutput", "industrialOutput"]
+  //  fractionOfOutputInServices.updateFn = function() {
+  //    return serviceOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k);
+  //  }
+  val fractionOfOutputInServices = Aux(
+    qName = "fractionOfOutputInServices",
+    qNumber = 149,
+    units = "dimensionless",
+    dependencies = Vector("food", "serviceOutput", "industrialOutput"),
+    updateFn = () => {serviceOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k)}
+  )
+
+  object Constants {
+    val assimilationHalfLifeValueIn1970 = 1.5, // years, used in eqn 146
+    val industrialOutput.valueIn1970 = 7.9e11, // for eqns 106 and 107
+    val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
+
+  }
 //
 //  // ENTRY POINT: called by body.onload
 //
