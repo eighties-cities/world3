@@ -376,8 +376,8 @@ object Agriculture2 {
 
     LAND YIELD (LY#103)
    */
-  def land_yield() =
-    land_yield_multiplier_from_technology() * land_fertility() * land_yield_multiplier_from_capital() * land_yield_multiplier_from_air_pollution()
+  def land_yield(time: Double, policy_year: Double) =
+    land_yield_multiplier_from_technology(time, policy_year) * land_fertility() * land_yield_multiplier_from_capital() * land_yield_multiplier_from_air_pollution()
 
   /*
   @cache('step')
@@ -468,8 +468,8 @@ object Agriculture2 {
     Dmnl
     component
     Land yield multiplier from air pollution before air poll time (LYMAP1#106). */
-  def land_yield_multipler_from_air_pollution_1() =
-    land_yield_multipler_from_air_pollution_table_1(industrial_output() / ind_out_in_1970)
+  def land_yield_multipler_from_air_pollution_1(industrial_output: Double) =
+    land_yield_multipler_from_air_pollution_table_1(industrial_output / ind_out_in_1970)
 
 
 
@@ -498,8 +498,8 @@ object Agriculture2 {
 
     Land yield multiplier from air pollution after air poll time (LYMAP2#107).
    */
-  def land_yield_multiplier_from_air_pollution_2() =
-    land_yield_multipler_from_air_pollution_table_2(industrial_output() / ind_out_in_1970)
+  def land_yield_multiplier_from_air_pollution_2(industrial_output: Double) =
+    land_yield_multipler_from_air_pollution_table_2(industrial_output / ind_out_in_1970)
 
 
   /*
@@ -598,5 +598,453 @@ object Agriculture2 {
     Land yield from technology change rate (LYTDR#--) */
   def land_yield_technology_change_rate(time: Double, policy_year: Double, land_yield_technology: Double) =
     if(time >= policy_year) land_yield_technology * land_yield_technology_change_rate_multiplier() else 0.0
+
+}
+
+
+object Agriculture3 {
+
+
+  /*
+  @cache('step')
+
+    average life of land
+    year
+    component
+
+    Average life of land (ALL#112). */
+  def average_life_of_land() =
+    average_life_of_land_normal * land_life_multiplier_from_land_yield()
+
+
+  /*@cache('run')
+
+    average life of land normal
+    year
+    constant
+
+    AVERAGE LIFE OF LAND NORMAL (ALLN#112.1). */
+  val average_life_of_land_normal = 1000
+
+  /* @cache('step')
+
+
+      land erosion rate
+
+      hectare/year
+
+      component
+
+      Land erosion rate (LER#
+  */
+  def land_erosion_rate(arable_land: Double) = arable_land / average_life_of_land()
+
+
+  /*@cache('step')
+
+
+      land removal for urban and industrial use
+
+      hectare/year
+
+      component
+
+      LAND REMOVAL FOR URBAN-INDUSTRIAL USE (LRUI#119).   */
+  def land_removal_for_urban_and_industrial_use() =
+    math.max(0.0, urban_and_industrial_land_required() - urban_and_industrial_land()) / urban_and_industrial_land_development_time()
+
+
+
+  /*  @cache('step')
+
+    land life multiplier from land yield 1
+    Dmnl
+    component
+    Land life multiplier from yield before switch time (LLMY1#114). */
+  def land_life_multiplier_from_land_yield_1() =
+    land_life_multiplier_from_land_yield_table_1(land_yield() / inherent_land_fertility())
+
+
+  /*
+      land life multiplier from land yield table 1
+      Dmnl
+      lookup
+      Table relating yield to the effect on land life (LLMY1T#114.1). */
+  def land_life_multiplier_from_land_yield_table_1(x: Double) =
+    lookup(x, Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01))
+
+
+  /* @cache('step')
+
+    land life multiplier from land yield 2
+    Dmnl
+    component
+    Land life multiplier from yield after switch time (LLMY2#115). */
+  def land_life_multiplier_from_land_yield_2() =
+    land_life_multiplier_from_land_yield_table_2(land_yield() / inherent_land_fertility())
+
+
+  /*
+      land life multiplier from land yield table 2
+
+      Dmnl
+
+      lookup
+
+      Table relating yield to the effect on land life (LLMY2T#115.1).
+   */
+  def land_life_multiplier_from_land_yield_table_2(x: Double) =
+    lookup(x, Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Vector(1.2, 1, 0.63, 0.36, 0.29, 0.26, 0.24, 0.22, 0.21, 0.2))
+
+
+  /* @cache('step')
+
+     land life multiplier from land yield
+    Dmnl
+    component
+    LAND LIFE MULTIPLIER FROM YIELD (LLMY#113). */
+  def land_life_multiplier_from_land_yield(time: Double, land_life_policy_implementation_time: Double) =
+    if(time >= land_life_policy_implementation_time())
+    math.pow(0.95, ((time - land_life_policy_implementation_time()) / one_year())) *
+      land_life_multiplier_from_land_yield_1() + (1 - 0.95**(
+      (time - land_life_policy_implementation_time()) / one_year())) *
+      land_life_multiplier_from_land_yield_2(), land_life_multiplier_from_land_yield_1())
+
+
+  /*
+  @cache('run')
+   land life policy implementation time
+
+      year
+
+      constant
+
+      Land life multiplier from yield switch time (LLMYTM#--)
+   */
+  def land_life_policy_implementation_time() = 4000
+
+
+
+  /*
+  @cache('run')
+
+        urban and industrial land development time
+
+      year
+
+      constant
+
+      Urban industrial land development time (UILDT#119.1).
+   */
+  def urban_and_industrial_land_development_time() = 10
+
+
+  /* @cache('step')
+
+     urban and industrial land required per capita
+      hectare/Person
+      component
+      Urban industrial land per capita (UILPC#117). */
+  def urban_and_industrial_land_required_per_capita() =
+    urban_and_industrial_land_required_per_capita_table(industrial_output_per_capita() / gdp_pc_unit())
+
+  /*
+   urban and industrial land required per capita table
+
+  hectare/Person
+
+  lookup
+
+  Table relating industrial output to urban industrial land (UILPCT#117.1) */
+  def urban_and_industrial_land_required_per_capita_table(x: Double) =
+    lookup(x, Vector(0, 200, 400, 600, 800, 1000, 1200, 1400, 1600), Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09))
+
+
+  /*
+  @cache('step')
+   """
+      urban and industrial land required
+
+      hectare
+
+      component
+
+      Urban industrial land required (UILR#118).
+      """
+   */
+  def urban_and_industrial_land_required(population: Double) =
+    urban_and_industrial_land_required_per_capita() * population
+
+
+
+  /*
+  @cache('step')
+
+  """
+      Urban and Industrial Land
+
+      hectare
+
+      component
+
+      URBAN-INDUSTRIAL LAND (UIL#120).
+
+
+    integ_urban_and_industrial_land = functions.Integ(
+      lambda: (land_removal_for_urban_and_industrial_use()),
+    lambda: initial_urban_and_industrial_land())
+
+      """
+   */
+  def urban_and_industrial_land_dot() = land_removal_for_urban_and_industrial_use()
+
+
+  /* @cache('run')
+
+   initial urban and industrial land
+  hectare
+  constant
+  URBAN-INDUSTRIAL LAND INITIAL (UILI#120.1). */
+  def initial_urban_and_industrial_land = 8.2e+06
+    //integ_urban_and_industrial_land()
+
+}
+
+
+object Agriculture4 {
+
+
+  /*
+  @cache('step')
+
+    land fertility degredation
+
+    Veg eq kg/(year*year*hectare)
+
+    component
+
+    LAND FERTILITY DEGRADATION (LFD#123).
+
+   */
+  def land_fertility_degredation() =
+    land_fertility() * land_fertility_degredation_rate()
+
+
+  /*@cache('step')
+
+      land fertility degredation rate
+
+      1/year
+
+      component
+
+      Land fertility degradation rate (LFDR#122).
+      """
+   */
+  def land_fertility_degredation_rate() =
+    land_fertility_degredation_rate_table(persistent_pollution_index())
+
+
+
+  /*
+
+     land fertility degredation rate table
+
+      1/year
+
+      lookup
+
+      Table relating persistent pollution to land fertility degradation (LFDRT#122.1).
+      """
+ */
+  def land_fertility_degredation_rate_table(x: Double) =
+    lookup(x, Vector(0, 10, 20, 30), Vector(0, 0.1, 0.3, 0.5))
+
+
+
+  /* @cache('step')
+
+      Land Fertility
+      Veg eq kg/(year*hectare)
+      component
+      Land fertility (LFERT#121).
+
+  integ_land_fertility = functions.Integ(
+      lambda: (land_fertility_regeneration() - land_fertility_degredation()),
+    lambda: initial_land_fertility())
+   */
+  def land_fertility_dot() = land_fertility_regeneration() - land_fertility_degredation()
+
+  //return integ_land_fertility()
+
+
+  /* @cache('run')
+
+    initial land fertility
+    Veg eq kg/(year*hectare)
+    constant
+    LAND FERTILITY INITIAL (LFERTI#121.2) */
+  val initial_land_fertility = 600
+
+
+}
+
+object Agriculture5 {
+
+  /*@cache('run')
+   """
+    inherent land fertility
+
+    Veg eq kg/(year*hectare)
+
+    constant
+
+    INHERENT LAND FERTILITY (ILF#124.1).
+    """
+   */
+  def inherent_land_fertility = 600
+
+
+  /*
+  @cache('step')
+
+    """
+    land fertility regeneration
+
+    Veg eq kg/(year*year*hectare)
+
+    component
+
+    Land fertility regeneration (LFR#124).
+    """
+   */
+  def land_fertility_regeneration() = (inherent_land_fertility - land_fertility()) / land_fertility_regeneration_time()
+
+
+   /* @cache('step')
+
+     """
+      land fertility regeneration time
+
+      year
+
+      component
+
+      LAND FERTILITY REGENERATION TIME (LFRT#125)
+      """
+    */
+    def land_fertility_regeneration_time() =
+      land_fertility_regeneration_time_table(fraction_of_agricultural_inputs_for_land_maintenance())
+
+
+  /*
+     land fertility regeneration time table
+     year
+     lookup
+
+     Table relating inputs to land maintenance to land fertility regeneration (LFRTT#125.1) */
+   def land_fertility_regeneration_time_table(x: Double) =
+    lookup(x, Vector(0, 0.02, 0.04, 0.06, 0.08, 0.1), Vector(20, 13, 8, 4, 2, 2))
+
+
+}
+
+
+object Agriculture6 {
+
+
+
+
+  /*@cache('step')
+
+    """
+    Perceived Food Ratio
+
+    Dmnl
+
+    component
+
+    PERCEIVED FOOD RATIO (PFR#128).
+    """
+   */
+  def perceived_food_ratio() = smooth_food_ratio_food_shortage_perception_delay_food_ratio_1()
+
+/*
+  #Circular init!
+    smooth_food_ratio_food_shortage_perception_delay_food_ratio_1 = functions.Smooth(
+    lambda: food_ratio(), lambda: food_shortage_perception_delay(), lambda: 1.0,
+  lambda: 1)*/
+
+  /*
+  @cache('step')
+    """
+    food ratio
+
+    Dmnl
+
+    component
+
+    FOOD RATIO (FR#127)
+    """
+
+  */
+  def food_ratio() = food_per_capita() / subsistence_food_per_capita() //, 1)
+  val food_ratio_initial = 1
+
+
+  /* @cache('run')
+    """
+    food shortage perception delay
+
+    year
+
+    constant
+
+    FOOD SHORTAGE PERCEPTION DELAY (FSPD#128.2)
+    """
+   */
+  def food_shortage_perception_delay() = 2
+
+
+
+  /*@cache('step')
+
+    fraction of agricultural inputs for land maintenance
+    Dmnl
+    component
+    FRACTION OF INPUTS ALLOCATED TO LAND MAINTENANCE (FALM#126). */
+  def fraction_of_agricultural_inputs_for_land_maintenance() =
+    fraction_of_agricultural_inputs_for_land_maintenance_table(perceived_food_ratio())
+
+
+  /*
+  """
+      fraction of agricultural inputs for land maintenance table
+
+      Dmnl
+
+      lookup
+
+      Table relating the perceived food ratio to the fraction of input used for land maintenance (FALMT#126.1).
+      """
+   */
+  def fraction_of_agricultural_inputs_for_land_maintenance_table(x: Double) =
+    lookup(x, Vector(0, 1, 2, 3, 4), Vector(0, 0.04, 0.07, 0.09, 0.1))
+
+
+  /*@cache('run')
+    """
+      subsistence food per capita
+
+      Veg eq kg/(Person*year)
+
+      constant
+
+      Subsistence food per capita (SFPC#127.1).
+      """
+
+   */
+  val subsistence_food_per_capita = 230
+
 
 }
