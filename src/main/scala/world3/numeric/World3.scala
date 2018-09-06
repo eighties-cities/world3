@@ -266,13 +266,12 @@ class World3 {
     def apply(
       qName: String,
       qNumber: Int,
-      initFn: () => All,
-      initVal: Double,
-      units: String,
       delay: Double,
-      dimension: String = "dimensionless",
+      initFn: () => All,
+      initVal: Option[Double] = None,
+      units: String = "dimensionless",
       dependencies: Vector[String] = Vector()) = {
-      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dimension, dependencies)
+      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dependencies)
       auxArray += s
       qArray(qNumber) = s
       s
@@ -298,10 +297,9 @@ class World3 {
     val qName: String,
     val qNumber: Int,
     val initFn: () => All,
-    val initVal: Double,
+    val initVal: Option[Double],
     val units: String,
     val delay: Double,
-    val dimension: String,
     val dependencies: Vector[String]) extends All {
     val qType = "Smooth"
     var j: Option[Double] = None
@@ -312,7 +310,7 @@ class World3 {
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
     def init  = {
-      j = Some(initFn().k.getOrElse(initVal))
+      j = Some(initFn().k.orElse(initVal).get)
     }
     //  Smooth.prototype.reset = function() {
     //    this.firstCall = true;
@@ -339,8 +337,8 @@ class World3 {
     def update() = {
       val theInput = initFn()
       if (firstCall) {
-        j = Some(theInput.k.getOrElse(initVal))
-        k = Some(theInput.k.getOrElse(initVal))
+        j = Some(theInput.k.orElse(initVal).get)
+        k = Some(theInput.k.orElse(initVal).get)
         firstCall = false
         k.get
       } else {
@@ -1244,17 +1242,25 @@ class World3 {
     )
 
 
-//  var effectiveHealthServicesPerCapitaImpactDelay = 20; // years, used in eqn 22
-//
 //  var effectiveHealthServicesPerCapita = new Smooth("effectiveHealthServicesPerCapita", 22, effectiveHealthServicesPerCapitaImpactDelay);
 //  effectiveHealthServicesPerCapita.units = "dollars per person-year";
 //  effectiveHealthServicesPerCapita.dependencies = ["healthServicesAllocationsPerCapita"];
 //  effectiveHealthServicesPerCapita.initFn = function() {
 //    return healthServicesAllocationsPerCapita;
 //  }
-//
-//
-//  var lifetimeMultiplierFromHealthServices = new Aux("lifetimeMultiplierFromHealthServices", 23);
+  
+  val effectiveHealthServicesPerCapita =
+    Smooth(
+      "effectiveHealthServicesPerCapita",
+      22,
+      Constants.effectiveHealthServicesPerCapitaImpactDelay,
+      units = "dollars per person-year",
+      dependencies = Vector("healthServicesAllocationsPerCapita"),
+      initFn = () => { healthServicesAllocationsPerCapita }
+    )
+
+
+  //  var lifetimeMultiplierFromHealthServices = new Aux("lifetimeMultiplierFromHealthServices", 23);
 //  lifetimeMultiplierFromHealthServices.units = "dimensionless";
 //  lifetimeMultiplierFromHealthServices.dependencies = ["lifetimeMultiplierFromHealthServicesBefore", "lifetimeMultiplierFromHealthServicesAfter"];
 //  lifetimeMultiplierFromHealthServices.policyYear = 1940;
@@ -2360,6 +2366,7 @@ val indexOfPersistentPollution = Aux(
     val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
     val lifeExpectancyNormal = 32 // used in eqn 19
     val subsistenceFoodPerCapitaK = 230;  // kilograms per person-year, used in eqns 20, 127
+    var effectiveHealthServicesPerCapitaImpactDelay = 20; // years, used in eqn 22
   }
 //
 //  // ENTRY POINT: called by body.onload
