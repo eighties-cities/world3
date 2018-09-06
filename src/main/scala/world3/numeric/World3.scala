@@ -488,7 +488,7 @@ class World3 {
         k.get
       }
     }
-    
+
     //  Delay3.prototype.warmup = Delay3.prototype.init;
     def warmup() = init()
 
@@ -498,59 +498,101 @@ class World3 {
 
 
 
-//
-//
-//  // constructor for Table objects
-//
-//  var Table = function(qName, qNumber, data, iMin, iMax, iDelta) {
-//    this.qName = qName;
-//    this.qNumber = qNumber;
-//    this.qType = "Aux";
-//    this.units = "dimensionless";
-//    this.dependencies = [];
-//    this.data = data;
-//    this.iMin = iMin;
-//    this.iMax = iMax;
-//    this.iDelta = iDelta;
-//    this.indices = [];
-//    for (var i = iMin ; i <= iMax ; i += iDelta)
-//    this.indices.push(i);
-//    this.k = this.j = null;
-//    qArray[qNumber] = this;
-//    auxArray.push(this);
-//  }
-//
-//  Table.prototype.interpolate = function(lower, upper, fraction) {
-//    var lowerVal = this.data[lower];
-//    var upperVal = this.data[upper];
-//    return lowerVal + (fraction * (upperVal - lowerVal));
-//  }
-//
-//  Table.prototype.lookup = function(v) {
-//    if (v <= this.iMin) {
-//      return this.data[0];
-//    }
-//    else if (v >= this.iMax) {
-//      return this.data[this.data.length - 1];
-//    }
-//    else {
-//      for (var i = this.iMin, j = 0 ; i <= this.iMax ; i += this.iDelta, j++)
-//      if (i >= v) {
-//        return this.interpolate(j-1, j, (v - (i - this.iDelta)) / this.iDelta);
-//      }
-//    }
-//  }
-//
-//  Table.prototype.reset = function() { return null; }
-//
-//  Table.prototype.update = function() {
-//    this.k = this.lookup(this.updateFn());
-//    return this.k;
-//  }
-//
-//  Table.prototype.warmup = Table.prototype.update;
-//
-//  Table.prototype.tick = Level.prototype.tick;
+  //
+  //
+  //  // constructor for Table objects
+  //
+  //  var Table = function(qName, qNumber, data, iMin, iMax, iDelta) {
+  //    this.qName = qName;
+  //    this.qNumber = qNumber;
+  //    this.qType = "Aux";
+  //    this.units = "dimensionless";
+  //    this.dependencies = [];
+  //    this.data = data;
+  //    this.iMin = iMin;
+  //    this.iMax = iMax;
+  //    this.iDelta = iDelta;
+  //    this.indices = [];
+  //    for (var i = iMin ; i <= iMax ; i += iDelta)
+  //    this.indices.push(i);
+  //    this.k = this.j = null;
+  //    qArray[qNumber] = this;
+  //    auxArray.push(this);
+  //  }
+
+
+  object Table {
+
+    def apply(qName: String, qNumber: Int, data: Vector[Double], iMin: Double, iMax: Double, iDelta: Double, updateFn: () => Double, units: String = "dimensionless") = {
+      val t = new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units)
+      qArray(qNumber) = t
+      auxArray += t
+      t
+    }
+    
+  }
+
+  class Table(qName: String, qNumber: Int, data: Vector[Double], iMin: Double, iMax: Double, iDelta: Double, updateFn: () => Double, units: String) extends All {
+    var j: Option[Double] = None
+    var k: Option[Double] = None
+
+    //  Table.prototype.interpolate = function(lower, upper, fraction) {
+    //    var lowerVal = this.data[lower];
+    //    var upperVal = this.data[upper];
+    //    return lowerVal + (fraction * (upperVal - lowerVal));
+    //  }
+    def interpolate(lower: Int, upper: Int, fraction: Double) = {
+      val lowerVal = data(lower)
+      val upperVal = data(upper)
+      lowerVal + (fraction * (upperVal - lowerVal))
+    }
+
+
+    //  Table.prototype.lookup = function(v) {
+    //    if (v <= this.iMin) {
+    //      return this.data[0];
+    //    }
+    //    else if (v >= this.iMax) {
+    //      return this.data[this.data.length - 1];
+    //    }
+    //    else {
+    //      for (var i = this.iMin, j = 0 ; i <= this.iMax ; i += this.iDelta, j++)
+    //      if (i >= v) {
+    //        return this.interpolate(j-1, j, (v - (i - this.iDelta)) / this.iDelta);
+    //      }
+    //    }
+    //  }
+    def lookup(v: Double): Double = {
+      if(v <= iMin) data(0)
+      else if(v >= iMax) data(data.length - 1)
+      else {
+        for((i, j) <- (iMin to iMax by iDelta).zipWithIndex) {
+          if(i >= v) return interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)
+        }
+      }
+    }
+
+    //  Table.prototype.reset = function() { return null; }
+    def reset() = {}
+
+
+    //  Table.prototype.update = function() {
+    //    this.k = this.lookup(this.updateFn());
+    //    return this.k;
+    //  }
+    def update() = {
+      k = Some(lookup(updateFn()))
+    }
+
+    //  Table.prototype.warmup = Table.prototype.update;
+    def warmup() = update()
+
+    //  Table.prototype.tick = Level.prototype.tick;
+    def tick() = { j = k }
+
+  }
+
+
 //
 //
 //
