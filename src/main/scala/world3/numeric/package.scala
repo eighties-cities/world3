@@ -56,4 +56,7 @@ package object numeric {
     psf.value(x)
   }
 
+  def smooth( smooth_input: Double, smooth_time: Double, initial_value: Double, order: Int): Double = ???
+
+
 }
