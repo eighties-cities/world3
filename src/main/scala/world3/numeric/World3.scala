@@ -19,7 +19,7 @@ class World3 {
   //    else
   //      return b
   //  }
-  def function_clip[A, B](a: => A, b: => B, x: Double, y: Double) = if(x >= y) a else b
+  def clip(a: () => Double, b: () => Double, x: Double, y: Double) = if(x >= y) a else b
 
   // when we create an Equation with qNumber n, it becomes element qArray[n]
   // note that there is no qArray[0]
@@ -669,9 +669,10 @@ class World3 {
 //
 //  var startTime = 1900;
 //  var stopTime = 2100;
-//  var t = 1900;
+  var t = 1900
   val dt = 1.0
-//  var policyYear = 1975;                 // eqn 150.1
+
+  //  var policyYear = 1975;                 // eqn 150.1
 //  var plotInterval = Math.max(dt, 1);
 //
 //  var resetModel = function() {
@@ -1248,7 +1249,7 @@ class World3 {
 //  effectiveHealthServicesPerCapita.initFn = function() {
 //    return healthServicesAllocationsPerCapita;
 //  }
-  
+
   val effectiveHealthServicesPerCapita =
     Smooth(
       "effectiveHealthServicesPerCapita",
@@ -1270,28 +1271,77 @@ class World3 {
 //      t,
 //      lifetimeMultiplierFromHealthServices.policyYear);
 //  }
-//
+
+  val lifetimeMultiplierFromHealthServices =
+    Aux(
+      "lifetimeMultiplierFromHealthServices",
+      23,
+      units = "dimensionless",
+      dependencies = Vector("lifetimeMultiplierFromHealthServicesBefore", "lifetimeMultiplierFromHealthServicesAfter"),
+      updateFn = clip(() => lifetimeMultiplierFromHealthServicesAfter.k.get, () => lifetimeMultiplierFromHealthServicesBefore.k.get,  t, Constants.lifetimeMultiplierFromHealthServicesPolicyYear)
+    )
+
 //  var lifetimeMultiplierFromHealthServicesBefore = new Table("lifetimeMultiplierFromHealthServicesBefore", 24, [1, 1.1, 1.4, 1.6, 1.7, 1.8], 0, 100, 20);
 //  lifetimeMultiplierFromHealthServicesBefore.units = "dimensionless";
 //  lifetimeMultiplierFromHealthServicesBefore.dependencies = ["effectiveHealthServicesPerCapita"];
 //  lifetimeMultiplierFromHealthServicesBefore.updateFn = function() {
 //    return effectiveHealthServicesPerCapita.k;
 //  }
-//
-//  var lifetimeMultiplierFromHealthServicesAfter = new Table("lifetimeMultiplierFromHealthServicesAfter", 25, [1, 1.4, 1.6, 1.8, 1.95, 2.0], 0, 100, 20);
+
+  val lifetimeMultiplierFromHealthServicesBefore =
+    Table(
+      "lifetimeMultiplierFromHealthServicesBefore",
+      24,
+      Vector(1, 1.1, 1.4, 1.6, 1.7, 1.8),
+      0,
+      100,
+      20,
+      units = "dimensionless",
+      dependencies = Vector("effectiveHealthServicesPerCapita"),
+      updateFn = () => { effectiveHealthServicesPerCapita.k.get }
+    )
+
+
+  //  var lifetimeMultiplierFromHealthServicesAfter = new Table("lifetimeMultiplierFromHealthServicesAfter", 25, [1, 1.4, 1.6, 1.8, 1.95, 2.0], 0, 100, 20);
 //  lifetimeMultiplierFromHealthServicesAfter.units = "dimensionless";
 //  lifetimeMultiplierFromHealthServicesAfter.dependencies = ["effectiveHealthServicesPerCapita"];
 //  lifetimeMultiplierFromHealthServicesAfter.updateFn = function() {
 //    return effectiveHealthServicesPerCapita.k;
 //  }
-//
+
+  val lifetimeMultiplierFromHealthServicesAfter =
+    Table(
+      "lifetimeMultiplierFromHealthServicesAfter",
+      25,
+      Vector(1, 1.4, 1.6, 1.8, 1.95, 2.0),
+      0,
+      100,
+      20,
+      units = "dimensionless",
+      dependencies = Vector("effectiveHealthServicesPerCapita"),
+      updateFn = () => { effectiveHealthServicesPerCapita.k.get }
+    )
+
 //  var fractionOfPopulationUrban = new Table("fractionOfPopulationUrban", 26, [0, 0.2, 0.4, 0.5, 0.58, 0.65, 0.72, 0.78, 0.80], 0, 1.6e10, 2.0e9);
 //  fractionOfPopulationUrban.units = "dimensionless";
 //  fractionOfPopulationUrban.dependencies = ["population"];
 //  fractionOfPopulationUrban.updateFn = function() {
 //    return population.k;
 //  }
-//
+
+  val fractionOfPopulationUrban =
+    Table(
+      "fractionOfPopulationUrban",
+      26,
+      Vector(0, 0.2, 0.4, 0.5, 0.58, 0.65, 0.72, 0.78, 0.80),
+      0,
+      1.6e10,
+      2.0e9,
+      units = "dimensionless",
+      dependencies = Vector("population"),
+      updateFn = () => { population.k.get }
+    )
+
 //  var crowdingMultiplierFromIndustrialization = new Table("crowdingMultiplierFromIndustrialization", 27, [0.5, 0.05, -0.1, -0.08, -0.02, 0.05, 0.1, 0.15, 0.2],
 //  0, 1600, 200);
 //  crowdingMultiplierFromIndustrialization.units = "dimensionless";
@@ -1299,13 +1349,34 @@ class World3 {
 //  crowdingMultiplierFromIndustrialization.updateFn = function() {
 //    return industrialOutputPerCapita.k;
 //  }
-//
+
+  val crowdingMultiplierFromIndustrialization =
+    Table(
+      "crowdingMultiplierFromIndustrialization",
+      27,
+      Vector(0.5, 0.05, -0.1, -0.08, -0.02, 0.05, 0.1, 0.15, 0.2),
+      0,
+      1600,
+      200,
+      units = "dimensionless",
+      dependencies = Vector("industrialOutputPerCapita"),
+      updateFn => () => { industrialOutputPerCapita.k.get }
+    )
+
 //  var lifetimeMultiplierFromCrowding = new Aux("lifetimeMultiplierFromCrowding", 28);
 //  lifetimeMultiplierFromCrowding.units = "dimensionless";
 //  lifetimeMultiplierFromCrowding.updateFn = function() {
 //    return 1 - (crowdingMultiplierFromIndustrialization.k * fractionOfPopulationUrban.k);
 //  }
-//
+
+  val lifetimeMultiplierFromCrowding =
+    Aux(
+      "lifetimeMultiplierFromCrowding",
+      28,
+      units = "dimensionless",
+      updateFn = () => { 1 - (crowdingMultiplierFromIndustrialization.k.get * fractionOfPopulationUrban.k.get) }
+    )
+
 //  var lifetimeMultiplierFromPollution
 //  = new Table("lifetimeMultiplierFromPollution", 29, [1.0, 0.99, 0.97, 0.95, 0.90, 0.85, 0.75, 0.65, 0.55, 0.40, 0.20], 0, 100, 10);
 //  lifetimeMultiplierFromPollution.units = "dimensionless";
@@ -1313,10 +1384,21 @@ class World3 {
 //  lifetimeMultiplierFromPollution.updateFn = function() {
 //    return indexOfPersistentPollution.k;
 //  }
-//
-//
+
+  var lifetimeMultiplierFromPollution =
+    Table(
+      "lifetimeMultiplierFromPollution",
+      29,
+      Vector(1.0, 0.99, 0.97, 0.95, 0.90, 0.85, 0.75, 0.65, 0.55, 0.40, 0.20),
+      0,
+      100,
+      10,
+      units = "dimensionless",
+      dependencies = Vector("indexOfPersistentPollution"),
+      updateFn = () => { indexOfPersistentPollution.k.get }
+    )
+
 //  // The Birth-Rate Subsector
-//
 //
 //  var birthsPerYear = new Rate("birthsPerYear", 30);
 //  birthsPerYear.units = "persons per year";
@@ -1328,7 +1410,19 @@ class World3 {
 //    var before = totalFertility.k * population15To44.k * 0.5 / birthsPerYear.reproductiveLifetime;
 //    return clip(after, before, t, birthsPerYear.populationEquilibriumTime);
 //  }
-//
+
+    val birthsPerYear =
+      Rate(
+        "birthsPerYear",
+        30,
+        units = "persons per year",
+        updateFn = {
+          def after() = deathsPerYear.k.get
+          def before(): Double = totalFertility.k.get * population15To44.k.get * 0.5 / Constants.birthsPerYearReproductiveLifetime
+          clip(after, before, t, Constants.birthsPerYearPopulationEquilibriumTime)
+        }
+      )
+
 //  var crudeBirthRate = new Aux("crudeBirthRate", 31);
 //  crudeBirthRate.units = "births per 1000 person-years";
 //  crudeBirthRate.dependencies = ["population"]
@@ -1338,7 +1432,16 @@ class World3 {
 //  crudeBirthRate.updateFn = function() {
 //    return 1000 * birthsPerYear.j / population.k;
 //  }
-//
+
+  val crudeBirthRate =
+    Aux(
+      "crudeBirthRate",
+      31,
+      units = "births per 1000 person-years",
+      dependencies = Vector("population"),
+      updateFn = () => { 1000 * birthsPerYear.j.get / population.k.get }
+    )
+
 //  var totalFertility = new Aux("totalFertility", 32);
 //  totalFertility.units = "dimensionless";
 //  totalFertility.dependencies = ["maxTotalFertility", "fertilityControlEffectiveness", "desiredTotalFertility"]
@@ -1347,7 +1450,21 @@ class World3 {
 //      (maxTotalFertility.k * (1 - fertilityControlEffectiveness.k) +
 //        desiredTotalFertility.k * fertilityControlEffectiveness.k));
 //  }
-//
+
+  val totalFertility =
+    Aux(
+      "totalFertility",
+      32,
+      units = "dimensionless",
+      dependencies = Vector("maxTotalFertility", "fertilityControlEffectiveness", "desiredTotalFertility"),
+      updateFn = () => {
+        math.min(
+          maxTotalFertility.k.get,
+          (maxTotalFertility.k.get * (1 - fertilityControlEffectiveness.k.get) + desiredTotalFertility.k.get * fertilityControlEffectiveness.k.get)
+        )
+      }
+    )
+
 //  var maxTotalFertility = new Aux("maxTotalFertility", 33);
 //  maxTotalFertility.units = "dimensionless";
 //  maxTotalFertility.dependencies = ["fecundityMultiplier"]
@@ -1355,21 +1472,52 @@ class World3 {
 //  maxTotalFertility.updateFn = function() {
 //    return maxTotalFertility.normal * fecundityMultiplier.k;
 //  }
-//
+
+  val maxTotalFertility =
+    Aux(
+      "maxTotalFertility",
+      33,
+      units = "dimensionless",
+      dependencies = Vector("fecundityMultiplier"),
+      updateFn = () => { Constants.maxTotalFertilityNormal * fecundityMultiplier.k.get }
+    )
+
 //  var fecundityMultiplier = new Table("fecundityMultiplier", 34, [0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.05, 1.1], 0, 80, 10);
 //  fecundityMultiplier.units = "dimensionless";
 //  fecundityMultiplier.dependencies = ["lifeExpectancy"];
 //  fecundityMultiplier.updateFn = function() {
 //    return lifeExpectancy.k;
 //  }
-//
+
+  var fecundityMultiplier =
+    Table(
+      "fecundityMultiplier",
+      34,
+      Vector(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.05, 1.1),
+      0,
+      80,
+      10,
+      units = "dimensionless",
+      dependencies = Vector("lifeExpectancy"),
+      updateFn = () => { lifeExpectancy.k.get }
+    )
+
 //  var desiredTotalFertility = new Aux("desiredTotalFertility", 35);
 //  desiredTotalFertility.units = "dimensionless";
 //  desiredTotalFertility.dependencies = [ "desiredCompletedFamilySize", "compensatoryMultiplierFromPerceivedLifeExpectancy" ]
 //  desiredTotalFertility.updateFn = function() {
 //    return desiredCompletedFamilySize.k * compensatoryMultiplierFromPerceivedLifeExpectancy.k;
 //  }
-//
+
+  val desiredTotalFertility =
+    Aux(
+      "desiredTotalFertility",
+      35,
+      units = "dimensionless",
+      dependencies = Vector("desiredCompletedFamilySize", "compensatoryMultiplierFromPerceivedLifeExpectancy"),
+      updateFn = () => { desiredCompletedFamilySize.k.get * compensatoryMultiplierFromPerceivedLifeExpectancy.k.get }
+    )
+
 //  var compensatoryMultiplierFromPerceivedLifeExpectancy =
 //    new Table("compensatoryMultiplierFromPerceivedLifeExpectancy", 36, [3.0, 2.1, 1.6, 1.4, 1.3, 1.2, 1.1, 1.05, 1.0], 0, 80, 10);
 //  compensatoryMultiplierFromPerceivedLifeExpectancy.units = "dimensionless";
@@ -1377,15 +1525,36 @@ class World3 {
 //  compensatoryMultiplierFromPerceivedLifeExpectancy.updateFn = function() {
 //    return perceivedLifeExpectancy.k;
 //  }
-//
-//  var lifetimePerceptionDelayK = 20;      // years, used in eqn 37
-//
+
+  val compensatoryMultiplierFromPerceivedLifeExpectancy =
+    Table(
+      "compensatoryMultiplierFromPerceivedLifeExpectancy",
+      36,
+      Vector(3.0, 2.1, 1.6, 1.4, 1.3, 1.2, 1.1, 1.05, 1.0),
+      0,
+      80,
+      10,
+      units = "dimensionless",
+      dependencies = Vector("perceivedLifeExpectancy"),
+      updateFn = () => { perceivedLifeExpectancy.k.get }
+    )
+
+
 //  var perceivedLifeExpectancy = new Delay3("perceivedLifeExpectancy", 37, lifetimePerceptionDelayK);
 //  perceivedLifeExpectancy.units = "years";
 //  perceivedLifeExpectancy.dependencies = ["lifeExpectancy"];
 //  perceivedLifeExpectancy.initFn = function() { return lifeExpectancy; }
-//
-//
+
+  var perceivedLifeExpectancy =
+    Delay3(
+      "perceivedLifeExpectancy",
+      37,
+      Constants.lifetimePerceptionDelayK,
+      units = "years",
+      dependencies = Vector("lifeExpectancy"),
+      initFn = () => { lifeExpectancy }
+    )
+
 //  var desiredCompletedFamilySize = new Aux("desiredCompletedFamilySize", 38);
 //  desiredCompletedFamilySize.units = "dimensionless";            // not persons?
 //  desiredCompletedFamilySize.dependencies = ["familyResponseToSocialNorm", "socialFamilySizeNorm"];
@@ -1394,13 +1563,38 @@ class World3 {
 //  desiredCompletedFamilySize.updateFn = function() {
 //    return clip(2.0, (desiredCompletedFamilySize.normal * familyResponseToSocialNorm.k * socialFamilySizeNorm.k), t, zeroPopulationGrowthTargetYear);
 //  }
-//
+
+  var desiredCompletedFamilySize =
+    Aux(
+      "desiredCompletedFamilySize",
+      38,
+      units = "dimensionless",            // not persons?
+      dependencies = Vector("familyResponseToSocialNorm", "socialFamilySizeNorm"),
+      updateFn = clip(() => 2.0, () => { Constants.desiredCompletedFamilySizeNormal * familyResponseToSocialNorm.k.get * socialFamilySizeNorm.k.get }, t, Constants.zeroPopulationGrowthTargetYear)
+    )
+
+
+  //
 //  var socialFamilySizeNorm = new Table("socialFamilySizeNorm", 39, [1.25, 1, 0.9, 0.8, 0.75], 0, 800, 200);
 //  socialFamilySizeNorm.units = "dimensionless";
 //  socialFamilySizeNorm.dependencies = ["delayedIndustrialOutputPerCapita"];
 //  socialFamilySizeNorm.updateFn = function() {
 //    return delayedIndustrialOutputPerCapita.k;
 //  }
+
+  var socialFamilySizeNorm =
+    Table(
+      "socialFamilySizeNorm",
+      39,
+      Vector(1.25, 1, 0.9, 0.8, 0.75),
+      0,
+      800,
+      200,
+      units = "dimensionless",
+      dependencies = Vector("delayedIndustrialOutputPerCapita"),
+      updateFn = () => { delayedIndustrialOutputPerCapita.k.get }
+    )
+
 //
 //  var socialAdjustmentDelayK = 20;    // years, used in eqn 40
 //
@@ -2367,6 +2561,14 @@ val indexOfPersistentPollution = Aux(
     val lifeExpectancyNormal = 32 // used in eqn 19
     val subsistenceFoodPerCapitaK = 230;  // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20; // years, used in eqn 22
+    val lifetimeMultiplierFromHealthServicesPolicyYear = 1940
+    val birthsPerYearReproductiveLifetime = 30;          // years
+    val birthsPerYearPopulationEquilibriumTime = 4000;   // year
+    val maxTotalFertilityNormal = 12;   // dimensionless
+    val lifetimePerceptionDelayK = 20;      // years, used in eqn 37
+    val desiredCompletedFamilySizeNormal = 4.0
+    val zeroPopulationGrowthTargetYear = 4000;
+
   }
 //
 //  // ENTRY POINT: called by body.onload
