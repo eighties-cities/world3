@@ -2524,6 +2524,12 @@ val foodPerCapita = Aux(
 //  landYieldMultiplierFromAirPollution.updateFn = function() {
 //    return clip(landYieldMultiplierFromAirPollutionAfter.k, landYieldMultiplierFromAirPollutionBefore.k, t, policyYear);
 //  }
+  var landYieldMultiplierFromAirPollution = Aux(
+    "landYieldMultiplierFromAirPollution", 105,
+    units = "dimensionless",
+    dependencies = Vector("landYieldMultiplierFromAirPollutionBefore", "landYieldMultiplierFromAirPollutionAfter"),
+    updateFn = clip(()=>landYieldMultiplierFromAirPollutionAfter.k.get, ()=>landYieldMultiplierFromAirPollutionBefore.k.get, t, policyYear)
+  )
 //
 //  var landYieldMultiplierFromAirPollutionBefore = new Table("landYieldMultiplierFromAirPollutionBefore", 106, [1, 1, 0.7, 0.4], 0, 30, 10)
 //  landYieldMultiplierFromAirPollutionBefore.units = "dimensionless";
@@ -2531,14 +2537,24 @@ val foodPerCapita = Aux(
 //  landYieldMultiplierFromAirPollutionBefore.updateFn = function() {
 //    return industrialOutput.k / industrialOutput.valueIn1970;
 //  }
-//
+  var landYieldMultiplierFromAirPollutionBefore = Table("landYieldMultiplierFromAirPollutionBefore", 106,
+    data = Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
+    units = "dimensionless",
+    dependencies = Vector("industrialOutput"),
+    updateFn = () => {industrialOutput.k.get / Constants.industrialOutputValueIn1970}
+  )
 //  var landYieldMultiplierFromAirPollutionAfter = new Table("landYieldMultiplierFromAirPollutionAfter", 107, [1, 1, 0.7, 0.4], 0, 30, 10)
 //  landYieldMultiplierFromAirPollutionAfter.units = "dimensionless";
 //  landYieldMultiplierFromAirPollutionAfter.dependencies = ["industrialOutput"];
 //  landYieldMultiplierFromAirPollutionAfter.updateFn = function() {
 //    return industrialOutput.k / industrialOutput.valueIn1970;
 //  }
-//
+  val landYieldMultiplierFromAirPollutionAfter = Table("landYieldMultiplierFromAirPollutionAfter", 107,
+    Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
+    units = "dimensionless",
+    dependencies = Vector("industrialOutput"),
+    updateFn = () => {industrialOutput.k.get / Constants.industrialCapitalOutputRatioAfter}
+  )
 //
 //  // Loops 1 and 2: The Investment Allocation Decision
 //
@@ -2548,7 +2564,12 @@ val foodPerCapita = Aux(
 //  fractionOfInputsAllocatedToLandDevelopment.updateFn = function() {
 //    return marginalProductivityOfLandDevelopment.k / marginalProductivityOfAgriculturalInputs.k;
 //  }
-//
+  val fractionOfInputsAllocatedToLandDevelopment = Table(
+    "fractionOfInputsAllocatedToLandDevelopment", 108,
+  data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
+  units = "dimensionless", dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
+  updateFn = () => {marginalProductivityOfLandDevelopment.k.get / marginalProductivityOfAgriculturalInputs.k.get}
+  )
 //  var marginalProductivityOfLandDevelopment = new Aux("marginalProductivityOfLandDevelopment", 109);
 //  marginalProductivityOfLandDevelopment.units = "kilograms per dollar";
 //  marginalProductivityOfLandDevelopment.socialDiscount = 0.07;
@@ -2556,6 +2577,11 @@ val foodPerCapita = Aux(
 //  marginalProductivityOfLandDevelopment.updateFn = function() {
 //    return landYield.k / (developmentCostPerHectare.k * marginalProductivityOfLandDevelopment.socialDiscount);
 //  }
+  val marginalProductivityOfLandDevelopment = Aux("marginalProductivityOfLandDevelopment", 109,
+  units = "kilograms per dollar",
+  dependencies = Vector("landYield", "developmentCostPerHectare"),
+  updateFn = () => { landYield.k.get / (developmentCostPerHectare.k.get * Constants.socialDiscount)}
+  )
 //
 //  var marginalProductivityOfAgriculturalInputs = new Aux("marginalProductivityOfAgriculturalInputs", 110);
 //  marginalProductivityOfAgriculturalInputs.units = "kilograms per dollar";
@@ -2563,14 +2589,24 @@ val foodPerCapita = Aux(
 //  marginalProductivityOfAgriculturalInputs.updateFn = function() {
 //    return averageLifetimeOfAgriculturalInputsK * landYield.k * (marginalLandYieldMultiplierFromCapital.k / landYieldMultiplierFromCapital.k);
 //  }
-//
+  val marginalProductivityOfAgriculturalInputs = Aux("marginalProductivityOfAgriculturalInputs", 110,
+    units = "kilograms per dollar",
+    dependencies = Vector("averageLifetimeOfAgriculturalInputs", "landYield", "marginalLandYieldMultiplierFromCapital", "landYieldMultiplierFromCapital"),
+    updateFn = () => {averageLifetimeOfAgriculturalInputsK * landYield.k.get * (marginalLandYieldMultiplierFromCapital.k.get / landYieldMultiplierFromCapital.k.get)}
+  )
 //  var marginalLandYieldMultiplierFromCapital = new Table("marginalLandYieldMultiplierFromCapital", 111, [0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005], 0, 600, 40)
 //  marginalLandYieldMultiplierFromCapital.units = "hectares per dollar";
 //  marginalLandYieldMultiplierFromCapital.dependencies = ["agriculturalInputsPerHectare"];
 //  marginalLandYieldMultiplierFromCapital.updateFn = function() {
 //    return agriculturalInputsPerHectare.k;
 //  }
-//
+  val marginalLandYieldMultiplierFromCapital = Table(
+  "marginalLandYieldMultiplierFromCapital", 111,
+  data = Vector(0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005),
+  iMin = 0, iMax = 600, iDelta = 40, units = "hectares per dollar",
+  dependencies = Vector("agriculturalInputsPerHectare"),
+  updateFn = () => {agriculturalInputsPerHectare.k.get}
+  )
 //
 //  // Loop 3: Land Erosion and Urban-Industrial Use
 //
@@ -3128,6 +3164,8 @@ val indexOfPersistentPollution = Aux(
     val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
+    val averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
+    val socialDiscount = 0.07 // eqn 109
     val averageLifeOfLandNormal = 6000 // years, used in eqn 112
     val inherentLandFertilityK = 600 // kilograms per hectare-year, used in eqns 114, 115 and 124
     val developmentTime = 10;   // years, used in eqn 119
