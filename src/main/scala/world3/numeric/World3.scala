@@ -39,12 +39,12 @@ class World3 {
 
   // Equations with qClass "Rate" are pushed onto this Array
   var rateArray = ListBuffer[Rate]()
-  
+
 //
 //
 //  // Equations with qClass "Aux" are pushed onto this Array
 //
-//  var auxArray = new Array();
+  var auxArray = ListBuffer[Aux]()
 //
 //
 //  // construtor for Level objects
@@ -83,7 +83,7 @@ class World3 {
 
   }
 
-  class Level(qName: String, qNumber: Int, initVal: Double, updateFn: () => Double, units: String) extends All {
+  class Level(val qName: String, val qNumber: Int, val initVal: Double, updateFn: () => Double, val units: String) extends All {
     val qType = "Level"
     var j = initVal
     var k = initVal
@@ -166,10 +166,13 @@ class World3 {
   object Rate {
     def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless") = {
       val r = new Rate(qName, qNumber, units, updateFn)
+      rateArray += r
+      qArray(qNumber) = r
+      r
     }
   }
 
-  class Rate(qName: String, qNumber: Int, units: String, updateFn: () => Double) {
+  class Rate(val qName: String, val qNumber: Int, val units: String, val updateFn: () => Double) {
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
@@ -231,19 +234,62 @@ class World3 {
 //    auxArray.push(this);
 //  }
 //
-//  Aux.prototype.reset = function() {
-//    this.j = this.k = null;
-//    this.data = [];
-//  }
-//
-//  Aux.prototype.warmup = Level.prototype.warmup;
-//
-//  Aux.prototype.update = Level.prototype.update;
-//
-//  Aux.prototype.tick = Level.prototype.tick;
-//
-//  Aux.prototype.plot = Level.prototype.plot;
-//
+
+  //  Aux.prototype.reset = function() {
+  //    this.j = this.k = null;
+  //    this.data = [];
+  //  }
+  //
+  //  Aux.prototype.warmup = Level.prototype.warmup;
+  //
+  //  Aux.prototype.update = Level.prototype.update;
+  //
+  //  Aux.prototype.tick = Level.prototype.tick;
+  //
+  //  Aux.prototype.plot = Level.prototype.plot;
+  //
+
+  object Aux {
+    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless") = {
+      val a = new Aux(qName, qNumber, updateFn, units)
+      auxArray += a
+      qArray(qNumber) = a
+      a
+    }
+  }
+
+
+  class Aux(val qName: String, val qNumber: Int, updateFn: () => Double, val units: String) extends All {
+    val qType = "Aux"
+    var j: Option[Double] = None
+    var k: Option[Double] = None
+
+    def reset() = {
+      j = None
+      k = None
+    }
+
+    //  Rate.prototype.warmup = Level.prototype.warmup;
+    def warmup() = {
+      k = Some(updateFn())
+    }
+
+    //  Rate.prototype.update = Level.prototype.update;
+    def update() = {
+      k = Some(updateFn())
+      k.get
+    }
+
+    //  Rate.prototype.tick = Level.prototype.tick;
+    def tick() = {
+      j = k
+    }
+
+  }
+
+  
+
+
 //
 //
 //
