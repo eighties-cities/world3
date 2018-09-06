@@ -374,7 +374,7 @@ class World3 {
   object Delay3 {
     case class JK(j: Option[Double], k: Option[Double])
 
-    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String]) = {
+    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val d = new Delay3(qName, qNumber, initFn, units, delay, dependencies)
       qArray(qNumber) = d
       auxArray += d
@@ -2142,70 +2142,119 @@ class World3 {
 //      }
 //    }
 //  */
-//
-//
-//  // NONRENEWABLE RESOURCE SECTOR
-//
-//
-//  var nonrenewableResourcesInitialK = 1.0e12;  // resource units, used in eqns 129 and 133
-//
-//  var nonrenewableResources = new Level("nonrenewableResources", 129, nonrenewableResourcesInitialK);
-//  nonrenewableResources.units = "resource units";
-//  nonrenewableResources.updateFn = function() {
-//    return nonrenewableResources.j + dt * (-nonrenewableResourceUsageRate.j);
-//  }
-//
-//  var nonrenewableResourceUsageRate = new Rate("nonrenewableResourceUsageRate", 130);
-//  nonrenewableResourceUsageRate.units = "resource units per year";
-//  nonrenewableResourceUsageRate.updateFn = function() {
-//    return population.k * perCapitaResourceUsageMultiplier.k * nonrenewableResourceUsageFactor.k;
-//  }
-//
-//  var nonrenewableResourceUsageFactor = new Aux("nonrenewableResourceUsageFactor", 131);
-//  nonrenewableResourceUsageFactor.units = "dimensionless";
-//  nonrenewableResourceUsageFactor.before = 1;
-//  nonrenewableResourceUsageFactor.after = 1;
-//  nonrenewableResourceUsageFactor.updateFn = function() {
-//    return clip(this.after, this.before, t, policyYear);
-//  }
-//
-//  var perCapitaResourceUsageMultiplier = new Table("perCapitaResourceUsageMultiplier", 132, [0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7], 0, 1600, 200);
-//  perCapitaResourceUsageMultiplier.units = "resource units per person-year";
-//  perCapitaResourceUsageMultiplier.dependencies = ["industrialOutputPerCapita"];
-//  perCapitaResourceUsageMultiplier.updateFn = function() {
-//    return industrialOutputPerCapita.k;
-//  }
-//
-//  var nonrenewableResourceFractionRemaining = new Aux("nonrenewableResourceFractionRemaining", 133);
-//  nonrenewableResourceFractionRemaining.units = "dimensionless";
-//  nonrenewableResourceFractionRemaining.plotColor = "#b0875e";
-//  nonrenewableResourceFractionRemaining.plotMin = 0.0;
-//  nonrenewableResourceFractionRemaining.plotMax = 1.0;
-//  nonrenewableResourceFractionRemaining.updateFn = function() {
-//    return nonrenewableResources.k / nonrenewableResourcesInitialK;
-//  }
-//
-//  var fractionOfCapitalAllocatedToObtainingResources = new Aux("fractionOfCapitalAllocatedToObtainingResources", 134);
-//  fractionOfCapitalAllocatedToObtainingResources.units = "dimensionless";
-//  fractionOfCapitalAllocatedToObtainingResources.dependencies = ["fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"];
-//  fractionOfCapitalAllocatedToObtainingResources.updateFn = function() {
-//    return clip(fractionOfCapitalAllocatedToObtainingResourcesAfter.k, fractionOfCapitalAllocatedToObtainingResourcesBefore.k, t, policyYear);
-//  }
-//
-//  var fractionOfCapitalAllocatedToObtainingResourcesBefore = new Table("fractionOfCapitalAllocatedToObtainingResourcesBefore", 135, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
-//  fractionOfCapitalAllocatedToObtainingResourcesBefore.units = "dimensionless";
-//  fractionOfCapitalAllocatedToObtainingResourcesBefore.dependencies = ["nonrenewableResourceFractionRemaining"];
-//  fractionOfCapitalAllocatedToObtainingResourcesBefore.updateFn = function() {
-//    return nonrenewableResourceFractionRemaining.k;
-//  }
-//
-//  var fractionOfCapitalAllocatedToObtainingResourcesAfter = new Table("fractionOfCapitalAllocatedToObtainingResourcesAfter", 136, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
-//  fractionOfCapitalAllocatedToObtainingResourcesAfter.units = "dimensionless";
-//  fractionOfCapitalAllocatedToObtainingResourcesAfter.dependencies = ["nonrenewableResourceFractionRemaining"];
-//  fractionOfCapitalAllocatedToObtainingResourcesAfter.updateFn = function() {
-//    return nonrenewableResourceFractionRemaining.k;
-//  }
+  //
+  //
+  //  // NONRENEWABLE RESOURCE SECTOR
+  //
+  //
+  //  var nonrenewableResourcesInitialK = 1.0e12;  // resource units, used in eqns 129 and 133
+  //
+  //  var nonrenewableResources = new Level("nonrenewableResources", 129, nonrenewableResourcesInitialK);
+  //  nonrenewableResources.units = "resource units";
+  //  nonrenewableResources.updateFn = function() {
+  //    return nonrenewableResources.j + dt * (-nonrenewableResourceUsageRate.j);
+  //  }
+  val nonrenewableResources = Level(
+    qName = "nonrenewableResources",
+    qNumber = 129,
+    initVal = Constants.nonrenewableResourcesInitialK,
+    units = "resource units",
+    updateFn = ()=> {nonrenewableResources.j + dt * (-nonrenewableResourceUsageRate.j)}
+  )
+  //  var nonrenewableResourceUsageRate = new Rate("nonrenewableResourceUsageRate", 130);
+  //  nonrenewableResourceUsageRate.units = "resource units per year";
+  //  nonrenewableResourceUsageRate.updateFn = function() {
+  //    return population.k * perCapitaResourceUsageMultiplier.k * nonrenewableResourceUsageFactor.k;
+  //  }
+  val nonrenewableResourceUsageRate = Rate(
+    qName = "nonrenewableResourceUsageRate",
+    qNumber = 130,
+    units = "resource units per year",
+    updateFn = () => {population.k.get * perCapitaResourceUsageMultiplier.k.get * nonrenewableResourceUsageFactor.k.get}
+  )
+  //  var nonrenewableResourceUsageFactor = new Aux("nonrenewableResourceUsageFactor", 131);
+  //  nonrenewableResourceUsageFactor.units = "dimensionless";
+  //  nonrenewableResourceUsageFactor.before = 1;
+  //  nonrenewableResourceUsageFactor.after = 1;
+  //  nonrenewableResourceUsageFactor.updateFn = function() {
+  //    return clip(this.after, this.before, t, policyYear);
+  //  }
+  val nonrenewableResourceUsageFactor = Aux(
+    qName = "nonrenewableResourceUsageFactor",qNumber = 131,
+    units = "dimensionless",
+    updateFn = () => {function_clip(1, 1, t, policyYear)}
+  )
+  //  var perCapitaResourceUsageMultiplier = new Table("perCapitaResourceUsageMultiplier", 132, [0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7], 0, 1600, 200);
+  //  perCapitaResourceUsageMultiplier.units = "resource units per person-year";
+  //  perCapitaResourceUsageMultiplier.dependencies = ["industrialOutputPerCapita"];
+  //  perCapitaResourceUsageMultiplier.updateFn = function() {
+  //    return industrialOutputPerCapita.k;
+  //  }
+  val perCapitaResourceUsageMultiplier = Table(
+    qName = "perCapitaResourceUsageMultiplier",qNumber = 132,
+    data = Vector(0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7), iMin = 0, iMax = 1600, iDelta = 200,
+    units = "resource units per person-year",
+    dependencies = Vector("industrialOutputPerCapita"),
+    updateFn = () => {industrialOutputPerCapita.k.get}
+  )
+  //  var nonrenewableResourceFractionRemaining = new Aux("nonrenewableResourceFractionRemaining", 133);
+  //  nonrenewableResourceFractionRemaining.units = "dimensionless";
+  //  nonrenewableResourceFractionRemaining.plotColor = "#b0875e";
+  //  nonrenewableResourceFractionRemaining.plotMin = 0.0;
+  //  nonrenewableResourceFractionRemaining.plotMax = 1.0;
+  //  nonrenewableResourceFractionRemaining.updateFn = function() {
+  //    return nonrenewableResources.k / nonrenewableResourcesInitialK;
+  //  }
+  val nonrenewableResourceFractionRemaining = Aux(
+    qName = "nonrenewableResourceFractionRemaining",
+    qNumber = 133,
+    unit = "dimensionless",
+    updateFn = () => {nonrenewableResources.k.get / nonrenewableResourcesInitialK}
+  )
+  //  var fractionOfCapitalAllocatedToObtainingResources = new Aux("fractionOfCapitalAllocatedToObtainingResources", 134);
+  //  fractionOfCapitalAllocatedToObtainingResources.units = "dimensionless";
+  //  fractionOfCapitalAllocatedToObtainingResources.dependencies = ["fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"];
+  //  fractionOfCapitalAllocatedToObtainingResources.updateFn = function() {
+  //    return clip(fractionOfCapitalAllocatedToObtainingResourcesAfter.k, fractionOfCapitalAllocatedToObtainingResourcesBefore.k, t, policyYear);
+  //  }
+  val fractionOfCapitalAllocatedToObtainingResources = Aux(
+    qName = "fractionOfCapitalAllocatedToObtainingResources",
+    qNumber = 134,
+    unit = "dimensionless",
+    dependencies = Vector("fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"),
+    updateFn = () => {function_clip(fractionOfCapitalAllocatedToObtainingResourcesAfter.k.get, fractionOfCapitalAllocatedToObtainingResourcesBefore.k.get, t, policyYear)}
+  )
+  //  var fractionOfCapitalAllocatedToObtainingResourcesBefore = new Table("fractionOfCapitalAllocatedToObtainingResourcesBefore", 135, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
+  //  fractionOfCapitalAllocatedToObtainingResourcesBefore.units = "dimensionless";
+  //  fractionOfCapitalAllocatedToObtainingResourcesBefore.dependencies = ["nonrenewableResourceFractionRemaining"];
+  //  fractionOfCapitalAllocatedToObtainingResourcesBefore.updateFn = function() {
+  //    return nonrenewableResourceFractionRemaining.k;
+  //  }
+  val fractionOfCapitalAllocatedToObtainingResourcesBefore = Table(
+    qName = "fractionOfCapitalAllocatedToObtainingResourcesBefore",
+    qNumber = 135,
+    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
+    iMin = 0, iMax = 1, iDelta = 0.1,
+    units = "dimensionless",
+    dependencies = Vector("nonrenewableResourceFractionRemaining"),
+    updateFn = () => {nonrenewableResourceFractionRemaining.k.get}
+  )
 
+  //  var fractionOfCapitalAllocatedToObtainingResourcesAfter = new Table("fractionOfCapitalAllocatedToObtainingResourcesAfter", 136, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
+  //  fractionOfCapitalAllocatedToObtainingResourcesAfter.units = "dimensionless";
+  //  fractionOfCapitalAllocatedToObtainingResourcesAfter.dependencies = ["nonrenewableResourceFractionRemaining"];
+  //  fractionOfCapitalAllocatedToObtainingResourcesAfter.updateFn = function() {
+  //    return nonrenewableResourceFractionRemaining.k;
+  //  }
+  val fractionOfCapitalAllocatedToObtainingResourcesAfter = Table(
+    qName = "fractionOfCapitalAllocatedToObtainingResourcesAfter",
+    qNumber = 136,
+    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
+    iMin = 0, iMax = 1, iDelta = 0.1,
+    units = "dimensionless",
+    dependencies = Vector("nonrenewableResourceFractionRemaining"),
+    updateFn = () => {nonrenewableResourceFractionRemaining.k.get}
+  )
   //
   //
   //  // PERSISTENT POLLUTION SECTOR
@@ -2220,7 +2269,7 @@ class World3 {
     qName = "persistentPollutionGenerationRate",
     qNumber = 137,
     units = "pollution units per year",
-    updateFn = () => {(persistentPollutionGeneratedByIndustrialOutput.k + persistentPollutionGeneratedByAgriculturalOutput.k) * persistentPollutionGenerationFactor.k}
+    updateFn = () => {(persistentPollutionGeneratedByIndustrialOutput.k.get + persistentPollutionGeneratedByAgriculturalOutput.k.get) * persistentPollutionGenerationFactor.k.get}
   )
   //  var persistentPollutionGenerationFactor = new Aux("persistentPollutionGenerationFactor", 138);
   //  persistentPollutionGenerationFactor.units = "dimensionless";
@@ -2250,7 +2299,7 @@ class World3 {
     qNumber = 139,
     units = "pollution units per year",
     dependencies = Vector("perCapitaResourceUsageMultiplier", "population"),
-    updateFn = () => {perCapitaResourceUsageMultiplier.k * population.k * Constants.fractionOfResourcesAsPersistentMaterial * Constants.industrialMaterialsEmissionFactor * Constants.industrialMaterialsToxicityIndex}
+    updateFn = () => {perCapitaResourceUsageMultiplier.k.get * population.k.get * Constants.fractionOfResourcesAsPersistentMaterial * Constants.industrialMaterialsEmissionFactor * Constants.industrialMaterialsToxicityIndex}
   )
   //  var persistentPollutionGeneratedByAgriculturalOutput = new Aux("persistentPollutionGeneratedByAgriculturalOutput", 140);
   //  persistentPollutionGeneratedByAgriculturalOutput.units = "pollution units per year";
@@ -2265,7 +2314,7 @@ class World3 {
     qNumber = 140,
     units = "pollution units per year",
     dependencies = Vector("agriculturalInputsPerHectare"),
-    updateFn = () => {agriculturalInputsPerHectare.k * arableLand.k * Constants.fractionOfInputsAsPersistentMaterial * Constants.agriculturalMaterialsToxicityIndex}
+    updateFn = () => {agriculturalInputsPerHectare.k.get * arableLand.k.get * Constants.fractionOfInputsAsPersistentMaterial * Constants.agriculturalMaterialsToxicityIndex}
   )
   //
   //  var persistentPollutionTransmissionDelayK = 20; // years, used in eqn 141
@@ -2280,7 +2329,7 @@ class World3 {
   val persistenPollutionAppearanceRate = Delay3(
     qName = "persistenPollutionAppearanceRate",
     qNumber = 141,
-    delay = persistentPollutionTransmissionDelayK,
+    delay = Constants.persistentPollutionTransmissionDelayK,
     units = "pollution units per year",
     initFn = () => {persistentPollutionGenerationRate}
   )
@@ -2289,7 +2338,7 @@ class World3 {
   //  persistentPollution.updateFn = function() {
   //    return persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j);
   //  }
-  val persistentPollution = Level(
+  val persistentPollution: Level = Level(
     qName = "persistentPollution",
     qNumber = 142,
     initVal = 2.5e7,
@@ -2368,7 +2417,7 @@ val indexOfPersistentPollution = Aux(
       qNumber = 147,
       units = "dimensionless",
       dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-      updateFn = () => {0.22 * food.k / ((0.22 * food.k) + serviceOutput.k + industrialOutput.k)}
+      updateFn = () => {0.22 * food.k.get / ((0.22 * food.k.get) + serviceOutput.k.get + industrialOutput.k.get)}
     )
 
   //  var fractionOfOutputInIndustry = new Aux("fractionOfOutputInIndustry", 148);
@@ -2382,7 +2431,7 @@ val indexOfPersistentPollution = Aux(
     qNumber = 148,
     units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-    updateFn = () => {industrialOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k)}
+    updateFn = () => {industrialOutput.k.get / (0.22 * food.k.get + serviceOutput.k.get + industrialOutput.k.get)}
   )
 
   //  var fractionOfOutputInServices = new Aux("fractionOfOutputInServices", 149);
@@ -2396,7 +2445,7 @@ val indexOfPersistentPollution = Aux(
     qNumber = 149,
     units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-    updateFn = () => {serviceOutput.k / (0.22 * food.k + serviceOutput.k + industrialOutput.k)}
+    updateFn = () => {serviceOutput.k.get / (0.22 * food.k.get + serviceOutput.k.get + industrialOutput.k.get)}
   )
 
   object Constants {
@@ -2404,6 +2453,7 @@ val indexOfPersistentPollution = Aux(
     val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
     var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
+    val nonrenewableResourcesInitialK = 1.0e12 // resource units, used in eqns 129 and 133
     val fractionOfResourcesAsPersistentMaterial = 0.02 // dimensionless, used in eqn 139
     val industrialMaterialsEmissionFactor = 0.1 // dimensionless, used in eqn 139
     val industrialMaterialsToxicityIndex = 10 // pollution units per resource unit, used in eqn 139
