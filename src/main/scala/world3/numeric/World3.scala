@@ -29,12 +29,9 @@ class World3 {
   def function_clip[A, B](a: => A, b: => B, x: Double, y: Double) =
     if(x  >= y) a else b
 
-
-
   // when we create an Equation with qNumber n, it becomes element qArray[n]
   // note that there is no qArray[0]
-
-   var qArray = Array.ofDim[All](1000)
+  var qArray = Array.ofDim[All](1000)
 
   // Equations with qClass "Level" are pushed onto this Array
   val levelArray = ListBuffer[Level]()
@@ -42,15 +39,12 @@ class World3 {
   // Equations with qClass "Rate" are pushed onto this Array
   var rateArray = ListBuffer[Rate]()
 
-//
-//
-//  // Equations with qClass "Aux" are pushed onto this Array
-//
-  var auxArray = ListBuffer[Aux]()
-//
-//
-//  // construtor for Level objects
-//
+  //  // Equations with qClass "Aux" are pushed onto this Array
+  var auxArray = ListBuffer[All]()
+
+  //
+  //  // construtor for Level objects
+  //
 
 
 
@@ -293,6 +287,14 @@ class World3 {
   }
 
 
+  object Smooth {
+    def apply(qName: String, qNumber: Int, initFn: () => All, initVal: Double, units: String, delay: Double, dimension: String = "dimensionless") = {
+      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dimension)
+      auxArray += s
+      qArray(qNumber) = s
+      s
+    }
+  }
   //
   //  // constructor for Smooth objects
   //
@@ -309,11 +311,11 @@ class World3 {
   //    auxArray.push(this);
   //  }
 
-  class Smooth(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double) extends All {
+  class Smooth(val qName: String, val qNumber: Int, initFn: () => All, initVal: Double, val units: String, val delay: Double, val dimension: String) extends All {
     val qType = "Smooth"
     var j: Option[Double] = None
     var k: Option[Double] = None
-    var theInput: All
+    var theInput: Option[All] = None
     var firstCall = true
 
     //  Smooth.prototype.init = function() {
@@ -321,8 +323,8 @@ class World3 {
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
     def init  = {
-      theInput = initFn()
-      j = Some(theInput.k.getOrElse(initVal))
+      theInput = Some(initFn())
+      j = Some(theInput.get.k.getOrElse(initVal))
     }
 
     //  Smooth.prototype.reset = function() {
@@ -350,12 +352,12 @@ class World3 {
 
     def update() =
       if(firstCall) {
-        j = Some(theInput.k.getOrElse(initVal))
-        k =  Some(theInput.k.getOrElse(initVal))
+        j = Some(theInput.get.k.getOrElse(initVal))
+        k =  Some(theInput.get.k.getOrElse(initVal))
         firstCall = false
         k.get
       } else {
-        k = Some(j.get + dt * (theInput.j.get - j.get) / delay)
+        k = Some(j.get + dt * (theInput.get.j.get - j.get) / delay)
         k.get
       }
 
@@ -368,7 +370,7 @@ class World3 {
     }
   }
 
-  
+
 //
 //
 //
