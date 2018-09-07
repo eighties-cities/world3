@@ -2951,7 +2951,9 @@ class World3 {
   val marginalProductivityOfAgriculturalInputs = Aux("marginalProductivityOfAgriculturalInputs", 110,
     units = "kilograms per dollar",
     dependencies = Vector("averageLifetimeOfAgriculturalInputs", "landYield", "marginalLandYieldMultiplierFromCapital", "landYieldMultiplierFromCapital"),
-    updateFn = () => lift {Constants.averageLifetimeOfAgriculturalInputsK * unlift(landYield.k) * (unlift(marginalLandYieldMultiplierFromCapital.k) / unlift(landYieldMultiplierFromCapital.k)}
+    updateFn = () => lift {
+      Constants.averageLifetimeOfAgriculturalInputsK * unlift(landYield.k) *
+        (unlift(marginalLandYieldMultiplierFromCapital.k) / unlift(landYieldMultiplierFromCapital.k))}
   )
 //  var marginalLandYieldMultiplierFromCapital = new Table("marginalLandYieldMultiplierFromCapital", 111, [0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005], 0, 600, 40)
 //  marginalLandYieldMultiplierFromCapital.units = "hectares per dollar";
@@ -3128,7 +3130,7 @@ class World3 {
     qName="landFertilityRegeneration",
     qNumber=124,
     units = "kilograms per hectare-year-year",
-    updateFn = () => lift {(Constants.inherentLandFertilityK - unlift(landFertility.k) / unlift(landFertilityRegenerationTime.k)}
+    updateFn = () => lift {(Constants.inherentLandFertilityK - unlift(landFertility.k)) / unlift(landFertilityRegenerationTime.k)}
   )
 
 //  var landFertilityRegenerationTime = new Table("landFertilityRegenerationTime", 125, [20, 13, 8, 4, 2, 2], 0, 0.1, 0.02);
@@ -3340,7 +3342,8 @@ class World3 {
     qName = "persistentPollutionGenerationRate",
     qNumber = 137,
     units = "pollution units per year",
-    updateFn = () => lift {(unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k) * unlift(persistentPollutionGenerationFactor.k)}
+    updateFn = () =>
+      lift { (unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k)) * unlift(persistentPollutionGenerationFactor.k)}
   )
   //  var persistentPollutionGenerationFactor = new Aux("persistentPollutionGenerationFactor", 138);
   //  persistentPollutionGenerationFactor.units = "dimensionless";
@@ -3420,7 +3423,7 @@ class World3 {
       qNumber = 142,
       initVal = 2.5e7,
       units = "pollution units",
-      updateFn = () => lift {unlift(persistentPollution.j) + dt * (unlift(persistentPollutionAppearanceRate.j) - unlift(persistenPollutionAssimilationRate.j)}
+      updateFn = () => lift {unlift(persistentPollution.j) + dt * (unlift(persistentPollutionAppearanceRate.j) - unlift(persistenPollutionAssimilationRate.j))}
     )
 
   //  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
@@ -3497,7 +3500,7 @@ class World3 {
       qNumber = 147,
       units = "dimensionless",
       dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-      updateFn = () => lift {0.22 * unlift(food.k) / ((0.22 * unlift(food.k)) + unlift(serviceOutput.k) + unlift(industrialOutput.k)}
+      updateFn = () => lift {0.22 * unlift(food.k) / ((0.22 * unlift(food.k)) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
     )
 
   //  var fractionOfOutputInIndustry = new Aux("fractionOfOutputInIndustry", 148);
