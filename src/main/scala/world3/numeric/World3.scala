@@ -1,6 +1,13 @@
 package world3.numeric
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import io.monadless.stdlib.MonadlessOption._
+
+object World3 extends App {
+  val w3 = new World3()
+  w3.fastRun()
+}
+
 
 class World3 {
   /*  Limits to Growth: This is a re-implementation in JavaScript
@@ -29,10 +36,10 @@ class World3 {
   val levelArray = ListBuffer[Level]()
 
   // Equations with qClass "Rate" are pushed onto this Array
-  var rateArray = ListBuffer[Rate]()
+  var rateArray = ListBuffer[All]()
 
   // Equations with qClass "Aux" are pushed onto this Array
-  var auxArray = ListBuffer[All]()
+  //var auxArray = ListBuffer[All]()
 
   //
   // construtor for Level objects
@@ -57,10 +64,13 @@ class World3 {
   sealed trait All {
     def j: Option[Double]
     def k: Option[Double]
+    def qName: String
+    def reset()
+    def warmup()
   }
 
   object Level {
-    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
+    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val l = new Level(qName, qNumber, initVal, updateFn, units, dependencies)
       levelArray += l
       qArray(qNumber) = l
@@ -72,26 +82,27 @@ class World3 {
     val qName: String,
     val qNumber: Int,
     val initVal: Double,
-    val updateFn: () => Double,
+    val updateFn: () => Option[Double],
     val units: String,
     val dependencies: Vector[String]) extends All {
 
     val qType = "Level"
-    var j = Some(initVal)
-    var k = Some(initVal)
+    var j: Option[Double] = initVal()
+    var k: Option[Double] = initVal()
+
     //  Level.prototype.reset = function() {
     //    this.j = this.k = this.initVal;
     //    this.data = [ {x: startTime, y: this.k} ];
     //  }
     def reset() = {
-      k = Some(initVal)
-      j = Some(initVal)
+      k = initVal()
+      j = initVal()
     }
     //  Level.prototype.warmup = function() {
     //    this.k = this.updateFn();
     //  }
     def warmup() = {
-      k = Some(updateFn())
+      k = updateFn()
     }
     //  Level.prototype.update = function() {
     //    this.k = this.updateFn();
@@ -102,15 +113,14 @@ class World3 {
     //    return this.k;
     //  }
     def update() = {
-      k = Some(updateFn())
+      k = updateFn()
       k.get
     }
     //  Level.prototype.tick = function() {
     //    this.j = this.k;
     //  }
-    def tick() = {
-      j = k
-    }
+    def tick() = { j = k }
+
     //  Level.prototype.plot = function() {
     //    var cvx = document.getElementById("cv").getContext("2d");
     //    cvx.strokeStyle = this.plotColor;
@@ -127,8 +137,7 @@ class World3 {
     //  }
   }
 
-  //
-  //
+
   //  // construtor for Rate objects
   //
   //  var Rate = function(qName, qNumber) {
@@ -145,12 +154,13 @@ class World3 {
   //    qArray[qNumber] = this;
   //    rateArray.push(this);
   //  }
-  //
+
   object Rate {
+
     def apply(
       qName: String,
       qNumber: Int,
-      updateFn: () => Double,
+      updateFn: () => Option[Double],
       units: String = "dimensionless",
       dependencies: Vector[String] = Vector()) = {
       val r = new Rate(qName, qNumber, units, updateFn, dependencies)
@@ -158,18 +168,20 @@ class World3 {
       qArray(qNumber) = r
       r
     }
+
   }
 
   class Rate(
     val qName: String,
     val qNumber: Int,
     val units: String,
-    val updateFn: () => Double,
+    val updateFn: () => Option[Double],
     val dependencies: Vector[String]) extends All {
 
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
+
     //  Rate.prototype.reset = function() {
     //    this.j = this.k = null;
     //    this.data = [];
@@ -178,20 +190,21 @@ class World3 {
       j = None
       k = None
     }
+
     //  Rate.prototype.warmup = Level.prototype.warmup;
     def warmup() = {
-      k = Some(updateFn())
+      k = updateFn()
     }
+
     //  Rate.prototype.update = Level.prototype.update;
     def update() = {
-      k = Some(updateFn())
+      k = updateFn()
       k.get
     }
+
     //  Rate.prototype.tick = Level.prototype.tick;
-    def tick() = {
-      j = k
-    }
-    //
+    def tick() = { j = k }
+
     //  Rate.prototype.plot = Level.prototype.plot;
   }
   //
@@ -221,9 +234,9 @@ class World3 {
   //  Aux.prototype.plot = Level.prototype.plot;
   //
   object Aux {
-    def apply(qName: String, qNumber: Int, updateFn: () => Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
+    def apply(qName: String, qNumber: Int, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val a = new Aux(qName, qNumber, updateFn, units, dependencies)
-      auxArray += a
+      //auxArray += a
       qArray(qNumber) = a
       a
     }
@@ -233,12 +246,13 @@ class World3 {
   class Aux(
     val qName: String,
     val qNumber: Int,
-    val updateFn: () => Double,
+    val updateFn: () => Option[Double],
     val units: String,
     val dependencies: Vector[String]) extends All {
     val qType = "Aux"
     var j: Option[Double] = None
     var k: Option[Double] = None
+
     //  Aux.prototype.reset = function() {
     //    this.j = this.k = null;
     //    this.data = [];
@@ -247,19 +261,20 @@ class World3 {
       j = None
       k = None
     }
+
     //  Rate.prototype.warmup = Level.prototype.warmup;
     def warmup() = {
-      k = Some(updateFn())
+      k = updateFn()
     }
+
     //  Rate.prototype.update = Level.prototype.update;
     def update() = {
-      k = Some(updateFn())
+      k = updateFn()
       k.get
     }
+
     //  Rate.prototype.tick = Level.prototype.tick;
-    def tick() = {
-      j = k
-    }
+    def tick() = { j = k }
   }
 
   object Smooth {
@@ -272,7 +287,7 @@ class World3 {
       units: String = "dimensionless",
       dependencies: Vector[String] = Vector()) = {
       val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dependencies)
-      auxArray += s
+      //auxArray += s
       qArray(qNumber) = s
       s
     }
@@ -305,13 +320,15 @@ class World3 {
     var j: Option[Double] = None
     var k: Option[Double] = None
     var firstCall = true
+
     //  Smooth.prototype.init = function() {
     //    this.theInput = this.initFn();
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
-    def init  = {
-      j = Some(initFn().k.orElse(initVal).get)
+    def init()  = {
+      j = initFn().k.orElse(initVal)
     }
+
     //  Smooth.prototype.reset = function() {
     //    this.firstCall = true;
     //    this.j = this.k = this.null;
@@ -377,7 +394,7 @@ class World3 {
     def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
       val d = new Delay3(qName, qNumber, initFn, units, delay, dependencies)
       qArray(qNumber) = d
-      auxArray += d
+      //auxArray += d
       d
     }
   }
@@ -513,12 +530,12 @@ class World3 {
       iMin: Double,
       iMax: Double,
       iDelta: Double,
-      updateFn: () => Double,
+      updateFn: () => Option[Double],
       units: String = "dimensionless",
       dependencies: Vector[String] = Vector()) = {
       val t = new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units, dependencies)
       qArray(qNumber) = t
-      auxArray += t
+      //auxArray += t
       t
     }
 
@@ -531,7 +548,7 @@ class World3 {
     val iMin: Double,
     val iMax: Double,
     val iDelta: Double,
-    val updateFn: () => Double,
+    val updateFn: () => Option[Double],
     val units: String,
     val dependencies: Vector[String]) extends All {
 
@@ -583,7 +600,7 @@ class World3 {
     //    return this.k;
     //  }
     def update() = {
-      k = Some(lookup(updateFn()))
+      k = updateFn().map(lookup)
     }
 
     //  Table.prototype.warmup = Table.prototype.update;
@@ -661,14 +678,43 @@ class World3 {
 //      if (left.sequenceNumber < right.sequenceNumber) { return -1; } else { return 1; }
 //    })
 //  }
+
+
+  def sortAuxEqns() = {
+    // Directly uses sortedAux
+
+//    assert(auxSequence.size == auxArray.size)
+//    auxArray = ListBuffer() ++ auxSequence
+//
+//    val prev = auxArray.map(_.qName)
+//
+//    val originalSize = auxArray.size
+//    val map = auxArray.groupBy(_.qName)
+//
+//    auxArray = ListBuffer() ++ auxSequence.map(s => map(s).head)
+//
+//    println(auxArray.size + " " + originalSize)
+//    println(prev -- auxArray.map(_.qName))
+//    assert(auxArray.size == originalSize)
+
+  }
+
+  //  var sortAuxEqns = function() {
+  //    for (var i = 0 ; i < auxSequence.length ; i++) {
+  //      eval(auxSequence[i]).sequenceNumber = i;
+  //    }
+  //    auxArray.sort(function(left, right) {
+  //      if (left.sequenceNumber < right.sequenceNumber) { return -1; } else { return 1; }
+  //    })
+  //  }
 //
 //
 //
 //
 //  // PARAMETERS THAT GOVERN THE RUNNING OF THE MODEL
 //
-//  var startTime = 1900;
-//  var stopTime = 2100;
+  val startTime = 1900;
+  val stopTime = 2100;
 
   var t = 1900
   val dt = 1.0
@@ -676,15 +722,12 @@ class World3 {
 
 //  var plotInterval = Math.max(dt, 1);
 //
-//  var resetModel = function() {
-//    t = startTime;
-//    for (var i = 1 ; i < qArray.length ; i++) {
-//      qArray[i].reset();
-//    }
-//    setUpGraph();
-//  }
-//
-//
+  def resetModel() =  {
+    t = startTime
+    for (i <- 1  until qArray.length) qArray(i).reset()
+    //setUpGraph();
+  }
+
 //  var initSmoothsAndDelay3s = function() {
 //    for (var i = 1 ; i < qArray.length ; i++) {
 //      var q = qArray[i];
@@ -693,23 +736,33 @@ class World3 {
 //      }
 //    }
 //  }
-//
-//
+
+  def initSmoothsAndDelay3s() = {
+    for (i <- 1 until qArray.length) {
+      qArray(i) match {
+        case s: Smooth => s.init()
+        case d: Delay3 => d.init()
+        case _ =>
+      }
+    }
+  }
+
+
 //  var updateAuxen = function() {
 //    for (var i = 0 ; i < auxArray.length ; i++) {
 //      auxArray[i].update();
 //      //    console.log(i);
 //    }
 //  }
-//
-//
+
+
 //  var updateRates = function() {
 //    for (var i = 0 ; i < rateArray.length ; i++) {
 //      rateArray[i].update();
 //    }
 //  }
-//
-//
+
+
 //  var updateLevels = function() {
 //    for (var i = 0 ; i < levelArray.length ; i++) {
 //      levelArray[i].update();
@@ -722,40 +775,38 @@ class World3 {
 //      //    console.log(auxArray[i].qName, auxArray[i].k);
 //    }
 //  }
-//
-//
+
+
+  def warmupAuxen() = { auxSequence.foreach(_.warmup()) }
+
+
 //  var warmupRates = function() {
 //    for (var i = 0 ; i < rateArray.length ; i++) {
 //      rateArray[i].warmup();
 //    }
 //  }
-//
-//
+
+
 //  var warmupLevels = function() {
 //    for (var i = 0 ; i < levelArray.length ; i++) {
 //      levelArray[i].warmup();
 //    }
 //  }
-//
+
+
 //  var tock = function() {
 //    for (var i = 1 ; i < qArray.length ; i++) {
 //      qArray[i].tick();
 //    }
 //  }
-//
-//
-//
-//
-//
-//
-//
-//
-//  var initModel = function() {
-//    initSmoothsAndDelay3s();
-//    sortAuxEqns();
-//    t = startTime;
-//  }
-//
+
+  def initModel() =  {
+    initSmoothsAndDelay3s()
+    sortAuxEqns()
+    t = startTime
+  }
+
+
 //  var timeStep = function() {
 //    updateLevels();
 //    updateAuxen();
@@ -763,6 +814,15 @@ class World3 {
 //    tock();
 //    t += dt;
 //  }
+
+  //  var timeStep = function() {
+  //    updateLevels();
+  //    updateAuxen();
+  //    updateRates();
+  //    tock();
+  //    t += dt;
+  //  }
+
 //
 //
 //
@@ -784,28 +844,31 @@ class World3 {
 //
 //
 //
-//  var runModel = function() {
-//    var plotDelay = 0 * dt;  // milliseconds
-//    disableControls();
-//    setStopButton();
-//    resetModel();
-//    initModel();
-//    setUpGraph();
-//    for (var i = 1 ; i <= 3 ; i++) {
+//  def runModel() =  {
+//    //var plotDelay = 0 * dt;  // milliseconds
+////    disableControls();
+////    setStopButton();
+//     resetModel();
+//     initModel();
+////    setUpGraph();
+//
+//    for (i <- 1 to 3) {
 //      warmupAuxen();
 //      warmupRates();
 //      tock();
 //    }
-//    for (var i = 1 ; i <= 10 ; i++) {
+//
+//    for (i <- 1 to 10) {
 //      warmupAuxen();
 //      warmupRates();
 //      warmupLevels();
 //      tock();
 //    }
-//    for (var i = 0 ; i < levelArray.length ; i++) {
-//      levelArray[i].reset();
+//
+//    for (i <- 0 until levelArray.length) {
+//      levelArray(i).reset();
 //    }
-//    plotTimer = setInterval(animationStep, plotDelay);   // note GLOBAL
+//
 //  }
 //
 //  var fastRun = function() {
@@ -821,7 +884,24 @@ class World3 {
 //      timeStep();
 //    }
 //  }
+
+
+  def fastRun() =  {
+    resetModel()
+    initModel()
+    //setUpGraph();
+
+    for (i <- 1 to 100) {
+      warmupAuxen()
+//      warmupRates()
+//      tock()
+    }
 //
+//    while (t <= stopTime) timeStep()
+  }
+
+
+  //
 //
 //  var checkForNaNs = function() {
 //    for (var i=1 ; i < qArray.length ; i++) { if (isNaN(qArray[i].k)) console.log(qArray[i].qName); }
@@ -880,7 +960,7 @@ class World3 {
       qName = "population",
       qNumber = 1,
       units = "persons",
-      updateFn = () => { population0To14.k.get + population15To44.k.get + population45To64.k.get + population65AndOver.k.get }
+      updateFn = () => lift { unlift(population0To14.k) + unlift(population15To44.k) + unlift(population45To64.k) + unlift(population65AndOver.k) }
     )
 
 //  var population0To14 = new Level("population0To14", 2, 6.5e8);
@@ -896,7 +976,10 @@ class World3 {
       qNumber = 2,
       initVal = 6.5e8,
       units = "persons",
-      updateFn = () => { population0To14.j.get + dt * (birthsPerYear.j.get - deathsPerYear0To14.j.get - maturationsPerYear14to15.j.get) }
+      updateFn = () => lift {
+        unlift(population0To14.j) + dt *
+          (unlift(birthsPerYear.j) - unlift(deathsPerYear0To14.j) - unlift(maturationsPerYear14to15.j))
+      }
     )
 
 //  var deathsPerYear0To14 = new Rate("deathsPerYear0To14", 3);
@@ -909,7 +992,7 @@ class World3 {
       qName = "deathsPerYear0To14",
       qNumber = 3,
       units = "persons per year",
-      updateFn = () => { population0To14.k.get * mortality0To14.k.get}
+      updateFn = () => lift { unlift(population0To14.k) * unlift(mortality0To14.k) }
     )
 
 //  var mortality0To14 = new Table("mortality0To14", 4, [0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010], 20, 80, 10);
@@ -929,7 +1012,7 @@ class World3 {
       iDelta = 10,
       units =  "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
-      updateFn = () => lifeExpectancy.k.get
+      updateFn = () => lifeExpectancy.k
     )
 
 
@@ -945,7 +1028,7 @@ class World3 {
       qName = "maturationsPerYear14to15",
       qNumber = 5,
       units = "persons per year",
-      updateFn = () => { population0To14.k.get * (1 - mortality0To14.k.get) / 15 }
+      updateFn = () => lift { unlift(population0To14.k) * (1 - unlift(mortality0To14.k)) / 15 }
     )
 
 //  var population15To44 = new Level("population15To44", 6, 7.0e8);
@@ -1151,7 +1234,13 @@ class World3 {
       "deathsPerYear",
       17,
       units = "persons per year",
-      updateFn = () => { deathsPerYear0To14.j.get + deathsPerYear15To44.j.get + deathsPerYear45To64.j.get + deathsPerYear65AndOver.j.get }
+      updateFn =
+        () => lift {
+          unlift(deathsPerYear0To14.j) +
+            unlift(deathsPerYear15To44.j) +
+            unlift(deathsPerYear45To64.j) +
+            unlift(deathsPerYear65AndOver.j)
+        }
     )
 
 //  var crudeDeathRate = new Aux("crudeDeathRate", 18);
@@ -2440,7 +2529,10 @@ class World3 {
       85,
       0.9e9,
       units = "hectares",
-      updateFn = () => { arableLand.j.get + dt * (landDevelopmentRate.j.get - landErosionRate.j.get - landRemovalForUrbanIndustrialUse.j.get) }
+      updateFn = () => {
+        arableLand.j.get +
+          dt * (landDevelopmentRate.j.get - landErosionRate.j.get - landRemovalForUrbanIndustrialUse.j.get)
+      }
     )
 
 //  var potentiallyArableLand = new Level("potentiallyArableLand", 86, 2.3e9);
@@ -2674,19 +2766,25 @@ class World3 {
 //  currentAgriculturalInputs.updateFn = function() {
 //    return totalAgriculturalInvestment.k * (1 - fractionOfInputsAllocatedToLandDevelopment.k);
 //  }
-  var currentAgriculturalInputs = new Aux("currentAgriculturalInputs", 98,
-  units = "dollars per year", dependencies = Vector("totalAgriculturalInvestment", "fractionOfInputsAllocatedToLandDevelopment"),
-  updateFn = () => {totalAgriculturalInvestment.k.get * (1 - fractionOfInputsAllocatedToLandDevelopment.k.get)}
-)
+  var currentAgriculturalInputs =
+    Aux(
+      "currentAgriculturalInputs",
+      98,
+      units = "dollars per year",
+      dependencies = Vector("totalAgriculturalInvestment", "fractionOfInputsAllocatedToLandDevelopment"),
+      updateFn = () => {totalAgriculturalInvestment.k.get * (1 - fractionOfInputsAllocatedToLandDevelopment.k.get)}
+    )
 //
 //  var averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
 //
-  var agriculturalInputs = Smooth("agriculturalInputs", 99, Constants.averageLifetimeOfAgriculturalInputsK,
-    units = "dollars per year",
-    dependencies = Vector(),   // "currentAgriculturalInputs" removed to break cycle
-    initFn = () => { currentAgriculturalInputs},
-    initVal = Some(5.0e9)
-  )
+  var agriculturalInputs =
+    Smooth("agriculturalInputs", 99, Constants.averageLifetimeOfAgriculturalInputsK,
+      units = "dollars per year",
+      dependencies = Vector(),   // "currentAgriculturalInputs" removed to break cycle
+      initFn = () => { currentAgriculturalInputs },
+      initVal = Some(5.0e9)
+    )
+
 //
 //  /*
 //  var agriculturalInputs = new Smooth("agriculturalInputs", 99, averageLifetimeOfAgriculturalInputsK);
@@ -2919,9 +3017,12 @@ class World3 {
 //  landErosionRate.updateFn = function() {
 //    return arableLand.k / averageLifeOfLand.k;
 //  }
-  val landErosionRate = Rate("landErosionRate", 116, units = "hectares per year",
-    updateFn = () => {arableLand.k.get/ averageLifeOfLand.k.get}
-  )
+  val landErosionRate =
+    Rate("landErosionRate", 116, units = "hectares per year",
+      updateFn = () => {
+        arableLand.k.get / averageLifeOfLand.k.get
+      }
+    )
 //
 //  // 2016-08-09: Neil S. Grant reported an error in the table of values
 //  // for urbanIndustrialLandPerCapita. The third element of the array
@@ -3294,40 +3395,48 @@ class World3 {
   // ??? WTF ???
   //  persistenPollutionAppearanceRate.qType = "Rate";
   //  rateArray.push(auxArray.pop());   // put this among the Rates, not the Auxes
-  val persistenPollutionAppearanceRate = Delay3(
-    qName = "persistenPollutionAppearanceRate",
-    qNumber = 141,
-    delay = Constants.persistentPollutionTransmissionDelayK,
-    units = "pollution units per year",
-    initFn = () => {persistentPollutionGenerationRate}
-  )
+
+  val persistentPollutionAppearanceRate =
+    Delay3(
+      qName = "persistentPollutionAppearanceRate",
+      qNumber = 141,
+      delay = Constants.persistentPollutionTransmissionDelayK,
+      units = "pollution units per year",
+      initFn = () => { persistentPollutionGenerationRate }
+    )
+
+  rateArray += persistentPollutionAppearanceRate
+
   //  var persistentPollution = new Level("persistentPollution", 142, 2.5e7);
   //  persistentPollution.units = "pollution units";
   //  persistentPollution.updateFn = function() {
   //    return persistentPollution.j + dt * (persistenPollutionAppearanceRate.j - persistenPollutionAssimilationRate.j);
   //  }
-  val persistentPollution: Level = Level(
-    qName = "persistentPollution",
-    qNumber = 142,
-    initVal = 2.5e7,
-    units = "pollution units",
-    updateFn = () => {persistentPollution.j.get + dt * (persistenPollutionAppearanceRate.j.get - persistenPollutionAssimilationRate.j.get)}
+  val persistentPollution: Level =
+    Level(
+      qName = "persistentPollution",
+      qNumber = 142,
+      initVal = 2.5e7,
+      units = "pollution units",
+      updateFn = () => {persistentPollution.j.get + dt * (persistentPollutionAppearanceRate.j.get - persistenPollutionAssimilationRate.j.get)}
+    )
+
+  //  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
+  //  indexOfPersistentPollution.units = "dimensionless";
+  //  indexOfPersistentPollution.pollutionValueIn1970 = 1.36e8; // pollution units, used in eqn 143
+  //  indexOfPersistentPollution.plotColor = "#a25563";
+  //  indexOfPersistentPollution.plotMin = 0;
+  //  indexOfPersistentPollution.plotMax = 32;
+  //  indexOfPersistentPollution.updateFn = function() {
+  //    return persistentPollution.k / indexOfPersistentPollution.pollutionValueIn1970;
+  //  }
+  val indexOfPersistentPollution = Aux(
+    qName = "indexOfPersistentPollution",
+    qNumber = 143,
+    units = "dimensionless",
+    updateFn = () => {persistentPollution.k.get / Constants.pollutionValueIn1970}
   )
-//  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
-//  indexOfPersistentPollution.units = "dimensionless";
-//  indexOfPersistentPollution.pollutionValueIn1970 = 1.36e8; // pollution units, used in eqn 143
-//  indexOfPersistentPollution.plotColor = "#a25563";
-//  indexOfPersistentPollution.plotMin = 0;
-//  indexOfPersistentPollution.plotMax = 32;
-//  indexOfPersistentPollution.updateFn = function() {
-//    return persistentPollution.k / indexOfPersistentPollution.pollutionValueIn1970;
-//  }
-val indexOfPersistentPollution = Aux(
-  qName = "indexOfPersistentPollution",
-  qNumber = 143,
-  units = "dimensionless",
-  updateFn = () => {persistentPollution.k.get / Constants.pollutionValueIn1970}
-)
+
   //  var persistenPollutionAssimilationRate = new Rate("persistenPollutionAssimilationRate", 144);
   //  persistenPollutionAssimilationRate.units = "pollution units per year";
   //  persistenPollutionAssimilationRate.updateFn = function() {
@@ -3339,6 +3448,7 @@ val indexOfPersistentPollution = Aux(
     units = "pollution units per year",
     updateFn = () => {persistentPollution.k.get / (assimilationHalfLife.k.get * 1.4)}
   )
+
   //  var assimilationHalfLifeMultiplier = new Table("assimilationHalfLifeMultiplier", 145, [1, 11, 21, 31, 41], 1, 1001, 250);
   //  assimilationHalfLifeMultiplier.units = "dimensionless";
   //  assimilationHalfLifeMultiplier.dependencies = ["indexOfPersistentPollution"];
@@ -3473,7 +3583,128 @@ val indexOfPersistentPollution = Aux(
 
 
   }
-//
+
+
+  val auxSequence = Vector[All](
+    population,
+    deathsPerYear,
+    lifetimeMultiplierFromCrowding,
+    industrialCapitalOutputRatio,
+    averageLifetimeOfIndustrialCapital,
+    averageLifetimeOfServiceCapital,
+    serviceCapitalOutputRatio,
+    laborForce,
+    landFractionCultivated,
+    developmentCostPerHectare,
+    landYieldFactor,
+    nonrenewableResourceUsageFactor,
+    nonrenewableResourceFractionRemaining,
+    persistentPollutionGenerationFactor,
+    indexOfPersistentPollution,
+    fractionOfIndustrialOutputAllocatedToConsumptionConstant,
+    averageLifetimeOfAgriculturalInputs,
+    laborUtilizationFractionDelayed,
+    agriculturalInputs,
+    perceivedFoodRatio,
+    fractionOfPopulationUrban,
+    crudeDeathRate,
+    crudeBirthRate,
+    fractionOfCapitalAllocatedToObtainingResourcesBefore,
+    fractionOfCapitalAllocatedToObtainingResourcesAfter,
+    fractionOfCapitalAllocatedToObtainingResources,
+    lifetimeMultiplierFromPollution,
+    landFertilityDegradationRate,
+    capitalUtilizationFraction,
+    industrialOutput,
+    industrialOutputPerCapita,
+    delayedIndustrialOutputPerCapita,
+    socialFamilySizeNorm,
+    averageIndustrialOutputPerCapita,
+    familyIncomeExpectation,
+    familyResponseToSocialNorm,
+    desiredCompletedFamilySize,
+    crowdingMultiplierFromIndustrialization,
+    indicatedServiceOutputPerCapitaBefore,
+    indicatedServiceOutputPerCapitaAfter,
+    indicatedServiceOutputPerCapita,
+    fractionOfIndustrialOutputAllocatedToConsumptionVariable,
+    fractionOfIndustrialOutputAllocatedToConsumption,
+    jobsPerIndustrialCapitalUnit,
+    potentialJobsInIndustrialSector,
+    serviceOutput,
+    serviceOutputPerCapita,
+    fractionOfIndustrialOutputAllocatedToServicesBefore,
+    fractionOfIndustrialOutputAllocatedToServicesAfter,
+    fractionOfIndustrialOutputAllocatedToServices,
+    jobsPerServiceCapitalUnit,
+    potentialJobsInServiceSector,
+    healthServicesAllocationsPerCapita,
+    effectiveHealthServicesPerCapita,
+    lifetimeMultiplierFromHealthServicesBefore,
+    lifetimeMultiplierFromHealthServicesAfter,
+    lifetimeMultiplierFromHealthServices,
+    fractionOfInputsAllocatedToLandMaintenance,
+    agriculturalInputsPerHectare,
+    jobsPerHectare,
+    potentialJobsInAgriculturalSector,
+    jobs,
+    laborUtilizationFraction,
+    landYieldMultiplierFromCapital,
+    landYieldMultiplierFromAirPollutionBefore,
+    landYieldMultiplierFromAirPollutionAfter,
+    landYieldMultiplierFromAirPollution,
+    landYield,
+    marginalProductivityOfLandDevelopment,
+    marginalLandYieldMultiplierFromCapital,
+    marginalProductivityOfAgriculturalInputs,
+    fractionOfInputsAllocatedToLandDevelopment,
+    food,
+    foodPerCapita,
+    indicatedFoodPerCapitaBefore,
+    indicatedFoodPerCapitaAfter,
+    indicatedFoodPerCapita,
+    fractionOfIndustrialOutputAllocatedToAgricultureBefore,
+    fractionOfIndustrialOutputAllocatedToAgricultureAfter,
+    fractionOfIndustrialOutputAllocatedToAgriculture,
+    totalAgriculturalInvestment,
+    currentAgriculturalInputs,
+    foodRatio,
+    landFertilityRegenerationTime,
+    lifetimeMultiplierFromFood,
+    lifeExpectancy,
+    mortality0To14,
+    mortality15To44,
+    mortality45To64,
+    mortality65AndOver,
+    fecundityMultiplier,
+    perceivedLifeExpectancy,
+    compensatoryMultiplierFromPerceivedLifeExpectancy,
+    maxTotalFertility,
+    desiredTotalFertility,
+    needForFertilityControl,
+    fractionOfServicesAllocatedToFertilityControl,
+    fertilityControlAllocationPerCapita,
+    fertilityControlFacilitiesPerCapita,
+    fertilityControlEffectiveness,
+    totalFertility,
+    landLifeMultiplierFromYieldBefore,
+    landLifeMultiplierFromYieldAfter,
+    landLifeMultiplierFromYield,
+    averageLifeOfLand,
+    urbanIndustrialLandPerCapita,
+    urbanIndustrialLandRequired,
+    perCapitaResourceUsageMultiplier,
+    persistentPollutionGeneratedByIndustrialOutput,
+    persistentPollutionGeneratedByAgriculturalOutput,
+    assimilationHalfLifeMultiplier,
+    assimilationHalfLife,
+    fractionOfIndustrialOutputAllocatedToIndustry,
+    fractionOfOutputInAgriculture,
+    fractionOfOutputInIndustry,
+    fractionOfOutputInServices)
+
+
+  //
 //  // ENTRY POINT: called by body.onload
 //
 //  var setUpModel = function() {
