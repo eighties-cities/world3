@@ -2552,7 +2552,7 @@ class World3 {
       86,
       2.3e9,
       units = "hectares",
-      updateFn = () => lift { unlift(potentiallyArableLand.j) + dt * (-unlift(landDevelopmentRate.j) }
+      updateFn = () => lift { unlift(potentiallyArableLand.j) + dt * (-unlift(landDevelopmentRate.j)) }
     )
 
 //  var food = new Aux("food", 87);
