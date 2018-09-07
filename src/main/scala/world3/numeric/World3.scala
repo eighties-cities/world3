@@ -87,16 +87,16 @@ class World3 {
     val dependencies: Vector[String]) extends All {
 
     val qType = "Level"
-    var j: Option[Double] = initVal()
-    var k: Option[Double] = initVal()
+    var j: Option[Double] = Some(initVal)
+    var k: Option[Double] = Some(initVal)
 
     //  Level.prototype.reset = function() {
     //    this.j = this.k = this.initVal;
     //    this.data = [ {x: startTime, y: this.k} ];
     //  }
     def reset() = {
-      k = initVal()
-      j = initVal()
+      k = Some(initVal)
+      j = Some(initVal)
     }
     //  Level.prototype.warmup = function() {
     //    this.k = this.updateFn();
