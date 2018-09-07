@@ -67,6 +67,8 @@ class World3 {
     def qName: String
     def reset()
     def warmup()
+    def tick()
+    def update()
   }
 
   object Level {
@@ -263,9 +265,7 @@ class World3 {
     }
 
     //  Rate.prototype.warmup = Level.prototype.warmup;
-    def warmup() = {
-      k = updateFn()
-    }
+    def warmup() = { k = updateFn() }
 
     //  Rate.prototype.update = Level.prototype.update;
     def update() = {
@@ -326,7 +326,8 @@ class World3 {
     //    this.j = this.k = this.theInput.k || this.initVal;
     //  }
     def init()  = {
-      j = initFn().k.orElse(initVal)
+      j = initFn().k orElse initVal
+      k = j
     }
 
     //  Smooth.prototype.reset = function() {
@@ -364,7 +365,7 @@ class World3 {
       }
     }
     //  Smooth.prototype.warmup = Smooth.prototype.init;
-    def warmup = init
+    def warmup = init()
     //  Smooth.prototype.tick = Level.prototype.tick;
     def tick() = { j = k }
   }
@@ -713,12 +714,12 @@ class World3 {
 //
 //  // PARAMETERS THAT GOVERN THE RUNNING OF THE MODEL
 //
-  val startTime = 1900;
-  val stopTime = 2100;
+  val startTime = 1900.0;
+  val stopTime = 2100.0;
 
-  var t = 1900
+  var t = 1900.0
   val dt = 1.0
-  var policyYear = 1975;                 // eqn 150.1
+  var policyYear = 1975.0;                 // eqn 150.1
 
 //  var plotInterval = Math.max(dt, 1);
 //
@@ -756,11 +757,16 @@ class World3 {
 //  }
 
 
+  def updateAuxen() = auxSequence.foreach(_.update())
+
+
 //  var updateRates = function() {
 //    for (var i = 0 ; i < rateArray.length ; i++) {
 //      rateArray[i].update();
 //    }
 //  }
+
+  def updateRates() = rateArray.foreach(_.update())
 
 
 //  var updateLevels = function() {
@@ -768,6 +774,9 @@ class World3 {
 //      levelArray[i].update();
 //    }
 //  }
+
+  def updateLevels() =  levelArray.foreach(_.update())
+
 //
 //  var warmupAuxen = function() {
 //    for (var i = 0 ; i < auxArray.length ; i++) {
@@ -777,8 +786,8 @@ class World3 {
 //  }
 
 
-  def warmupAuxen() = { auxSequence.foreach(_.warmup()) }
-
+  def warmupAuxen() = auxSequence.foreach(_.warmup())
+  def warmupRates() = rateArray.foreach(_.warmup())
 
 //  var warmupRates = function() {
 //    for (var i = 0 ; i < rateArray.length ; i++) {
@@ -800,6 +809,9 @@ class World3 {
 //    }
 //  }
 
+  def tock() = (1 to qArray.length - 1).map(i => qArray(i).tick)
+
+
   def initModel() =  {
     initSmoothsAndDelay3s()
     sortAuxEqns()
@@ -815,13 +827,13 @@ class World3 {
 //    t += dt;
 //  }
 
-  //  var timeStep = function() {
-  //    updateLevels();
-  //    updateAuxen();
-  //    updateRates();
-  //    tock();
-  //    t += dt;
-  //  }
+   def timeStep() =  {
+      updateLevels()
+      updateAuxen()
+      updateRates()
+      tock()
+      t += dt
+    }
 
 //
 //
@@ -893,11 +905,16 @@ class World3 {
 
     for (i <- 1 to 100) {
       warmupAuxen()
-//      warmupRates()
-//      tock()
+      warmupRates()
+      tock()
     }
-//
-//    while (t <= stopTime) timeStep()
+
+    assert((1 to qArray.length - 1).forall(i => qArray(i).k.isDefined))
+
+    while (t <= stopTime) {
+      println(population.k.get)
+      timeStep()
+    }
   }
 
 
@@ -2472,7 +2489,7 @@ class World3 {
       Constants.laborUtilizationFractionDelayedDelayTime,
       units = "dimensionless",
       dependencies = Vector("laborUtilizationFraction"),
-      initFn = () => { laborUtilizationFraction }
+      initFn = () => laborUtilizationFraction
     )
 
 
