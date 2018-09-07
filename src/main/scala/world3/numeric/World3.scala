@@ -2390,7 +2390,7 @@ class World3 {
 //    return laborUtilizationFractionDelayed.k || 1.0;   // to break circularity
 //  }
 
-  var capitalUtilizationFraction =
+  var capitalUtilizationFraction: Table =
     Table(
       "capitalUtilizationFraction",
       83,
@@ -2434,7 +2434,7 @@ class World3 {
 //      (landDevelopmentRate.j - landErosionRate.j - landRemovalForUrbanIndustrialUse.j);
 //  }
 
-  var arableLand =
+  var arableLand: Level =
     Level(
       "arableLand",
       85,
@@ -2449,7 +2449,7 @@ class World3 {
 //    return potentiallyArableLand.j + dt * (-landDevelopmentRate.j)
 //  }
 
-  var potentiallyArableLand =
+  var potentiallyArableLand: Level =
     Level(
       "potentiallyArableLand",
       86,
@@ -2647,7 +2647,7 @@ class World3 {
 //  landDevelopmentRate.updateFn = function() {
 //    return totalAgriculturalInvestment.k * fractionOfInputsAllocatedToLandDevelopment.k / developmentCostPerHectare.k;
 //  }
-  var landDevelopmentRate = new Rate("landDevelopmentRate", 96, units = "hectares per year",
+  var landDevelopmentRate = Rate("landDevelopmentRate", 96, units = "hectares per year",
   updateFn = () => {totalAgriculturalInvestment.k.get * fractionOfInputsAllocatedToLandDevelopment.k.get / developmentCostPerHectare.k.get}
 )
 //
@@ -2656,7 +2656,10 @@ class World3 {
 //  developmentCostPerHectare.updateFn = function() {
 //    return potentiallyArableLand.k / landFractionCultivated.potentiallyArableLandTotal;
 //  }
-  var developmentCostPerHectare = new Table("developmentCostPerHectare", 97,
+  var developmentCostPerHectare =
+  Table(
+  qName = "developmentCostPerHectare",
+  qNumber = 97,
   data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
   updateFn = () => {potentiallyArableLand.k.get / Constants.potentiallyArableLandTotal}
 )
@@ -2725,7 +2728,7 @@ class World3 {
 //  agriculturalInputsPerHectare.updateFn = function() {
 //    return agriculturalInputs.k * (1 - fractionOfInputsAllocatedToLandMaintenance.k) / arableLand.k;
 //  }
-    var agriculturalInputsPerHectare = Aux("agriculturalInputsPerHectare", 101,
+    var agriculturalInputsPerHectare: Aux = Aux("agriculturalInputsPerHectare", 101,
     units = "dollars per hectare-year",
   dependencies = Vector("agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"),
     updateFn = () => {agriculturalInputs.k.get * (1 - fractionOfInputsAllocatedToLandMaintenance.k.get) / arableLand.k.get}
@@ -2846,7 +2849,7 @@ class World3 {
   val marginalProductivityOfAgriculturalInputs = Aux("marginalProductivityOfAgriculturalInputs", 110,
     units = "kilograms per dollar",
     dependencies = Vector("averageLifetimeOfAgriculturalInputs", "landYield", "marginalLandYieldMultiplierFromCapital", "landYieldMultiplierFromCapital"),
-    updateFn = () => {averageLifetimeOfAgriculturalInputsK * landYield.k.get * (marginalLandYieldMultiplierFromCapital.k.get / landYieldMultiplierFromCapital.k.get)}
+    updateFn = () => {Constants.averageLifetimeOfAgriculturalInputsK * landYield.k.get * (marginalLandYieldMultiplierFromCapital.k.get / landYieldMultiplierFromCapital.k.get)}
   )
 //  var marginalLandYieldMultiplierFromCapital = new Table("marginalLandYieldMultiplierFromCapital", 111, [0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005], 0, 600, 40)
 //  marginalLandYieldMultiplierFromCapital.units = "hectares per dollar";
@@ -2897,7 +2900,7 @@ class World3 {
   val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", 114,
   data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01), iMin = 0, iMax = 9, iDelta = 1,units = "dimensionless",
   dependencies = Vector("landYield"),
-  updateFn = () =>{landYield.k.get / inherentLandFertilityK}
+  updateFn = () =>{landYield.k.get / Constants.inherentLandFertilityK}
 )
 //
 //  var landLifeMultiplierFromYieldAfter = new Table("landLifeMultiplierFromYieldAfter", 115, [1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01], 0, 9, 1)
@@ -2909,7 +2912,7 @@ class World3 {
   val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", 115,
   data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
   iMin = 0, iMax = 9, iDelta = 1, units = "dimensionless", dependencies = Vector("landYield"),
-  updateFn = () => {landYield.k.get / inherentLandFertilityK}
+  updateFn = () => {landYield.k.get / Constants.inherentLandFertilityK}
   )
 //  var landErosionRate = new Rate("landErosionRate", 116);
 //  landErosionRate.units = "hectares per year";
@@ -3173,7 +3176,7 @@ class World3 {
   val nonrenewableResourceFractionRemaining = Aux(
     qName = "nonrenewableResourceFractionRemaining",
     qNumber = 133,
-    unit = "dimensionless",
+//    unit = "dimensionless",
     updateFn = () => {nonrenewableResources.k.get / Constants.nonrenewableResourcesInitialK}
   )
   //  var fractionOfCapitalAllocatedToObtainingResources = new Aux("fractionOfCapitalAllocatedToObtainingResources", 134);
