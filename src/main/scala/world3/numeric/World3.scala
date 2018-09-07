@@ -2209,7 +2209,7 @@ class World3 {
       "serviceCapitalDepreciationRate",
       68,
       units = "dollars per year",
-      updateFn = () => { serviceCapital.k.get / averageLifetimeOfServiceCapital.k.get }
+      updateFn = () => lift { unlift(serviceCapital.k) / unlift(averageLifetimeOfServiceCapital.k) }
     )
 
 //  var averageLifetimeOfServiceCapital = new Aux("averageLifetimeOfServiceCapital", 69);
@@ -2228,8 +2228,8 @@ class World3 {
       units = "years",
       updateFn =
         clip(
-          () => Constants.averageLifetimeOfServiceCapitalAfter,
-          () => Constants.averageLifetimeOfServiceCapitalBefore,
+          () => Some(Constants.averageLifetimeOfServiceCapitalAfter),
+          () => Some(Constants.averageLifetimeOfServiceCapitalBefore),
           t,
           policyYear)
     )
@@ -2251,7 +2251,7 @@ class World3 {
       70,
       units = "dollars per year",
       dependencies = Vector("capitalUtilizationFraction", "serviceCapitalOutputRatio"),
-      updateFn = () => { (serviceCapital.k.get * capitalUtilizationFraction.k.get) / serviceCapitalOutputRatio.k.get }
+      updateFn = () => lift { (unlift(serviceCapital.k) * unlift(capitalUtilizationFraction.k)) / unlift(serviceCapitalOutputRatio.k) }
     )
 
 //  var serviceOutputPerCapita = new Aux("serviceOutputPerCapita", 71);
@@ -2267,7 +2267,7 @@ class World3 {
       71,
       units = "dollars per person-year",
       dependencies = Vector("serviceOutput", "population"),
-      updateFn = () => { serviceOutput.k.get / population.k.get }
+      updateFn = () => lift { unlift(serviceOutput.k) / unlift(population.k) }
     )
 
 
@@ -2286,8 +2286,8 @@ class World3 {
       units = "years",
       updateFn =
         clip(
-          () => Constants.serviceCapitalOutputRatioAfter,
-          () => Constants.serviceCapitalOutputRatioBefore,
+          () => Some(Constants.serviceCapitalOutputRatioAfter),
+          () => Some(Constants.serviceCapitalOutputRatioBefore),
           t,
           policyYear)
     )
@@ -2307,7 +2307,7 @@ class World3 {
       73,
       units = "persons",
       dependencies = Vector("potentialJobsInIndustrialSector", "potentialJobsInAgriculturalSector", "potentialJobsInServiceSector"),
-      updateFn = () => { potentialJobsInIndustrialSector.k.get + potentialJobsInAgriculturalSector.k.get + potentialJobsInServiceSector.k.get }
+      updateFn = () => lift { unlift(potentialJobsInIndustrialSector.k) + unlift(potentialJobsInAgriculturalSector.k) + unlift(potentialJobsInServiceSector.k) }
     )
 
 
@@ -2324,7 +2324,7 @@ class World3 {
       74,
       units = "persons",
       dependencies = Vector("jobsPerIndustrialCapitalUnit"),
-      updateFn = () => { industrialCapital.k.get * jobsPerIndustrialCapitalUnit.k.get }
+      updateFn = () => lift { unlift(industrialCapital.k) * unlift(jobsPerIndustrialCapitalUnit.k) }
     )
 
 //  var jobsPerIndustrialCapitalUnit = new Table("jobsPerIndustrialCapitalUnit", 75, [0.00037, 0.00018, 0.00012, 0.00009, 0.00007, 0.00006], 50, 800, 150);
@@ -2344,7 +2344,7 @@ class World3 {
       150,
       units = "persons per dollar",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => { industrialOutputPerCapita.k }
     )
 
 
@@ -2361,7 +2361,7 @@ class World3 {
       76,
       units = "persons",
       dependencies = Vector("jobsPerServiceCapitalUnit"),
-      updateFn = () => { serviceCapital.k.get * jobsPerServiceCapitalUnit.k.get }
+      updateFn = () => lift { unlift(serviceCapital.k) * unlift(jobsPerServiceCapitalUnit.k) }
     )
 
 //  var jobsPerServiceCapitalUnit = new Table("jobsPerServiceCapitalUnit", 77, [.0011, 0.0006, 0.00035, 0.0002, 0.00015, 0.00015], 50, 800, 150);
@@ -2381,7 +2381,7 @@ class World3 {
       150,
       units = "persons per dollar",
       dependencies = Vector("serviceOutputPerCapita"),
-      updateFn = () => { serviceOutputPerCapita.k.get }
+      updateFn = () => { serviceOutputPerCapita.k }
     )
 
 //  var potentialJobsInAgriculturalSector = new Aux("potentialJobsInAgriculturalSector", 78);
@@ -2398,7 +2398,7 @@ class World3 {
       78,
       units = "persons",
       dependencies = Vector("jobsPerHectare"),
-      updateFn = () => { arableLand.k.get * jobsPerHectare.k.get }
+      updateFn = () => lift { unlift(arableLand.k) * unlift(jobsPerHectare.k) }
     )
 
 
@@ -2419,7 +2419,7 @@ class World3 {
       4,
       units = "persons per hectare",
       dependencies = Vector("agriculturalInputsPerHectare"),
-      updateFn = () => { agriculturalInputsPerHectare.k.get }
+      updateFn = () => { agriculturalInputsPerHectare.k }
     )
 
 //  var laborForce = new Aux("laborForce", 80);
@@ -2434,7 +2434,7 @@ class World3 {
       "laborForce",
       80,
       units = "persons",
-      updateFn = () => { (population15To44.k.get + population45To64.k.get) * Constants.laborForceParticipationFraction }
+      updateFn = () => lift { (unlift(population15To44.k) + unlift(population45To64.k)) * Constants.laborForceParticipationFraction }
     )
 
 
@@ -2451,7 +2451,7 @@ class World3 {
       81,
       units = "dimensionless",
       dependencies = Vector("jobs", "laborForce"),
-      updateFn = () => { jobs.k.get / laborForce.k.get }
+      updateFn = () => lift { unlift(jobs.k) / unlift(laborForce.k) }
     )
 
 
@@ -2489,7 +2489,7 @@ class World3 {
       2,
       units = "dimensionless",
       dependencies = Vector(),   // "laborUtilizationFractionDelayed" removed to break cycle
-      updateFn = () => { laborUtilizationFractionDelayed.k.getOrElse(1.0) } // to break circularity 
+      updateFn = () => lift { laborUtilizationFractionDelayed.k.getOrElse(1.0) } // to break circularity
     )
 
 
@@ -2509,7 +2509,7 @@ class World3 {
       "landFractionCultivated",
       84,
       units = "dimensionless",
-      updateFn = () => { arableLand.k.get / Constants.landFractionCultivatedPotentiallyArableLandTotal }
+      updateFn = () => lift {unlift(arableLand.k) / Constants.landFractionCultivatedPotentiallyArableLandTotal }
     )
 
 
@@ -2529,9 +2529,9 @@ class World3 {
       85,
       0.9e9,
       units = "hectares",
-      updateFn = () => {
-        arableLand.j.get +
-          dt * (landDevelopmentRate.j.get - landErosionRate.j.get - landRemovalForUrbanIndustrialUse.j.get)
+      updateFn = () => lift {
+        unlift(arableLand.j) +
+          dt * (unlift(landDevelopmentRate.j) - unlift(landErosionRate.j) - unlift(landRemovalForUrbanIndustrialUse.j))
       }
     )
 
@@ -2547,7 +2547,7 @@ class World3 {
       86,
       2.3e9,
       units = "hectares",
-      updateFn = () => { potentiallyArableLand.j.get + dt * (-landDevelopmentRate.j.get) }
+      updateFn = () => lift { unlift(potentiallyArableLand.j) + dt * (-unlift(landDevelopmentRate.j) }
     )
 
 //  var food = new Aux("food", 87);
@@ -2565,7 +2565,7 @@ class World3 {
       87,
       units = "kilograms per year",
       dependencies = Vector("landYield"),
-      updateFn = () => { landYield.k.get * arableLand.k.get * Constants.foodLandFractionHarvestedK * (1 - Constants.foodProcessingLossK) }
+      updateFn = () => lift { unlift(landYield.k) * unlift(arableLand.k) * Constants.foodLandFractionHarvestedK * (1 - Constants.foodProcessingLossK) }
     )
 
 
@@ -2585,7 +2585,7 @@ class World3 {
     qNumber = 88,
     units = "kilograms per person-year",
     dependencies = Vector("food", "population"),
-    updateFn = ()=> {food.k.get / population.k.get}
+    updateFn = ()=> lift {unlift(food.k) / unlift(population.k)}
   )
 
 
@@ -2603,7 +2603,7 @@ class World3 {
       89,
       units = "kilograms per person-year",
       dependencies = Vector("indicatedFoodPerCapitaBefore", "indicatedFoodPerCapitaAfter"),
-      updateFn = clip(() => indicatedFoodPerCapitaAfter.k.get, () => indicatedFoodPerCapitaBefore.k.get, t, policyYear)
+      updateFn = clip(() => indicatedFoodPerCapitaAfter.k, () => indicatedFoodPerCapitaBefore.k, t, policyYear)
     )
 
 
@@ -2626,7 +2626,7 @@ class World3 {
       200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => { industrialOutputPerCapita.k }
     )
 
 
@@ -2648,7 +2648,7 @@ class World3 {
       200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => industrialOutputPerCapita.k
     )
 
 
@@ -2666,7 +2666,7 @@ class World3 {
       92,
       units = "dollars per year",
       dependencies = Vector("industrialOutput", "fractionOfIndustrialOutputAllocatedToAgriculture"),
-      updateFn = () => { industrialOutput.k.get * fractionOfIndustrialOutputAllocatedToAgriculture.k.get }
+      updateFn = () => lift { unlift(industrialOutput.k) * unlift(fractionOfIndustrialOutputAllocatedToAgriculture.k)}
     )
 
 
@@ -2686,8 +2686,8 @@ class World3 {
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgricultureBefore", "fractionOfIndustrialOutputAllocatedToAgricultureAfter"),
       updateFn =
         clip(
-          () => fractionOfIndustrialOutputAllocatedToAgricultureAfter.k.get,
-          () => fractionOfIndustrialOutputAllocatedToAgricultureBefore.k.get,
+          () => fractionOfIndustrialOutputAllocatedToAgricultureAfter.k,
+          () => fractionOfIndustrialOutputAllocatedToAgricultureBefore.k,
           t,
           policyYear)
     )
@@ -2710,7 +2710,7 @@ class World3 {
       0.5,
       units = "dimensionless",
       dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
-      updateFn = () => { foodPerCapita.k.get / indicatedFoodPerCapita.k.get }
+      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k) }
     )
 
 //  var fractionOfIndustrialOutputAllocatedToAgricultureAfter = new Table("fractionOfIndustrialOutputAllocatedToAgricultureAfter", 95, [0.4, 0.2, 0.1, 0.025, 0, 0], 0, 2.5, 0.5)
@@ -2730,7 +2730,7 @@ class World3 {
       0.5,
       units = "dimensionless",
       dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
-      updateFn = () => { foodPerCapita.k.get / indicatedFoodPerCapita.k.get }
+      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k)}
     )
 
   
@@ -2740,21 +2740,20 @@ class World3 {
 //    return totalAgriculturalInvestment.k * fractionOfInputsAllocatedToLandDevelopment.k / developmentCostPerHectare.k;
 //  }
   var landDevelopmentRate = Rate("landDevelopmentRate", 96, units = "hectares per year",
-  updateFn = () => {totalAgriculturalInvestment.k.get * fractionOfInputsAllocatedToLandDevelopment.k.get / developmentCostPerHectare.k.get}
-)
+    updateFn = () => lift {unlift(totalAgriculturalInvestment.k) * unlift(fractionOfInputsAllocatedToLandDevelopment.k) / unlift(developmentCostPerHectare.k)}
+  )
 //
 //  var developmentCostPerHectare = new Table("developmentCostPerHectare", 97, [100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50], 0, 1.0, 0.1)
 //  developmentCostPerHectare.units = "dollars per hectare";
 //  developmentCostPerHectare.updateFn = function() {
 //    return potentiallyArableLand.k / landFractionCultivated.potentiallyArableLandTotal;
 //  }
-  var developmentCostPerHectare =
-  Table(
-  qName = "developmentCostPerHectare",
-  qNumber = 97,
-  data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
-  updateFn = () => {potentiallyArableLand.k.get / Constants.potentiallyArableLandTotal}
-)
+  var developmentCostPerHectare = Table(
+    qName = "developmentCostPerHectare",
+    qNumber = 97,
+    data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
+    updateFn = () => lift {unlift(potentiallyArableLand.k) / Constants.potentiallyArableLandTotal}
+  )
 //
 //
 //  // Loop 2: Food from Investment in Agricultural Inputs
@@ -2772,7 +2771,7 @@ class World3 {
       98,
       units = "dollars per year",
       dependencies = Vector("totalAgriculturalInvestment", "fractionOfInputsAllocatedToLandDevelopment"),
-      updateFn = () => {totalAgriculturalInvestment.k.get * (1 - fractionOfInputsAllocatedToLandDevelopment.k.get)}
+      updateFn = () => lift {unlift(totalAgriculturalInvestment.k) * (1 - unlift(fractionOfInputsAllocatedToLandDevelopment.k))}
     )
 //
 //  var averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
@@ -2817,9 +2816,9 @@ class World3 {
 //  averageLifetimeOfAgriculturalInputs.updateFn = function() {
 //    return clip(this.after, this.before, t, policyYear);
 //  }
-    var averageLifetimeOfAgriculturalInputs = Aux("averageLifetimeOfAgriculturalInputs", 100, units = "years",
-  updateFn = clip(() => 2,()=>2 , t, policyYear)
-)
+  var averageLifetimeOfAgriculturalInputs = Aux("averageLifetimeOfAgriculturalInputs", 100, units = "years",
+    updateFn = clip(() => Some(2), () => Some(2) , t, policyYear)
+  )
 //  var agriculturalInputsPerHectare = new Aux("agriculturalInputsPerHectare", 101);
 //  agriculturalInputsPerHectare.units = "dollars per hectare-year";
 //  agriculturalInputsPerHectare.dependencies = ["agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"];
@@ -2827,10 +2826,10 @@ class World3 {
 //    return agriculturalInputs.k * (1 - fractionOfInputsAllocatedToLandMaintenance.k) / arableLand.k;
 //  }
     var agriculturalInputsPerHectare: Aux = Aux("agriculturalInputsPerHectare", 101,
-    units = "dollars per hectare-year",
-  dependencies = Vector("agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"),
-    updateFn = () => {agriculturalInputs.k.get * (1 - fractionOfInputsAllocatedToLandMaintenance.k.get) / arableLand.k.get}
-  )
+      units = "dollars per hectare-year",
+      dependencies = Vector("agriculturalInputs", "fractionOfInputsAllocatedToLandMaintenance"),
+      updateFn = () => lift {unlift(agriculturalInputs.k) * (1 - unlift(fractionOfInputsAllocatedToLandMaintenance.k)) / unlift(arableLand.k)}
+    )
 //  var landYieldMultiplierFromCapital = new Table("landYieldMultiplierFromCapital", 102, [1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10], 0, 1000, 40)
 //  landYieldMultiplierFromCapital.units = "dimensionless";
 //  landYieldMultiplierFromCapital.dependencies = ["agriculturalInputsPerHectare"];
@@ -2840,11 +2839,11 @@ class World3 {
     var landYieldMultiplierFromCapital = Table(
       "landYieldMultiplierFromCapital", 102,
       data=Vector(1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10),
-    iMin = 0, iMax = 1000, iDelta = 40,
-    units = "dimensionless",
-    dependencies = Vector("agriculturalInputsPerHectare"),
-    updateFn = () => {agriculturalInputsPerHectare.k.get}
-  )
+      iMin = 0, iMax = 1000, iDelta = 40,
+      units = "dimensionless",
+      dependencies = Vector("agriculturalInputsPerHectare"),
+      updateFn = () => agriculturalInputsPerHectare.k
+    )
 //  var landYield = new Aux("landYield", 103);
 //  landYield.units = "kilograms per hectare-year";
 //  landYield.plotColor = "#185103";
@@ -2860,7 +2859,7 @@ class World3 {
   var landYield:Aux = Aux(
     "landYield", 103,
     units = "kilograms per hectare-year", dependencies = Vector("landYieldFactor", "landYieldMultiplierFromCapital", "landYieldMultiplierFromAirPollution"),
-    updateFn = () => {landYieldFactor.k.get * landFertility.k.get * landYieldMultiplierFromCapital.k.get * landYieldMultiplierFromAirPollution.k.get}
+    updateFn = () => lift {unlift(landYieldFactor.k) * unlift(landFertility.k) * unlift(landYieldMultiplierFromCapital.k) * unlift(landYieldMultiplierFromAirPollution.k)}
   )
 //  var landYieldFactor = new Aux("landYieldFactor", 104);
 //  landYieldFactor.units = "dimensionless";
@@ -2870,7 +2869,7 @@ class World3 {
 //    return clip(this.after, this.before, t, policyYear);
 //  }
   val landYieldFactor = Aux("landYieldFactor", 104, units = "dimensionless",
-    updateFn = clip(() => 1,() => 1, t, policyYear)
+    updateFn = clip(() => Some(1),() => Some(1), t, policyYear)
   )
 //
 //  var landYieldMultiplierFromAirPollution = new Aux("landYieldMultiplierFromAirPollution", 105);
@@ -2883,7 +2882,7 @@ class World3 {
     "landYieldMultiplierFromAirPollution", 105,
     units = "dimensionless",
     dependencies = Vector("landYieldMultiplierFromAirPollutionBefore", "landYieldMultiplierFromAirPollutionAfter"),
-    updateFn = clip(()=>landYieldMultiplierFromAirPollutionAfter.k.get, ()=>landYieldMultiplierFromAirPollutionBefore.k.get, t, policyYear)
+    updateFn = clip(()=>landYieldMultiplierFromAirPollutionAfter.k, ()=>landYieldMultiplierFromAirPollutionBefore.k, t, policyYear)
   )
 //
 //  var landYieldMultiplierFromAirPollutionBefore = new Table("landYieldMultiplierFromAirPollutionBefore", 106, [1, 1, 0.7, 0.4], 0, 30, 10)
@@ -2896,7 +2895,7 @@ class World3 {
     data = Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     units = "dimensionless",
     dependencies = Vector("industrialOutput"),
-    updateFn = () => {industrialOutput.k.get / Constants.industrialOutputValueIn1970}
+    updateFn = () => lift {unlift(industrialOutput.k) / Constants.industrialOutputValueIn1970}
   )
 //  var landYieldMultiplierFromAirPollutionAfter = new Table("landYieldMultiplierFromAirPollutionAfter", 107, [1, 1, 0.7, 0.4], 0, 30, 10)
 //  landYieldMultiplierFromAirPollutionAfter.units = "dimensionless";
@@ -2908,7 +2907,7 @@ class World3 {
     Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     units = "dimensionless",
     dependencies = Vector("industrialOutput"),
-    updateFn = () => {industrialOutput.k.get / Constants.industrialCapitalOutputRatioAfter}
+    updateFn = () => lift {unlift(industrialOutput.k) / Constants.industrialCapitalOutputRatioAfter}
   )
 //
 //  // Loops 1 and 2: The Investment Allocation Decision
@@ -2921,9 +2920,9 @@ class World3 {
 //  }
   val fractionOfInputsAllocatedToLandDevelopment = Table(
     "fractionOfInputsAllocatedToLandDevelopment", 108,
-  data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
-  units = "dimensionless", dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
-  updateFn = () => {marginalProductivityOfLandDevelopment.k.get / marginalProductivityOfAgriculturalInputs.k.get}
+    data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
+    units = "dimensionless", dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
+    updateFn = () => lift {unlift(marginalProductivityOfLandDevelopment.k) / unlift(marginalProductivityOfAgriculturalInputs.k)}
   )
 //  var marginalProductivityOfLandDevelopment = new Aux("marginalProductivityOfLandDevelopment", 109);
 //  marginalProductivityOfLandDevelopment.units = "kilograms per dollar";
@@ -2933,9 +2932,9 @@ class World3 {
 //    return landYield.k / (developmentCostPerHectare.k * marginalProductivityOfLandDevelopment.socialDiscount);
 //  }
   val marginalProductivityOfLandDevelopment = Aux("marginalProductivityOfLandDevelopment", 109,
-  units = "kilograms per dollar",
-  dependencies = Vector("landYield", "developmentCostPerHectare"),
-  updateFn = () => { landYield.k.get / (developmentCostPerHectare.k.get * Constants.socialDiscount)}
+    units = "kilograms per dollar",
+    dependencies = Vector("landYield", "developmentCostPerHectare"),
+    updateFn = () => lift { unlift(landYield.k) / (unlift(developmentCostPerHectare.k) * Constants.socialDiscount)}
   )
 //
 //  var marginalProductivityOfAgriculturalInputs = new Aux("marginalProductivityOfAgriculturalInputs", 110);
@@ -2947,7 +2946,7 @@ class World3 {
   val marginalProductivityOfAgriculturalInputs = Aux("marginalProductivityOfAgriculturalInputs", 110,
     units = "kilograms per dollar",
     dependencies = Vector("averageLifetimeOfAgriculturalInputs", "landYield", "marginalLandYieldMultiplierFromCapital", "landYieldMultiplierFromCapital"),
-    updateFn = () => {Constants.averageLifetimeOfAgriculturalInputsK * landYield.k.get * (marginalLandYieldMultiplierFromCapital.k.get / landYieldMultiplierFromCapital.k.get)}
+    updateFn = () => lift {Constants.averageLifetimeOfAgriculturalInputsK * unlift(landYield.k) * (unlift(marginalLandYieldMultiplierFromCapital.k) / unlift(landYieldMultiplierFromCapital.k)}
   )
 //  var marginalLandYieldMultiplierFromCapital = new Table("marginalLandYieldMultiplierFromCapital", 111, [0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005], 0, 600, 40)
 //  marginalLandYieldMultiplierFromCapital.units = "hectares per dollar";
@@ -2956,11 +2955,11 @@ class World3 {
 //    return agriculturalInputsPerHectare.k;
 //  }
   val marginalLandYieldMultiplierFromCapital = Table(
-  "marginalLandYieldMultiplierFromCapital", 111,
-  data = Vector(0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005),
-  iMin = 0, iMax = 600, iDelta = 40, units = "hectares per dollar",
-  dependencies = Vector("agriculturalInputsPerHectare"),
-  updateFn = () => {agriculturalInputsPerHectare.k.get}
+    "marginalLandYieldMultiplierFromCapital", 111,
+    data = Vector(0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005),
+    iMin = 0, iMax = 600, iDelta = 40, units = "hectares per dollar",
+    dependencies = Vector("agriculturalInputsPerHectare"),
+    updateFn = () => agriculturalInputsPerHectare.k
   )
 //
 //  // Loop 3: Land Erosion and Urban-Industrial Use
@@ -2973,8 +2972,8 @@ class World3 {
 //  averageLifeOfLand.updateFn = function() {
 //    return averageLifeOfLand.normal * landLifeMultiplierFromYield.k;
 //  }
-    val averageLifeOfLand = Aux("averageLifeOfLand", 112, units = "years", dependencies = Vector("landLifeMultiplierFromYield"),
-      updateFn = () => {Constants.averageLifeOfLandNormal * landLifeMultiplierFromYield.k.get}
+  val averageLifeOfLand = Aux("averageLifeOfLand", 112, units = "years", dependencies = Vector("landLifeMultiplierFromYield"),
+    updateFn = () => lift {Constants.averageLifeOfLandNormal * unlift(landLifeMultiplierFromYield.k)}
   )
 //  var landLifeMultiplierFromYield = new Aux("landLifeMultiplierFromYield", 113);
 //  landLifeMultiplierFromYield.units = "dimensionless";
@@ -2983,8 +2982,8 @@ class World3 {
 //    return clip(landLifeMultiplierFromYieldAfter.k, landLifeMultiplierFromYieldBefore.k, t, policyYear);
 //  }
   val landLifeMultiplierFromYield = Aux("landLifeMultiplierFromYield", 113,units = "dimensionless",
-  dependencies = Vector("landLifeMultiplierFromYieldBefore", "landLifeMultiplierFromYieldAfter"),
-  updateFn = clip(()=>landLifeMultiplierFromYieldAfter.k.get, ()=>landLifeMultiplierFromYieldBefore.k.get, t, policyYear)
+    dependencies = Vector("landLifeMultiplierFromYieldBefore", "landLifeMultiplierFromYieldAfter"),
+    updateFn = clip(()=>landLifeMultiplierFromYieldAfter.k, ()=>landLifeMultiplierFromYieldBefore.k, t, policyYear)
   )
 //
 //  var inherentLandFertilityK = 600;   // kilograms per hectare-year, used in eqns 114, 115 and 124
@@ -2996,10 +2995,10 @@ class World3 {
 //    return landYield.k / inherentLandFertilityK;
 //  }
   val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", 114,
-  data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01), iMin = 0, iMax = 9, iDelta = 1,units = "dimensionless",
-  dependencies = Vector("landYield"),
-  updateFn = () =>{landYield.k.get / Constants.inherentLandFertilityK}
-)
+    data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01), iMin = 0, iMax = 9, iDelta = 1,units = "dimensionless",
+    dependencies = Vector("landYield"),
+    updateFn = () => lift {unlift(landYield.k) / Constants.inherentLandFertilityK}
+  )
 //
 //  var landLifeMultiplierFromYieldAfter = new Table("landLifeMultiplierFromYieldAfter", 115, [1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01], 0, 9, 1)
 //  landLifeMultiplierFromYieldAfter.units = "dimensionless";
@@ -3008,9 +3007,9 @@ class World3 {
 //    return landYield.k / inherentLandFertilityK;
 //  }
   val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", 115,
-  data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
-  iMin = 0, iMax = 9, iDelta = 1, units = "dimensionless", dependencies = Vector("landYield"),
-  updateFn = () => {landYield.k.get / Constants.inherentLandFertilityK}
+    data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+    iMin = 0, iMax = 9, iDelta = 1, units = "dimensionless", dependencies = Vector("landYield"),
+    updateFn = () => lift {unlift(landYield.k) / Constants.inherentLandFertilityK}
   )
 //  var landErosionRate = new Rate("landErosionRate", 116);
 //  landErosionRate.units = "hectares per year";
@@ -3019,9 +3018,7 @@ class World3 {
 //  }
   val landErosionRate =
     Rate("landErosionRate", 116, units = "hectares per year",
-      updateFn = () => {
-        arableLand.k.get / averageLifeOfLand.k.get
-      }
+      updateFn = () => lift { unlift(arableLand.k) / unlift(averageLifeOfLand.k) }
     )
 //
 //  // 2016-08-09: Neil S. Grant reported an error in the table of values
@@ -3039,7 +3036,7 @@ class World3 {
     data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
     iMin = 0, iMax = 1600, iDelta = 200, units = "hectares per person",
     dependencies = Vector("industrialOutputPerCapita"),
-    updateFn = () =>{industrialOutputPerCapita.k.get}
+    updateFn = () => industrialOutputPerCapita.k
   )
 //  var urbanIndustrialLandRequired = new Aux("urbanIndustrialLandRequired", 118);
 //  urbanIndustrialLandRequired.units = "hectares";
@@ -3050,7 +3047,7 @@ class World3 {
   val urbanIndustrialLandRequired = Aux("urbanIndustrialLandRequired", 118,
     units = "hectares",
     dependencies = Vector("urbanIndustrialLandPerCapita", "population"),
-    updateFn = () => {urbanIndustrialLandPerCapita.k.get * population.k.get}
+    updateFn = () => lift {unlift(urbanIndustrialLandPerCapita.k) * unlift(population.k)}
   )
 //
 //  var landRemovalForUrbanIndustrialUse = new Rate("landRemovalForUrbanIndustrialUse", 119);
@@ -3060,7 +3057,7 @@ class World3 {
 //    return Math.max(0, (urbanIndustrialLandRequired.k - urbanIndustrialLand.k) / landRemovalForUrbanIndustrialUse.developmentTime);
 //  }
   val landRemovalForUrbanIndustrialUse = Rate("landRemovalForUrbanIndustrialUse", 119, units = "hectares per year",
-    updateFn = () => {Math.max(0, (urbanIndustrialLandRequired.k.get - urbanIndustrialLand.k.get) / Constants.developmentTime)}
+    updateFn = () => lift {Math.max(0, (unlift(urbanIndustrialLandRequired.k) - unlift(urbanIndustrialLand.k)) / Constants.developmentTime)}
   )
 //
 //  var urbanIndustrialLand = new Level("urbanIndustrialLand", 120, 8.2e6);
@@ -3072,7 +3069,7 @@ class World3 {
     "urbanIndustrialLand", 120,
     initVal = 8.2e6,
     units = "hectares",
-    updateFn = () => {urbanIndustrialLand.j.get + dt * landRemovalForUrbanIndustrialUse.j.get}
+    updateFn = () => lift {unlift(urbanIndustrialLand.j) + dt * unlift(landRemovalForUrbanIndustrialUse.j)}
   )
 
   //
@@ -3089,7 +3086,7 @@ class World3 {
     qNumber = 121,
     initVal = 600,
     units = "kilograms per hectare-year",
-    updateFn = ()=> {landFertility.j.get + dt * (landFertilityRegeneration.j.get - landFertilityDegradation.j.get)}
+    updateFn = ()=> lift {unlift(landFertility.j) + dt * (unlift(landFertilityRegeneration.j) - unlift(landFertilityDegradation.j))}
   )
 //  var landFertilityDegradationRate = new Table("landFertilityDegradationRate", 122, [0, 0.1, 0.3, 0.5], 0, 30, 10);
 //  landFertilityDegradationRate.units = "inverse years";
@@ -3101,7 +3098,7 @@ class World3 {
       qName="landFertilityDegradationRate", qNumber=122, data=Vector(0, 0.1, 0.3, 0.5), iMin=0, iMax = 30, iDelta = 10,
     units = "inverse years",
     dependencies = Vector("indexOfPersistentPollution"),
-    updateFn = () => {indexOfPersistentPollution.k.get}
+    updateFn = () => indexOfPersistentPollution.k
     )
 //  var landFertilityDegradation = new Rate("landFertilityDegradation", 123);
 //  landFertilityDegradation.units = "kilograms per hectare-year-year";
@@ -3112,7 +3109,7 @@ class World3 {
     qName="landFertilityDegradation",
     qNumber=123,
     units = "kilograms per hectare-year-year",
-    updateFn = () => {landFertility.k.get * landFertilityDegradationRate.k.get}
+    updateFn = () => lift {unlift(landFertility.k) * unlift(landFertilityDegradationRate.k)}
   )
 //
 //  // Loop 5: Land fertility regeneration
@@ -3126,7 +3123,7 @@ class World3 {
     qName="landFertilityRegeneration",
     qNumber=124,
     units = "kilograms per hectare-year-year",
-    updateFn = () => {(Constants.inherentLandFertilityK - landFertility.k.get) / landFertilityRegenerationTime.k.get}
+    updateFn = () => lift {(Constants.inherentLandFertilityK - unlift(landFertility.k) / unlift(landFertilityRegenerationTime.k)}
   )
 
 //  var landFertilityRegenerationTime = new Table("landFertilityRegenerationTime", 125, [20, 13, 8, 4, 2, 2], 0, 0.1, 0.02);
@@ -3140,7 +3137,7 @@ class World3 {
     data = Vector(20, 13, 8, 4, 2, 2), iMin=0, iMax=0.1, iDelta=0.02,
     units = "years",
     dependencies = Vector("fractionOfInputsAllocatedToLandMaintenance"),
-    updateFn = () => {fractionOfInputsAllocatedToLandMaintenance.k.get}
+    updateFn = () => fractionOfInputsAllocatedToLandMaintenance.k
   )
   //
   //  // Loop 6: Discontinuing land maintenance
@@ -3158,7 +3155,7 @@ class World3 {
     iMin=0, iMax=4, iDelta=1,
     units = "dimensionless",
     dependencies = Vector("perceivedFoodRatio"),
-    updateFn = () => {perceivedFoodRatio.k.get}
+    updateFn = () => perceivedFoodRatio.k
   )
   //  var foodRatio = new Aux("foodRatio", 127);
   //  foodRatio.units = "dimensionless";
@@ -3171,7 +3168,7 @@ class World3 {
     qNumber= 127,
     units = "dimensionless",
     dependencies = Vector("foodPerCapita"),
-    updateFn = () => {foodPerCapita.k.get/Constants.subsistenceFoodPerCapitaK}
+    updateFn = () => lift {unlift(foodPerCapita.k)/Constants.subsistenceFoodPerCapitaK}
   )
 
   //
@@ -3188,7 +3185,7 @@ class World3 {
     qNumber = 128,
     delay= Constants.foodShortagePerceptionDelayK,
     initVal = Some(1.0),
-    initFn = () => foodRatio
+    initFn = () => foodRatio // ??? CHECK THAT!!!
   )
   //  /*
   //  var perceivedFoodRatio = new Smooth("perceivedFoodRatio", 128, foodShortagePerceptionDelayK);
@@ -3227,7 +3224,7 @@ class World3 {
     qNumber = 129,
     initVal = Constants.nonrenewableResourcesInitialK,
     units = "resource units",
-    updateFn = ()=> lift {unlift(nonrenewableResources.j) + dt * (-unlift(nonrenewableResourceUsageRate.j)}
+    updateFn = ()=> lift {unlift(nonrenewableResources.j) + dt * (-unlift(nonrenewableResourceUsageRate.j))}
   )
   //  var nonrenewableResourceUsageRate = new Rate("nonrenewableResourceUsageRate", 130);
   //  nonrenewableResourceUsageRate.units = "resource units per year";
