@@ -1,19 +1,26 @@
 package world3.numeric
 
-import scala.collection.mutable.{ ListBuffer}
+import scala.collection.mutable.ListBuffer
 import io.monadless.stdlib.MonadlessOption._
 import better.files._
 import File._
+import world3.numeric.World3.result
 
 object World3 extends App {
+
+  def csv(result: Vector[StepValues]) =
+    result.map {
+      r => s"${r.step},${r.population},${r.nonrenewableResourceFractionRemaining},${r.foodPerCapita},${r.industrialOutputPerCapita},${r.indexOfPersistentPollution},${r.lifeExpectancy}"
+    }.mkString("\n")
+
+  def check(result: Vector[StepValues]) = {
+    assert(File("/tmp/results.csv").contentAsString == csv(result))
+  }
+
   val w3 = new World3()
   val result = w3.fastRun()
 
-  def csv = result.map {
-    r => s"${r.step},${r.population},${r.nonrenewableResourceFractionRemaining},${r.foodPerCapita},${r.industrialOutputPerCapita},${r.indexOfPersistentPollution},${r.lifeExpectancy}"
-  }.mkString("\n")
-
-  File("/tmp/results.csv").write(csv)
+  check(result)
 
 }
 
@@ -27,6 +34,10 @@ case class StepValues(
   lifeExpectancy:Double)
 
 class World3 {
+
+
+
+
   /*  Limits to Growth: This is a re-implementation in JavaScript
     of World3, the social-economic-environmental model created by
     Dennis and Donella Meadows and others circa 1970. The results
@@ -35,6 +46,65 @@ class World3 {
     Dynamics of Growth in a Finite World in 1974.
 
 */
+
+
+  object Constants {
+    val lifeExpectancyNormal = 32 // used in eqn 19
+    val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
+    var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
+    val potentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
+    val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
+    val averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
+    val socialDiscount = 0.07 // eqn 109
+    val averageLifeOfLandNormal = 6000 // years, used in eqn 112
+    val inherentLandFertilityK = 600 // kilograms per hectare-year, used in eqns 114, 115 and 124
+    val developmentTime = 10;   // years, used in eqn 119
+    val foodShortagePerceptionDelayK = 2  // years, used in eqn 128
+    val nonrenewableResourcesInitialK = 1.0e12 // resource units, used in eqns 129 and 133
+    val fractionOfResourcesAsPersistentMaterial = 0.02 // dimensionless, used in eqn 139
+    val industrialMaterialsEmissionFactor = 0.1 // dimensionless, used in eqn 139
+    val industrialMaterialsToxicityIndex = 10 // pollution units per resource unit, used in eqn 139
+    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
+    val fractionOfInputsAsPersistentMaterial = 0.001 // dimensionless, used in eqn 141
+    val agriculturalMaterialsToxicityIndex = 1 // pollution units per dollar, used in eqn 141
+    val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
+    val lifetimeMultiplierFromHealthServicesPolicyYear = 1940
+    val birthsPerYearReproductiveLifetime = 30;          // years
+    val birthsPerYearPopulationEquilibriumTime = 4000;   // year
+    val maxTotalFertilityNormal = 12;   // dimensionless
+    val lifetimePerceptionDelayK = 20;      // years, used in eqn 37
+    val desiredCompletedFamilySizeNormal = 4.0
+    val zeroPopulationGrowthTargetYear = 4000;
+    val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
+    val socialAdjustmentDelayK = 20;    // years, used in eqn 40
+    val incomeExpectationAveragingTimeK = 3; // years, used in eqn 43
+    val healthServicesImpactDelayK = 20;    // years, for eqn 46
+    val industrialCapitalOutputRatioBefore = 3;
+    val industrialCapitalOutputRatioAfter = 3;
+    val averageLifetimeOfIndustrialCapitalBefore = 14;
+    val averageLifetimeOfIndustrialCapitalAfter = 14;
+
+    val fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime = 4000;  // year
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore = 0.43;
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter = 0.43;
+    val fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired = 400;
+
+    val averageLifetimeOfServiceCapitalBefore = 20;   // years
+    val averageLifetimeOfServiceCapitalAfter = 20;    // years
+
+    val serviceCapitalOutputRatioBefore = 1;
+    val serviceCapitalOutputRatioAfter = 1;
+
+    val laborForceParticipationFraction = 0.75  // dimensionless
+    val laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
+
+    val landFractionCultivatedPotentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
+
+    val foodLandFractionHarvestedK = 0.7;   // dimensionless
+    val foodProcessingLossK = 0.1;          // dimensionless
+
+
+  }
 
   // The DYNAMO clip function, a poor-man's conditional expression.
   //  function clip(a, b, x, y) {
@@ -3570,63 +3640,7 @@ class World3 {
     updateFn = () => lift {unlift(serviceOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
 
-  object Constants {
-    val lifeExpectancyNormal = 32 // used in eqn 19
-    val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
-    var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
-    val potentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
-    val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
-    val averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
-    val socialDiscount = 0.07 // eqn 109
-    val averageLifeOfLandNormal = 6000 // years, used in eqn 112
-    val inherentLandFertilityK = 600 // kilograms per hectare-year, used in eqns 114, 115 and 124
-    val developmentTime = 10;   // years, used in eqn 119
-    val foodShortagePerceptionDelayK = 2  // years, used in eqn 128
-    val nonrenewableResourcesInitialK = 1.0e12 // resource units, used in eqns 129 and 133
-    val fractionOfResourcesAsPersistentMaterial = 0.02 // dimensionless, used in eqn 139
-    val industrialMaterialsEmissionFactor = 0.1 // dimensionless, used in eqn 139
-    val industrialMaterialsToxicityIndex = 10 // pollution units per resource unit, used in eqn 139
-    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
-    val fractionOfInputsAsPersistentMaterial = 0.001 // dimensionless, used in eqn 141
-    val agriculturalMaterialsToxicityIndex = 1 // pollution units per dollar, used in eqn 141
-    val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
-    val lifetimeMultiplierFromHealthServicesPolicyYear = 1940
-    val birthsPerYearReproductiveLifetime = 30;          // years
-    val birthsPerYearPopulationEquilibriumTime = 4000;   // year
-    val maxTotalFertilityNormal = 12;   // dimensionless
-    val lifetimePerceptionDelayK = 20;      // years, used in eqn 37
-    val desiredCompletedFamilySizeNormal = 4.0
-    val zeroPopulationGrowthTargetYear = 4000;
-    val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
-    val socialAdjustmentDelayK = 20;    // years, used in eqn 40
-    val incomeExpectationAveragingTimeK = 3; // years, used in eqn 43
-    val healthServicesImpactDelayK = 20;    // years, for eqn 46
-    val industrialCapitalOutputRatioBefore = 3;
-    val industrialCapitalOutputRatioAfter = 3;
-    val averageLifetimeOfIndustrialCapitalBefore = 14;
-    val averageLifetimeOfIndustrialCapitalAfter = 14;
 
-    val fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime = 4000;  // year
-    val fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore = 0.43;
-    val fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter = 0.43;
-    val fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired = 400;
-
-    val averageLifetimeOfServiceCapitalBefore = 20;   // years
-    val averageLifetimeOfServiceCapitalAfter = 20;    // years
-
-    val serviceCapitalOutputRatioBefore = 1;
-    val serviceCapitalOutputRatioAfter = 1;
-
-    val laborForceParticipationFraction = 0.75  // dimensionless
-    val laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
-
-    val landFractionCultivatedPotentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
-
-    val foodLandFractionHarvestedK = 0.7;   // dimensionless
-    val foodProcessingLossK = 0.1;          // dimensionless
-
-
-  }
 
 
   val auxSequence = Vector[All](
