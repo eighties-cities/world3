@@ -113,20 +113,9 @@ class World3 {
   //    else
   //      return b
   //  }
+
   def clip(a: () => Option[Double], b: () => Option[Double], x: Double, y: Double) = if(x >= y) a else b
 
-  // when we create an Equation with qNumber n, it becomes element qArray[n]
-  // note that there is no qArray[0]
-  var qArray = Array.ofDim[All](150)
-
-  // Equations with qClass "Level" are pushed onto this Array
-  val levelArray = ListBuffer[Level]()
-
-  // Equations with qClass "Rate" are pushed onto this Array
-  var rateArray = ListBuffer[All]()
-
-  // Equations with qClass "Aux" are pushed onto this Array
-  //var auxArray = ListBuffer[All]()
 
   //
   // construtor for Level objects
@@ -159,12 +148,8 @@ class World3 {
   }
 
   object Level {
-    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
-      val l = new Level(qName, qNumber, initVal, updateFn, units, dependencies)
-      levelArray += l
-      qArray(qNumber) = l
-      l
-    }
+    def apply(qName: String, qNumber: Int, initVal: Double, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) =
+      new Level(qName, qNumber, initVal, updateFn, units, dependencies)
   }
 
   class Level(
@@ -251,12 +236,8 @@ class World3 {
       qNumber: Int,
       updateFn: () => Option[Double],
       units: String = "dimensionless",
-      dependencies: Vector[String] = Vector()) = {
-      val r = new Rate(qName, qNumber, units, updateFn, dependencies)
-      rateArray += r
-      qArray(qNumber) = r
-      r
-    }
+      dependencies: Vector[String] = Vector()) =
+      new Rate(qName, qNumber, units, updateFn, dependencies)
 
   }
 
@@ -323,12 +304,8 @@ class World3 {
   //  Aux.prototype.plot = Level.prototype.plot;
   //
   object Aux {
-    def apply(qName: String, qNumber: Int, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
-      val a = new Aux(qName, qNumber, updateFn, units, dependencies)
-      //auxArray += a
-      qArray(qNumber) = a
-      a
-    }
+    def apply(qName: String, qNumber: Int, updateFn: () => Option[Double], units: String = "dimensionless", dependencies: Vector[String] = Vector()) =
+      new Aux(qName, qNumber, updateFn, units, dependencies)
   }
 
 
@@ -372,12 +349,9 @@ class World3 {
       initFn: () => All,
       initVal: Option[Double] = None,
       units: String = "dimensionless",
-      dependencies: Vector[String] = Vector()) = {
-      val s = new Smooth(qName, qNumber, initFn, initVal, units, delay, dependencies)
-      //auxArray += s
-      qArray(qNumber) = s
-      s
-    }
+      dependencies: Vector[String] = Vector()) =
+        new Smooth(qName, qNumber, initFn, initVal, units, delay, dependencies)
+
   }
   //
   //  // constructor for Smooth objects
@@ -479,12 +453,9 @@ class World3 {
   object Delay3 {
     case class JK(j: Option[Double], k: Option[Double])
 
-    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) = {
-      val d = new Delay3(qName, qNumber, initFn, units, delay, dependencies)
-      qArray(qNumber) = d
-      //auxArray += d
-      d
-    }
+    def apply(qName: String, qNumber: Int, initFn: () => All, delay: Double, units: String = "dimensionless", dependencies: Vector[String] = Vector()) =
+      new Delay3(qName, qNumber, initFn, units, delay, dependencies)
+
   }
 
   class Delay3(
@@ -620,12 +591,9 @@ class World3 {
       iDelta: Double,
       updateFn: () => Option[Double],
       units: String = "dimensionless",
-      dependencies: Vector[String] = Vector()) = {
-      val t = new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units, dependencies)
-      qArray(qNumber) = t
-      //auxArray += t
-      t
-    }
+      dependencies: Vector[String] = Vector()) =
+      new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units, dependencies)
+      
 
   }
 
@@ -812,8 +780,7 @@ class World3 {
 //
   def resetModel() =  {
     t = startTime
-    for (i <- 1  until qArray.length) qArray(i).reset()
-    //setUpGraph();
+    all.foreach(_.reset)
   }
 
 //  var initSmoothsAndDelay3s = function() {
@@ -825,16 +792,12 @@ class World3 {
 //    }
 //  }
 
-  def initSmoothsAndDelay3s() = {
-    for (i <- 1 until qArray.length) {
-      qArray(i) match {
-        case s: Smooth => s.init()
-        case d: Delay3 => d.init()
-        case _ =>
-      }
+  def initSmoothsAndDelay3s() =
+    all.foreach {
+      case s: Smooth => s.init()
+      case d: Delay3 => d.init()
+      case _ =>
     }
-  }
-
 
 //  var updateAuxen = function() {
 //    for (var i = 0 ; i < auxArray.length ; i++) {
@@ -853,7 +816,7 @@ class World3 {
 //    }
 //  }
 
-  def updateRates() = rateArray.foreach(_.update())
+  def updateRates() = rates.foreach(_.update())
 
 
 //  var updateLevels = function() {
@@ -862,7 +825,7 @@ class World3 {
 //    }
 //  }
 
-  def updateLevels() =  levelArray.foreach(_.update())
+  def updateLevels() =  levels.foreach(_.update())
 
 //
 //  var warmupAuxen = function() {
@@ -874,7 +837,7 @@ class World3 {
 
 
   def warmupAuxen() = auxSequence.foreach(_.warmup())
-  def warmupRates() = rateArray.foreach(_.warmup())
+  def warmupRates() = rates.foreach(_.warmup())
 
 //  var warmupRates = function() {
 //    for (var i = 0 ; i < rateArray.length ; i++) {
@@ -896,8 +859,7 @@ class World3 {
 //    }
 //  }
 
-  def tock() = (1 to qArray.length - 1).map(i => qArray(i).tick)
-
+  def tock() = all.foreach(_.tick)
 
   def initModel() =  {
     initSmoothsAndDelay3s()
@@ -996,7 +958,7 @@ class World3 {
       tock()
     }
 
-    assert((1 to qArray.length - 1).forall(i => qArray(i).k.isDefined))
+    assert(all.forall(_.k.isDefined))
 
     val result = ListBuffer[StepValues]()
 
@@ -2847,7 +2809,7 @@ class World3 {
       updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k)}
     )
 
-  
+
 //  var landDevelopmentRate = new Rate("landDevelopmentRate", 96);
 //  landDevelopmentRate.units = "hectares per year";
 //  landDevelopmentRate.updateFn = function() {
@@ -3519,8 +3481,6 @@ class World3 {
       initFn = () => { persistentPollutionGenerationRate }
     )
 
-  rateArray += persistentPollutionAppearanceRate
-
   //  var persistentPollution = new Level("persistentPollution", 142, 2.5e7);
   //  persistentPollution.units = "pollution units";
   //  persistentPollution.updateFn = function() {
@@ -3761,6 +3721,199 @@ class World3 {
     fractionOfOutputInIndustry,
     fractionOfOutputInServices)
 
+
+  val levels = Vector(
+    population0To14,
+    population15To44,
+    population45To64,
+    population65AndOver,
+    industrialCapital,
+    serviceCapital,
+    arableLand,
+    potentiallyArableLand,
+    urbanIndustrialLand,
+    landFertility,
+    nonrenewableResources,
+    persistentPollution
+  )
+
+
+  val rates = Vector(
+    deathsPerYear0To14,
+    maturationsPerYear14to15,
+    deathsPerYear15To44,
+    maturationsPerYear44to45,
+    deathsPerYear45To64,
+    maturationsPerYear64to65,
+    deathsPerYear65AndOver,
+    birthsPerYear,
+    industrialCapitalDepreciationRate,
+    industrialCapitalInvestmentRate,
+    serviceCapitalInvestmentRate,
+    serviceCapitalDepreciationRate,
+    landDevelopmentRate,
+    landErosionRate,
+    landRemovalForUrbanIndustrialUse,
+    landFertilityDegradation,
+    landFertilityRegeneration,
+    nonrenewableResourceUsageRate,
+    persistentPollutionGenerationRate,
+    persistentPollutionAppearanceRate,
+    persistenPollutionAssimilationRate
+  )
+
+
+  val all = Vector(
+    population,
+    population0To14,
+    deathsPerYear0To14,
+    mortality0To14,
+    maturationsPerYear14to15,
+    population15To44,
+    deathsPerYear15To44,
+    mortality15To44,
+    maturationsPerYear44to45,
+    population45To64,
+    deathsPerYear45To64,
+    mortality45To64,
+    maturationsPerYear64to65,
+    population65AndOver,
+    deathsPerYear65AndOver,
+    mortality65AndOver,
+    deathsPerYear,
+    crudeDeathRate,
+    lifeExpectancy,
+    lifetimeMultiplierFromFood,
+    healthServicesAllocationsPerCapita,
+    effectiveHealthServicesPerCapita,
+    lifetimeMultiplierFromHealthServices,
+    lifetimeMultiplierFromHealthServicesBefore,
+    lifetimeMultiplierFromHealthServicesAfter,
+    fractionOfPopulationUrban,
+    crowdingMultiplierFromIndustrialization,
+    lifetimeMultiplierFromCrowding,
+    lifetimeMultiplierFromPollution,
+    birthsPerYear,
+    crudeBirthRate,
+    totalFertility,
+    maxTotalFertility,
+    fecundityMultiplier,
+    desiredTotalFertility,
+    compensatoryMultiplierFromPerceivedLifeExpectancy,
+    perceivedLifeExpectancy,
+    desiredCompletedFamilySize,
+    socialFamilySizeNorm,
+    delayedIndustrialOutputPerCapita,
+    familyResponseToSocialNorm,
+    familyIncomeExpectation,
+    averageIndustrialOutputPerCapita,
+    needForFertilityControl,
+    fertilityControlEffectiveness,
+    fertilityControlFacilitiesPerCapita,
+    fertilityControlAllocationPerCapita,
+    fractionOfServicesAllocatedToFertilityControl,
+    industrialOutputPerCapita,
+    industrialOutput,
+    industrialCapitalOutputRatio,
+    industrialCapital,
+    industrialCapitalDepreciationRate,
+    averageLifetimeOfIndustrialCapital,
+    industrialCapitalInvestmentRate,
+    fractionOfIndustrialOutputAllocatedToIndustry,
+    fractionOfIndustrialOutputAllocatedToConsumption,
+    fractionOfIndustrialOutputAllocatedToConsumptionConstant,
+    fractionOfIndustrialOutputAllocatedToConsumptionVariable,
+    indicatedServiceOutputPerCapita,
+    indicatedServiceOutputPerCapitaBefore,
+    indicatedServiceOutputPerCapitaAfter,
+    fractionOfIndustrialOutputAllocatedToServices,
+    fractionOfIndustrialOutputAllocatedToServicesBefore,
+    fractionOfIndustrialOutputAllocatedToServicesAfter,
+    serviceCapitalInvestmentRate,
+    serviceCapital,
+    serviceCapitalDepreciationRate,
+    averageLifetimeOfServiceCapital,
+    serviceOutput,
+    serviceOutputPerCapita,
+    serviceCapitalOutputRatio,
+    jobs,
+    potentialJobsInIndustrialSector,
+    jobsPerIndustrialCapitalUnit,
+    potentialJobsInServiceSector,
+    jobsPerServiceCapitalUnit,
+    potentialJobsInAgriculturalSector,
+    jobsPerHectare,
+    laborForce,
+    laborUtilizationFraction,
+    laborUtilizationFractionDelayed,
+    capitalUtilizationFraction,
+    landFractionCultivated,
+    arableLand,
+    potentiallyArableLand,
+    food,
+    foodPerCapita,
+    indicatedFoodPerCapita,
+    indicatedFoodPerCapitaBefore,
+    indicatedFoodPerCapitaAfter,
+    totalAgriculturalInvestment,
+    fractionOfIndustrialOutputAllocatedToAgriculture,
+    fractionOfIndustrialOutputAllocatedToAgricultureBefore,
+    fractionOfIndustrialOutputAllocatedToAgricultureAfter,
+    landDevelopmentRate,
+    developmentCostPerHectare,
+    currentAgriculturalInputs,
+    agriculturalInputs,
+    averageLifetimeOfAgriculturalInputs,
+    agriculturalInputsPerHectare,
+    landYieldMultiplierFromCapital,
+    landYield,
+    landYieldFactor,
+    landYieldMultiplierFromAirPollution,
+    landYieldMultiplierFromAirPollutionBefore,
+    landYieldMultiplierFromAirPollutionAfter,
+    fractionOfInputsAllocatedToLandDevelopment,
+    marginalProductivityOfLandDevelopment,
+    marginalProductivityOfAgriculturalInputs,
+    marginalLandYieldMultiplierFromCapital,
+    averageLifeOfLand,
+    landLifeMultiplierFromYield,
+    landLifeMultiplierFromYieldBefore,
+    landLifeMultiplierFromYieldAfter,
+    landErosionRate,
+    urbanIndustrialLandPerCapita,
+    urbanIndustrialLandRequired,
+    landRemovalForUrbanIndustrialUse,
+    urbanIndustrialLand,
+    landFertility,
+    landFertilityDegradationRate,
+    landFertilityDegradation,
+    landFertilityRegeneration,
+    landFertilityRegenerationTime,
+    fractionOfInputsAllocatedToLandMaintenance,
+    foodRatio,
+    perceivedFoodRatio,
+    nonrenewableResources,
+    nonrenewableResourceUsageRate,
+    nonrenewableResourceUsageFactor,
+    perCapitaResourceUsageMultiplier,
+    nonrenewableResourceFractionRemaining,
+    fractionOfCapitalAllocatedToObtainingResources,
+    fractionOfCapitalAllocatedToObtainingResourcesBefore,
+    fractionOfCapitalAllocatedToObtainingResourcesAfter,
+    persistentPollutionGenerationRate,
+    persistentPollutionGenerationFactor,
+    persistentPollutionGeneratedByIndustrialOutput,
+    persistentPollutionGeneratedByAgriculturalOutput,
+    persistentPollutionAppearanceRate,
+    persistentPollution,
+    indexOfPersistentPollution,
+    persistenPollutionAssimilationRate,
+    assimilationHalfLifeMultiplier,
+    assimilationHalfLife,
+    fractionOfOutputInAgriculture,
+    fractionOfOutputInIndustry,
+    fractionOfOutputInServices
+  )
 
   //
 //  // ENTRY POINT: called by body.onload
