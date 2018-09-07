@@ -26,7 +26,7 @@ class World3 {
   //    else
   //      return b
   //  }
-  def clip(a: () => Double, b: () => Double, x: Double, y: Double) = if(x >= y) a else b
+  def clip(a: () => Option[Double], b: () => Option[Double], x: Double, y: Double) = if(x >= y) a else b
 
   // when we create an Equation with qNumber n, it becomes element qArray[n]
   // note that there is no qArray[0]
@@ -3227,7 +3227,7 @@ class World3 {
     qNumber = 129,
     initVal = Constants.nonrenewableResourcesInitialK,
     units = "resource units",
-    updateFn = ()=> {nonrenewableResources.j.get + dt * (-nonrenewableResourceUsageRate.j.get)}
+    updateFn = ()=> lift {unlift(nonrenewableResources.j) + dt * (-unlift(nonrenewableResourceUsageRate.j)}
   )
   //  var nonrenewableResourceUsageRate = new Rate("nonrenewableResourceUsageRate", 130);
   //  nonrenewableResourceUsageRate.units = "resource units per year";
@@ -3238,7 +3238,7 @@ class World3 {
     qName = "nonrenewableResourceUsageRate",
     qNumber = 130,
     units = "resource units per year",
-    updateFn = () => {population.k.get * perCapitaResourceUsageMultiplier.k.get * nonrenewableResourceUsageFactor.k.get}
+    updateFn = () => lift {unlift(population.k) * unlift(perCapitaResourceUsageMultiplier.k) * unlift(nonrenewableResourceUsageFactor.k)}
   )
   //  var nonrenewableResourceUsageFactor = new Aux("nonrenewableResourceUsageFactor", 131);
   //  nonrenewableResourceUsageFactor.units = "dimensionless";
@@ -3251,7 +3251,7 @@ class World3 {
     qName = "nonrenewableResourceUsageFactor",
     qNumber = 131,
     units = "dimensionless",
-    updateFn = clip(()=>1.0, ()=>1.0, t, policyYear) // ???
+    updateFn = clip(()=>Some(1.0), ()=>Some(1.0), t, policyYear) // ???
   )
   //  var perCapitaResourceUsageMultiplier = new Table("perCapitaResourceUsageMultiplier", 132, [0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7], 0, 1600, 200);
   //  perCapitaResourceUsageMultiplier.units = "resource units per person-year";
@@ -3264,7 +3264,7 @@ class World3 {
     data = Vector(0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7), iMin = 0, iMax = 1600, iDelta = 200,
     units = "resource units per person-year",
     dependencies = Vector("industrialOutputPerCapita"),
-    updateFn = () => {industrialOutputPerCapita.k.get}
+    updateFn = () => industrialOutputPerCapita.k
   )
   //  var nonrenewableResourceFractionRemaining = new Aux("nonrenewableResourceFractionRemaining", 133);
   //  nonrenewableResourceFractionRemaining.units = "dimensionless";
@@ -3278,7 +3278,7 @@ class World3 {
     qName = "nonrenewableResourceFractionRemaining",
     qNumber = 133,
 //    unit = "dimensionless",
-    updateFn = () => {nonrenewableResources.k.get / Constants.nonrenewableResourcesInitialK}
+    updateFn = () => lift {unlift(nonrenewableResources.k) / Constants.nonrenewableResourcesInitialK}
   )
   //  var fractionOfCapitalAllocatedToObtainingResources = new Aux("fractionOfCapitalAllocatedToObtainingResources", 134);
   //  fractionOfCapitalAllocatedToObtainingResources.units = "dimensionless";
@@ -3291,7 +3291,7 @@ class World3 {
     qNumber = 134,
 //    unit = "dimensionless",
     dependencies = Vector("fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"),
-    updateFn = clip(() => fractionOfCapitalAllocatedToObtainingResourcesAfter.k.get, () => fractionOfCapitalAllocatedToObtainingResourcesBefore.k.get, t, policyYear)
+    updateFn = clip(() => fractionOfCapitalAllocatedToObtainingResourcesAfter.k, () => fractionOfCapitalAllocatedToObtainingResourcesBefore.k, t, policyYear)
   )
   //  var fractionOfCapitalAllocatedToObtainingResourcesBefore = new Table("fractionOfCapitalAllocatedToObtainingResourcesBefore", 135, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
   //  fractionOfCapitalAllocatedToObtainingResourcesBefore.units = "dimensionless";
@@ -3306,7 +3306,7 @@ class World3 {
     iMin = 0, iMax = 1, iDelta = 0.1,
     units = "dimensionless",
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
-    updateFn = () => {nonrenewableResourceFractionRemaining.k.get}
+    updateFn = () => nonrenewableResourceFractionRemaining.k
   )
 
   //  var fractionOfCapitalAllocatedToObtainingResourcesAfter = new Table("fractionOfCapitalAllocatedToObtainingResourcesAfter", 136, [1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05], 0, 1, 0.1);
@@ -3322,7 +3322,7 @@ class World3 {
     iMin = 0, iMax = 1, iDelta = 0.1,
     units = "dimensionless",
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
-    updateFn = () => {nonrenewableResourceFractionRemaining.k.get}
+    updateFn = () => nonrenewableResourceFractionRemaining.k
   )
   //
   //
@@ -3338,7 +3338,7 @@ class World3 {
     qName = "persistentPollutionGenerationRate",
     qNumber = 137,
     units = "pollution units per year",
-    updateFn = () => {(persistentPollutionGeneratedByIndustrialOutput.k.get + persistentPollutionGeneratedByAgriculturalOutput.k.get) * persistentPollutionGenerationFactor.k.get}
+    updateFn = () => lift {(unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k) * unlift(persistentPollutionGenerationFactor.k)}
   )
   //  var persistentPollutionGenerationFactor = new Aux("persistentPollutionGenerationFactor", 138);
   //  persistentPollutionGenerationFactor.units = "dimensionless";
@@ -3352,7 +3352,7 @@ class World3 {
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
     units = "dimensionless",
-    updateFn = clip(()=>1.0,()=>1.0,t,policyYear)
+    updateFn = clip(()=>Some(1.0),()=>Some(1.0),t,policyYear)
   )
   //  var persistentPollutionGeneratedByIndustrialOutput = new Aux("persistentPollutionGeneratedByIndustrialOutput", 139);
   //  persistentPollutionGeneratedByIndustrialOutput.units = "pollution units per year";
@@ -3368,7 +3368,7 @@ class World3 {
     qNumber = 139,
     units = "pollution units per year",
     dependencies = Vector("perCapitaResourceUsageMultiplier", "population"),
-    updateFn = () => {perCapitaResourceUsageMultiplier.k.get * population.k.get * Constants.fractionOfResourcesAsPersistentMaterial * Constants.industrialMaterialsEmissionFactor * Constants.industrialMaterialsToxicityIndex}
+    updateFn = () => lift {unlift(perCapitaResourceUsageMultiplier.k) * unlift(population.k) * Constants.fractionOfResourcesAsPersistentMaterial * Constants.industrialMaterialsEmissionFactor * Constants.industrialMaterialsToxicityIndex}
   )
   //  var persistentPollutionGeneratedByAgriculturalOutput = new Aux("persistentPollutionGeneratedByAgriculturalOutput", 140);
   //  persistentPollutionGeneratedByAgriculturalOutput.units = "pollution units per year";
@@ -3383,7 +3383,7 @@ class World3 {
     qNumber = 140,
     units = "pollution units per year",
     dependencies = Vector("agriculturalInputsPerHectare"),
-    updateFn = () => {agriculturalInputsPerHectare.k.get * arableLand.k.get * Constants.fractionOfInputsAsPersistentMaterial * Constants.agriculturalMaterialsToxicityIndex}
+    updateFn = () => lift {unlift(agriculturalInputsPerHectare.k) * unlift(arableLand.k) * Constants.fractionOfInputsAsPersistentMaterial * Constants.agriculturalMaterialsToxicityIndex}
   )
   //
   //  var persistentPollutionTransmissionDelayK = 20; // years, used in eqn 141
@@ -3418,7 +3418,7 @@ class World3 {
       qNumber = 142,
       initVal = 2.5e7,
       units = "pollution units",
-      updateFn = () => {persistentPollution.j.get + dt * (persistentPollutionAppearanceRate.j.get - persistenPollutionAssimilationRate.j.get)}
+      updateFn = () => lift {unlift(persistentPollution.j) + dt * (unlift(persistentPollutionAppearanceRate.j) - unlift(persistenPollutionAssimilationRate.j)}
     )
 
   //  var indexOfPersistentPollution = new Aux("indexOfPersistentPollution", 143);
@@ -3434,7 +3434,7 @@ class World3 {
     qName = "indexOfPersistentPollution",
     qNumber = 143,
     units = "dimensionless",
-    updateFn = () => {persistentPollution.k.get / Constants.pollutionValueIn1970}
+    updateFn = () => lift {unlift(persistentPollution.k) / Constants.pollutionValueIn1970}
   )
 
   //  var persistenPollutionAssimilationRate = new Rate("persistenPollutionAssimilationRate", 144);
@@ -3446,7 +3446,7 @@ class World3 {
     qName = "persistenPollutionAssimilationRate",
     qNumber = 144,
     units = "pollution units per year",
-    updateFn = () => {persistentPollution.k.get / (assimilationHalfLife.k.get * 1.4)}
+    updateFn = () => lift {unlift(persistentPollution.k) / (unlift(assimilationHalfLife.k) * 1.4)}
   )
 
   //  var assimilationHalfLifeMultiplier = new Table("assimilationHalfLifeMultiplier", 145, [1, 11, 21, 31, 41], 1, 1001, 250);
@@ -3460,7 +3460,7 @@ class World3 {
     qNumber = 145,
     units = "years",
     dependencies = Vector("indexOfPersistentPollution"),
-    updateFn = () => {indexOfPersistentPollution.k.get},
+    updateFn = () => indexOfPersistentPollution.k,
     data = Vector(1, 11, 21, 31, 41),
     iMin = 1,
     iMax = 1001,
@@ -3478,7 +3478,7 @@ class World3 {
     qNumber = 146,
     units = "years",
     dependencies = Vector("assimilationHalfLifeMultiplier"),
-    updateFn = () => {assimilationHalfLifeMultiplier.k.get * Constants.assimilationHalfLifeValueIn1970}
+    updateFn = () => lift {unlift(assimilationHalfLifeMultiplier.k) * Constants.assimilationHalfLifeValueIn1970}
   )
 
   //
@@ -3495,7 +3495,7 @@ class World3 {
       qNumber = 147,
       units = "dimensionless",
       dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-      updateFn = () => {0.22 * food.k.get / ((0.22 * food.k.get) + serviceOutput.k.get + industrialOutput.k.get)}
+      updateFn = () => lift {0.22 * unlift(food.k) / ((0.22 * unlift(food.k)) + unlift(serviceOutput.k) + unlift(industrialOutput.k)}
     )
 
   //  var fractionOfOutputInIndustry = new Aux("fractionOfOutputInIndustry", 148);
@@ -3509,7 +3509,7 @@ class World3 {
     qNumber = 148,
     units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-    updateFn = () => {industrialOutput.k.get / (0.22 * food.k.get + serviceOutput.k.get + industrialOutput.k.get)}
+    updateFn = () => lift {unlift(industrialOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
 
   //  var fractionOfOutputInServices = new Aux("fractionOfOutputInServices", 149);
@@ -3523,7 +3523,7 @@ class World3 {
     qNumber = 149,
     units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
-    updateFn = () => {serviceOutput.k.get / (0.22 * food.k.get + serviceOutput.k.get + industrialOutput.k.get)}
+    updateFn = () => lift {unlift(serviceOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
 
   object Constants {
