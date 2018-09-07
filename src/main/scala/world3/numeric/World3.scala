@@ -1044,7 +1044,9 @@ class World3 {
       6,
       7.0e8,
       units = "persons",
-      updateFn = () => { population15To44.j.get + dt * (maturationsPerYear14to15.j.get - deathsPerYear15To44.j.get - maturationsPerYear44to45.j.get) }
+      updateFn = () => lift {
+        unlift(population15To44.j) + dt * (unlift(maturationsPerYear14to15.j) - unlift(deathsPerYear15To44.j) - unlift(maturationsPerYear44to45.j))
+      }
     )
 
 //  var deathsPerYear15To44 = new Rate("deathsPerYear15To44", 7);
@@ -1058,7 +1060,7 @@ class World3 {
       "deathsPerYear15To44",
       7,
       units = "persons per year",
-      updateFn = () => { population15To44.k.get * mortality15To44.k.get }
+      updateFn = () => lift { unlift(population15To44.k) * unlift(mortality15To44.k) }
     )
 
 //  var mortality15To44 = new Table("mortality15To44", 8, [0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008], 20, 80, 10);
@@ -1078,7 +1080,7 @@ class World3 {
       10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
-      updateFn = () => { lifeExpectancy.k.get }
+      updateFn = () => lift { unlift(lifeExpectancy.k) }
     )
 
 
@@ -1094,7 +1096,7 @@ class World3 {
       "maturationsPerYear44to45",
       9,
       units = "persons per year",
-      updateFn = () => { population15To44.k.get * (1 - mortality15To44.k.get) / 30 }
+      updateFn = () => lift { unlift(population15To44.k) * (1 - unlift(mortality15To44.k)) / 30 }
     )
 
 
@@ -1113,7 +1115,9 @@ class World3 {
       10,
       1.9e8,
       units = "persons",
-      updateFn = () => { population45To64.j.get + dt * (maturationsPerYear44to45.j.get - deathsPerYear45To64.j.get - maturationsPerYear64to65.j.get) }
+      updateFn = () => lift {
+        unlift(population45To64.j) + dt * (unlift(maturationsPerYear44to45.j) - unlift(deathsPerYear45To64.j) - unlift(maturationsPerYear64to65.j))
+      }
     )
 
 //  var deathsPerYear45To64 = new Rate("deathsPerYear45To64", 11);
@@ -1127,7 +1131,7 @@ class World3 {
       "deathsPerYear45To64",
       11,
       units = "persons per year",
-      updateFn = () => { population45To64.k.get * mortality45To64.k.get }
+      updateFn = () => lift { unlift(population45To64.k) * unlift(mortality45To64.k) }
     )
 
 
@@ -1148,7 +1152,7 @@ class World3 {
       10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
-      updateFn = () => { lifeExpectancy.k.get }
+      updateFn = () => lift { unlift(lifeExpectancy.k) }
     )
 
 //  var maturationsPerYear64to65 = new Rate("maturationsPerYear64to65", 13);
@@ -1162,7 +1166,7 @@ class World3 {
       "maturationsPerYear64to65",
       13,
       units = "persons per year",
-      updateFn = () => { population45To64.k.get * (1 - mortality45To64.k.get) / 20 }
+      updateFn = () => lift { unlift(population45To64.k) * (1 - unlift(mortality45To64.k)) / 20 }
     )
 
 //  var population65AndOver = new Level("population65AndOver", 14, 6.0e7);
@@ -1178,7 +1182,7 @@ class World3 {
       14,
       6.0e7,
       units = "persons",
-      updateFn = () => { population65AndOver.j.get + dt * (maturationsPerYear64to65.j.get - deathsPerYear65AndOver.j.get) }
+      updateFn = () => lift {  unlift(population65AndOver.j) + dt * (unlift(maturationsPerYear64to65.j) - unlift(deathsPerYear65AndOver.j)) }
     )
 
 
@@ -1193,7 +1197,7 @@ class World3 {
       "deathsPerYear65AndOver",
       15,
       units = "persons per year",
-      updateFn = () => { population65AndOver.k.get * mortality65AndOver.k.get }
+      updateFn = () => lift { unlift(population65AndOver.k) * unlift(mortality65AndOver.k) }
     )
 
 
@@ -1214,7 +1218,7 @@ class World3 {
       10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
-      updateFn = () => { lifeExpectancy.k.get }
+      updateFn = () => lifeExpectancy.k
     )
 
 
@@ -1260,7 +1264,7 @@ class World3 {
       18,
       units = "deaths per 1000 person-years",
       dependencies = Vector("deathsPerYear", "population"),
-      updateFn = () => { 1000 * deathsPerYear.k.get / population.k.get }
+      updateFn = () => lift { 1000 * unlift(deathsPerYear.k) / unlift(population.k) }
     )
 
 //  var lifeExpectancy = new Aux("lifeExpectancy", 19);
@@ -1284,12 +1288,12 @@ class World3 {
       19,
       units = "years",
       dependencies = Vector("lifetimeMultiplierFromFood", "lifetimeMultiplierFromHealthServices", "lifetimeMultiplierFromPollution", "lifetimeMultiplierFromCrowding"),
-      updateFn = () => {
+      updateFn = () => lift {
        Constants.lifeExpectancyNormal *
-        lifetimeMultiplierFromFood.k.get *
-        lifetimeMultiplierFromHealthServices.k.get *
-        lifetimeMultiplierFromPollution.k.get *
-        lifetimeMultiplierFromCrowding.k.get }
+        unlift(lifetimeMultiplierFromFood.k) *
+        unlift(lifetimeMultiplierFromHealthServices.k) *
+        unlift(lifetimeMultiplierFromPollution.k) *
+        unlift(lifetimeMultiplierFromCrowding.k) }
     )
 
 //  var lifetimeMultiplierFromFood = new Table("lifetimeMultiplierFromFood", 20, [0, 1, 1.2, 1.3, 1.35, 1.4], 0, 5, 1);
@@ -1309,7 +1313,7 @@ class World3 {
       1,
       units = "dimensionless",
       dependencies = Vector("foodPerCapita"),
-      updateFn = () => { foodPerCapita.k.get / Constants.subsistenceFoodPerCapitaK }
+      updateFn = () => lift { unlift(foodPerCapita.k) / Constants.subsistenceFoodPerCapitaK }
     )
 
 //  var healthServicesAllocationsPerCapita = new Table("healthServicesAllocationsPerCapita", 21, [0, 20, 50, 95, 140, 175, 200, 220, 230], 0, 2000, 250);
@@ -1329,7 +1333,7 @@ class World3 {
       250,
       units = "dollars per person-year",
       dependencies = Vector("serviceOutputPerCapita"),
-      updateFn = () => { serviceOutputPerCapita.k.get }
+      updateFn = () => serviceOutputPerCapita.k
     )
 
 
@@ -1347,7 +1351,7 @@ class World3 {
       Constants.effectiveHealthServicesPerCapitaImpactDelay,
       units = "dollars per person-year",
       dependencies = Vector("healthServicesAllocationsPerCapita"),
-      initFn = () => { healthServicesAllocationsPerCapita }
+      initFn = () => healthServicesAllocationsPerCapita
     )
 
 
@@ -1368,7 +1372,7 @@ class World3 {
       23,
       units = "dimensionless",
       dependencies = Vector("lifetimeMultiplierFromHealthServicesBefore", "lifetimeMultiplierFromHealthServicesAfter"),
-      updateFn = clip(() => lifetimeMultiplierFromHealthServicesAfter.k.get, () => lifetimeMultiplierFromHealthServicesBefore.k.get,  t, Constants.lifetimeMultiplierFromHealthServicesPolicyYear)
+      updateFn = clip(() => lifetimeMultiplierFromHealthServicesAfter.k, () => lifetimeMultiplierFromHealthServicesBefore.k,  t, Constants.lifetimeMultiplierFromHealthServicesPolicyYear)
     )
 
 //  var lifetimeMultiplierFromHealthServicesBefore = new Table("lifetimeMultiplierFromHealthServicesBefore", 24, [1, 1.1, 1.4, 1.6, 1.7, 1.8], 0, 100, 20);
@@ -1388,7 +1392,7 @@ class World3 {
       20,
       units = "dimensionless",
       dependencies = Vector("effectiveHealthServicesPerCapita"),
-      updateFn = () => { effectiveHealthServicesPerCapita.k.get }
+      updateFn = () => effectiveHealthServicesPerCapita.k
     )
 
 
@@ -1409,7 +1413,7 @@ class World3 {
       20,
       units = "dimensionless",
       dependencies = Vector("effectiveHealthServicesPerCapita"),
-      updateFn = () => { effectiveHealthServicesPerCapita.k.get }
+      updateFn = () => effectiveHealthServicesPerCapita.k
     )
 
 //  var fractionOfPopulationUrban = new Table("fractionOfPopulationUrban", 26, [0, 0.2, 0.4, 0.5, 0.58, 0.65, 0.72, 0.78, 0.80], 0, 1.6e10, 2.0e9);
@@ -1429,7 +1433,7 @@ class World3 {
       2.0e9,
       units = "dimensionless",
       dependencies = Vector("population"),
-      updateFn = () => { population.k.get }
+      updateFn = () => population.k
     )
 
 //  var crowdingMultiplierFromIndustrialization = new Table("crowdingMultiplierFromIndustrialization", 27, [0.5, 0.05, -0.1, -0.08, -0.02, 0.05, 0.1, 0.15, 0.2],
@@ -1450,7 +1454,7 @@ class World3 {
       200,
       units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => industrialOutputPerCapita.k
     )
 
 //  var lifetimeMultiplierFromCrowding = new Aux("lifetimeMultiplierFromCrowding", 28);
@@ -1464,7 +1468,7 @@ class World3 {
       "lifetimeMultiplierFromCrowding",
       28,
       units = "dimensionless",
-      updateFn = () => { 1 - (crowdingMultiplierFromIndustrialization.k.get * fractionOfPopulationUrban.k.get) }
+      updateFn = () => lift { 1 - (unlift(crowdingMultiplierFromIndustrialization.k) * unlift(fractionOfPopulationUrban.k)) }
     )
 
 //  var lifetimeMultiplierFromPollution
@@ -1485,7 +1489,7 @@ class World3 {
       10,
       units = "dimensionless",
       dependencies = Vector("indexOfPersistentPollution"),
-      updateFn = () => { indexOfPersistentPollution.k.get }
+      updateFn = () => indexOfPersistentPollution.k
     )
 
 //  // The Birth-Rate Subsector
@@ -1507,8 +1511,8 @@ class World3 {
         30,
         units = "persons per year",
         updateFn = {
-          def after() = deathsPerYear.k.get
-          def before(): Double = totalFertility.k.get * population15To44.k.get * 0.5 / Constants.birthsPerYearReproductiveLifetime
+          def after() = deathsPerYear.k
+          def before() = lift { unlift(totalFertility.k) * unlift(population15To44.k) * 0.5 / Constants.birthsPerYearReproductiveLifetime }
           clip(after, before, t, Constants.birthsPerYearPopulationEquilibriumTime)
         }
       )
@@ -1529,7 +1533,7 @@ class World3 {
       31,
       units = "births per 1000 person-years",
       dependencies = Vector("population"),
-      updateFn = () => { 1000 * birthsPerYear.j.get / population.k.get }
+      updateFn = () => lift { 1000 * unlift(birthsPerYear.j) / unlift(population.k) }
     )
 
 //  var totalFertility = new Aux("totalFertility", 32);
@@ -1547,10 +1551,10 @@ class World3 {
       32,
       units = "dimensionless",
       dependencies = Vector("maxTotalFertility", "fertilityControlEffectiveness", "desiredTotalFertility"),
-      updateFn = () => {
+      updateFn = () => lift {
         math.min(
-          maxTotalFertility.k.get,
-          (maxTotalFertility.k.get * (1 - fertilityControlEffectiveness.k.get) + desiredTotalFertility.k.get * fertilityControlEffectiveness.k.get)
+          unlift(maxTotalFertility.k),
+          (unlift(maxTotalFertility.k) * (1 - unlift(fertilityControlEffectiveness.k)) + unlift(desiredTotalFertility.k) * unlift(fertilityControlEffectiveness.k))
         )
       }
     )
@@ -1569,7 +1573,7 @@ class World3 {
       33,
       units = "dimensionless",
       dependencies = Vector("fecundityMultiplier"),
-      updateFn = () => { Constants.maxTotalFertilityNormal * fecundityMultiplier.k.get }
+      updateFn = () => lift { Constants.maxTotalFertilityNormal * unlift(fecundityMultiplier.k) }
     )
 
 //  var fecundityMultiplier = new Table("fecundityMultiplier", 34, [0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.05, 1.1], 0, 80, 10);
@@ -1589,7 +1593,7 @@ class World3 {
       10,
       units = "dimensionless",
       dependencies = Vector("lifeExpectancy"),
-      updateFn = () => { lifeExpectancy.k.get }
+      updateFn = () => lifeExpectancy.k
     )
 
 //  var desiredTotalFertility = new Aux("desiredTotalFertility", 35);
@@ -1605,7 +1609,7 @@ class World3 {
       35,
       units = "dimensionless",
       dependencies = Vector("desiredCompletedFamilySize", "compensatoryMultiplierFromPerceivedLifeExpectancy"),
-      updateFn = () => { desiredCompletedFamilySize.k.get * compensatoryMultiplierFromPerceivedLifeExpectancy.k.get }
+      updateFn = () => lift { unlift(desiredCompletedFamilySize.k) * unlift(compensatoryMultiplierFromPerceivedLifeExpectancy.k) }
     )
 
 //  var compensatoryMultiplierFromPerceivedLifeExpectancy =
@@ -1626,7 +1630,7 @@ class World3 {
       10,
       units = "dimensionless",
       dependencies = Vector("perceivedLifeExpectancy"),
-      updateFn = () => { perceivedLifeExpectancy.k.get }
+      updateFn = () => perceivedLifeExpectancy.k
     )
 
 
@@ -1642,7 +1646,7 @@ class World3 {
       delay=Constants.lifetimePerceptionDelayK,
       units = "years",
       dependencies = Vector("lifeExpectancy"),
-      initFn = () => { lifeExpectancy }
+      initFn = () => lifeExpectancy
     )
 
 //  var desiredCompletedFamilySize = new Aux("desiredCompletedFamilySize", 38);
@@ -1660,11 +1664,11 @@ class World3 {
       38,
       units = "dimensionless",            // not persons?
       dependencies = Vector("familyResponseToSocialNorm", "socialFamilySizeNorm"),
-      updateFn = clip(() => 2.0, () => { Constants.desiredCompletedFamilySizeNormal * familyResponseToSocialNorm.k.get * socialFamilySizeNorm.k.get }, t, Constants.zeroPopulationGrowthTargetYear)
+      updateFn = clip(
+        () => Some(2.0),
+        () => lift { Constants.desiredCompletedFamilySizeNormal * unlift(familyResponseToSocialNorm.k) * unlift(socialFamilySizeNorm.k) }, t, Constants.zeroPopulationGrowthTargetYear)
     )
 
-
-  //
 //  var socialFamilySizeNorm = new Table("socialFamilySizeNorm", 39, [1.25, 1, 0.9, 0.8, 0.75], 0, 800, 200);
 //  socialFamilySizeNorm.units = "dimensionless";
 //  socialFamilySizeNorm.dependencies = ["delayedIndustrialOutputPerCapita"];
@@ -1682,7 +1686,7 @@ class World3 {
       200,
       units = "dimensionless",
       dependencies = Vector("delayedIndustrialOutputPerCapita"),
-      updateFn = () => { delayedIndustrialOutputPerCapita.k.get }
+      updateFn = () => delayedIndustrialOutputPerCapita.k
     )
 
 //  var delayedIndustrialOutputPerCapita = new Delay3("delayedIndustrialOutputPerCapita", 40, socialAdjustmentDelayK);
@@ -1697,7 +1701,7 @@ class World3 {
       delay=Constants.socialAdjustmentDelayK,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      initFn = () => { industrialOutputPerCapita }
+      initFn = () => industrialOutputPerCapita
     )
 
 //  var familyResponseToSocialNorm = new Table("familyResponseToSocialNorm", 41, [0.5, 0.6, 0.7, 0.85, 1.0], -0.2, 0.2, 0.1);
@@ -1717,7 +1721,7 @@ class World3 {
       0.1,
       units = "dimensionless",
       dependencies = Vector("familyIncomeExpectation"),
-      updateFn = () => { familyIncomeExpectation.k.get }
+      updateFn = () => familyIncomeExpectation.k
     )
 
 
@@ -1734,7 +1738,7 @@ class World3 {
       42,
       units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita", "averageIndustrialOutputPerCapita"),
-      updateFn = () => { (industrialOutputPerCapita.k.get - averageIndustrialOutputPerCapita.k.get) / averageIndustrialOutputPerCapita.k.get }
+      updateFn = () => lift { (unlift(industrialOutputPerCapita.k) - unlift(averageIndustrialOutputPerCapita.k)) / unlift(averageIndustrialOutputPerCapita.k) }
     )
 
 //  var averageIndustrialOutputPerCapita = new Smooth("averageIndustrialOutputPerCapita", 43, incomeExpectationAveragingTimeK);
@@ -1749,7 +1753,7 @@ class World3 {
       Constants.incomeExpectationAveragingTimeK,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      initFn = () => { industrialOutputPerCapita }
+      initFn = () => industrialOutputPerCapita
     )
 
 //  var needForFertilityControl = new Aux("needForFertilityControl", 44);
@@ -1765,7 +1769,7 @@ class World3 {
       44,
       units = "dimensionless",
       dependencies = Vector("maxTotalFertility", "desiredTotalFertility"),
-      updateFn = () => { (maxTotalFertility.k.get / desiredTotalFertility.k.get) - 1 }
+      updateFn = () => lift { (unlift(maxTotalFertility.k) / unlift(desiredTotalFertility.k)) - 1 }
     )
 
 //  var fertilityControlEffectiveness = new Table("fertilityControlEffectiveness", 45, [0.75, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0], 0, 3, 0.5 );
@@ -1785,7 +1789,7 @@ class World3 {
       0.5,
       units = "dimensionless",
       dependencies = Vector("fertilityControlFacilitiesPerCapita"),
-      updateFn = () => { fertilityControlFacilitiesPerCapita.k.get }
+      updateFn = () => fertilityControlFacilitiesPerCapita.k
     )
 
 //  var fertilityControlFacilitiesPerCapita = new Delay3("fertilityControlFacilitiesPerCapita", 46, healthServicesImpactDelayK);
@@ -1800,7 +1804,7 @@ class World3 {
       delay=Constants.healthServicesImpactDelayK,
       units = "dollars per person-year",
       dependencies = Vector("fertilityControlAllocationPerCapita"),
-      initFn = () => { fertilityControlAllocationPerCapita }
+      initFn = () => fertilityControlAllocationPerCapita
     )
 
 
@@ -1817,7 +1821,7 @@ class World3 {
       47,
       units = "dollars per person-year",
       dependencies = Vector("serviceOutputPerCapita", "fractionOfServicesAllocatedToFertilityControl"),
-      updateFn = () => { fractionOfServicesAllocatedToFertilityControl.k.get * serviceOutputPerCapita.k.get }
+      updateFn = () => lift { unlift(fractionOfServicesAllocatedToFertilityControl.k) * unlift(serviceOutputPerCapita.k) }
     )
 
 
@@ -1838,7 +1842,7 @@ class World3 {
       2,
       units = "dimensionless",
       dependencies = Vector("needForFertilityControl"),
-      updateFn = () => { needForFertilityControl.k.get }
+      updateFn = () => needForFertilityControl.k
     )
 
 
@@ -1863,7 +1867,7 @@ class World3 {
       49,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutput", "population"),
-      updateFn = () => { industrialOutput.k.get / population.k.get }
+      updateFn = () => lift { unlift(industrialOutput.k) / unlift(population.k) }
     )
 
 //  var industrialOutput = new Aux("industrialOutput", 50);
@@ -1880,7 +1884,8 @@ class World3 {
       50,
       units = "dollars per year",
       dependencies = Vector("fractionOfCapitalAllocatedToObtainingResources", "capitalUtilizationFraction", "industrialCapitalOutputRatio"),
-      updateFn = () => { industrialCapital.k.get * (1 - fractionOfCapitalAllocatedToObtainingResources.k.get) * capitalUtilizationFraction.k.get / industrialCapitalOutputRatio.k.get }
+      updateFn = () => lift {
+        unlift(industrialCapital.k) * (1 - unlift(fractionOfCapitalAllocatedToObtainingResources.k)) * unlift(capitalUtilizationFraction.k) / unlift(industrialCapitalOutputRatio.k) }
     )
 
 //  var industrialCapitalOutputRatio = new Aux("industrialCapitalOutputRatio", 51);
@@ -1896,7 +1901,7 @@ class World3 {
       "industrialCapitalOutputRatio",
       51,
       units = "years",
-      updateFn = clip(() => Constants.industrialCapitalOutputRatioAfter, () => Constants.industrialCapitalOutputRatioBefore, t, policyYear)
+      updateFn = clip(() => Some(Constants.industrialCapitalOutputRatioAfter), () => Some(Constants.industrialCapitalOutputRatioBefore), t, policyYear)
     )
 
 //  var industrialCapital = new Level("industrialCapital", 52, 2.1e11);
@@ -1912,7 +1917,7 @@ class World3 {
       52,
       2.1e11,
       units = "dollars",
-      updateFn = () => { industrialCapital.j.get + dt * (industrialCapitalInvestmentRate.j.get - industrialCapitalDepreciationRate.j.get) }
+      updateFn = () => lift { unlift(industrialCapital.j) + dt * (unlift(industrialCapitalInvestmentRate.j) - unlift(industrialCapitalDepreciationRate.j)) }
     )
 
 //  var industrialCapitalDepreciationRate = new Rate("industrialCapitalDepreciationRate", 53);
@@ -1926,7 +1931,7 @@ class World3 {
       "industrialCapitalDepreciationRate",
       53,
       units = "dollars per year",
-      updateFn = () => { industrialCapital.k.get / averageLifetimeOfIndustrialCapital.k.get }
+      updateFn = () => lift { unlift(industrialCapital.k) / unlift(averageLifetimeOfIndustrialCapital.k) }
     )
 
 //  var averageLifetimeOfIndustrialCapital = new Aux("averageLifetimeOfIndustrialCapital", 54);
@@ -1944,8 +1949,8 @@ class World3 {
       units = "years",
       updateFn =
         clip(
-          () => Constants.averageLifetimeOfIndustrialCapitalAfter,
-          () => Constants.averageLifetimeOfIndustrialCapitalBefore,
+          () => Some(Constants.averageLifetimeOfIndustrialCapitalAfter),
+          () => Some(Constants.averageLifetimeOfIndustrialCapitalBefore),
           t,
           policyYear)
     )
@@ -1963,7 +1968,7 @@ class World3 {
       "industrialCapitalInvestmentRate",
       55,
       units = "dollars per year",
-      updateFn = () => { industrialOutput.k.get * fractionOfIndustrialOutputAllocatedToIndustry.k.get }
+      updateFn = () => lift { unlift(industrialOutput.k) * unlift(fractionOfIndustrialOutputAllocatedToIndustry.k) }
     )
 
 
@@ -1980,7 +1985,7 @@ class World3 {
       56,
       units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgriculture", "fractionOfIndustrialOutputAllocatedToServices", "fractionOfIndustrialOutputAllocatedToConsumption"),
-      updateFn = () => { 1 - fractionOfIndustrialOutputAllocatedToAgriculture.k.get - fractionOfIndustrialOutputAllocatedToServices.k.get - fractionOfIndustrialOutputAllocatedToConsumption.k.get }
+      updateFn = () => lift { 1 - unlift(fractionOfIndustrialOutputAllocatedToAgriculture.k) - unlift(fractionOfIndustrialOutputAllocatedToServices.k) - unlift(fractionOfIndustrialOutputAllocatedToConsumption.k) }
     )
 
 //  var fractionOfIndustrialOutputAllocatedToConsumption = new Aux("fractionOfIndustrialOutputAllocatedToConsumption", 57);
@@ -1998,8 +2003,8 @@ class World3 {
       units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToConsumptionVariable"),
       updateFn = clip(
-        () => fractionOfIndustrialOutputAllocatedToConsumptionVariable.k.get,
-        () => fractionOfIndustrialOutputAllocatedToConsumptionConstant.k.get,
+        () => fractionOfIndustrialOutputAllocatedToConsumptionVariable.k,
+        () => fractionOfIndustrialOutputAllocatedToConsumptionConstant.k,
         t,
         Constants.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime)
     )
@@ -2018,8 +2023,8 @@ class World3 {
       units = "dimensionless",
       updateFn =
         clip(
-          () => Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter,
-          () => Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore,
+          () => lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter),
+          () => lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore),
           t,
           policyYear)
     )
@@ -2041,7 +2046,7 @@ class World3 {
       0.2,
       units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get / Constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
+      updateFn = () => lift { unlift(industrialOutputPerCapita.k) / Constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
     )
 
 //
@@ -2062,7 +2067,7 @@ class World3 {
       units = "dollars per person-year",
       dependencies = Vector("indicatedServiceOutputPerCapitaAfter", "indicatedServiceOutputPerCapitaBefore"),
       updateFn =
-        clip(() => indicatedServiceOutputPerCapitaAfter.k.get, () => indicatedServiceOutputPerCapitaBefore.k.get, t, policyYear)
+        clip(() => indicatedServiceOutputPerCapitaAfter.k, () => indicatedServiceOutputPerCapitaBefore.k, t, policyYear)
     )
 
 //  var indicatedServiceOutputPerCapitaBefore = new Table("indicatedServiceOutputPerCapitaBefore", 61, [40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000], 0, 1600, 200);
@@ -2082,7 +2087,7 @@ class World3 {
       200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => industrialOutputPerCapita.k
     )
 
 //  var indicatedServiceOutputPerCapitaAfter = new Table("indicatedServiceOutputPerCapitaAfter", 62, [40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000], 0, 1600, 200);
@@ -2103,7 +2108,7 @@ class World3 {
       200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k.get }
+      updateFn = () => industrialOutputPerCapita.k
     )
 
 //  var fractionOfIndustrialOutputAllocatedToServices = new Aux("fractionOfIndustrialOutputAllocatedToServices", 63);
@@ -2120,8 +2125,8 @@ class World3 {
       units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToServicesBefore", "fractionOfIndustrialOutputAllocatedToServicesAfter"),
       updateFn = clip(
-        () => fractionOfIndustrialOutputAllocatedToServicesAfter.k.get,
-        () => fractionOfIndustrialOutputAllocatedToServicesBefore.k.get,
+        () => fractionOfIndustrialOutputAllocatedToServicesAfter.k,
+        () => fractionOfIndustrialOutputAllocatedToServicesBefore.k,
         t,
         policyYear)
     )
@@ -2144,7 +2149,7 @@ class World3 {
       0.5,
       units = "dimensionless",
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
-      updateFn = () => { serviceOutputPerCapita.k.get / indicatedServiceOutputPerCapita.k.get }
+      updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
 
   //  var fractionOfIndustrialOutputAllocatedToServicesAfter = new Table("fractionOfIndustrialOutputAllocatedToServicesAfter", 65, [0.3, 0.2, 0.1, 0.05, 0], 0, 2, 0.5);
@@ -2164,7 +2169,7 @@ class World3 {
       0.5,
       units = "dimensionless",
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
-      updateFn = () => { serviceOutputPerCapita.k.get / indicatedServiceOutputPerCapita.k.get }
+      updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
 
 //  var serviceCapitalInvestmentRate = new Rate("serviceCapitalInvestmentRate", 66);
@@ -2178,7 +2183,7 @@ class World3 {
       "serviceCapitalInvestmentRate",
       66,
       units = "dollars per year",
-      updateFn = () => { industrialOutput.k.get * fractionOfIndustrialOutputAllocatedToServices.k.get }
+      updateFn = () => lift { unlift(industrialOutput.k) * unlift(fractionOfIndustrialOutputAllocatedToServices.k) }
     )
 
 //  var serviceCapital = new Level("serviceCapital", 67, 1.44e11);
@@ -2194,7 +2199,7 @@ class World3 {
       67,
       1.44e11,
       units = "dollars",
-      updateFn = () => { serviceCapital.j.get + dt * (serviceCapitalInvestmentRate.j.get - serviceCapitalDepreciationRate.j.get) }
+      updateFn = () => lift { unlift(serviceCapital.j) + dt * (unlift(serviceCapitalInvestmentRate.j) - unlift(serviceCapitalDepreciationRate.j)) }
     )
 
 
