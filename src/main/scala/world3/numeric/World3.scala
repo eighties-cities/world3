@@ -1,13 +1,30 @@
 package world3.numeric
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{ ListBuffer}
 import io.monadless.stdlib.MonadlessOption._
+import better.files._
+import File._
 
 object World3 extends App {
   val w3 = new World3()
-  w3.fastRun()
+  val result = w3.fastRun()
+
+  def csv = result.map {
+    r => s"${r.step},${r.population},${r.nonrenewableResourceFractionRemaining},${r.foodPerCapita},${r.industrialOutputPerCapita},${r.indexOfPersistentPollution},${r.lifeExpectancy}"
+  }.mkString("\n")
+
+  File("/tmp/results.csv").write(csv)
+
 }
 
+case class StepValues(
+  step: Double,
+  population: Double,
+  nonrenewableResourceFractionRemaining: Double,
+  foodPerCapita: Double,
+  industrialOutputPerCapita: Double,
+  indexOfPersistentPollution: Double,
+  lifeExpectancy:Double)
 
 class World3 {
   /*  Limits to Growth: This is a re-implementation in JavaScript
@@ -911,11 +928,16 @@ class World3 {
 
     assert((1 to qArray.length - 1).forall(i => qArray(i).k.isDefined))
 
+    val result = ListBuffer[StepValues]()
+
     while (t <= stopTime) {
-      println(population.k.get)
+      result += StepValues(t, population.k.get, nonrenewableResourceFractionRemaining.k.get, foodPerCapita.k.get, industrialOutputPerCapita.k.get, indexOfPersistentPollution.k.get, lifeExpectancy.k.get )
       timeStep()
     }
+
+    result.toVector
   }
+
 
 
   //
