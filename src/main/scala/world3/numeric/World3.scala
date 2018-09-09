@@ -3,24 +3,42 @@ package world3.numeric
 import scala.collection.mutable.ListBuffer
 import io.monadless.stdlib.MonadlessOption._
 import better.files._
-import File._
-import world3.numeric.World3.result
 
 object World3 extends App {
 
-  def csv(result: Vector[StepValues]) =
-    result.map {
-      r => s"${r.step},${r.population},${r.nonrenewableResourceFractionRemaining},${r.foodPerCapita},${r.industrialOutputPerCapita},${r.indexOfPersistentPollution},${r.lifeExpectancy}"
-    }.mkString("\n")
+  def scale(x: Double, xMin: Double = 0.0, xMax: Double): Double = (x - xMin) / (xMax - xMin)
 
-  def check(result: Vector[StepValues]) = {
+  def csv(result: Vector[StepValues]):String = {
+    def header = "step,population,nonrenewableResourceFractionRemaining,serviceOutput," +
+      "foodPerCapita,industrialOutputPerCapita,indexOfPersistentPollution,lifeExpectancy," +
+      "crudeBirthRate,crudeDeathRate,arableLand,landYield"
+    Vector(header).++(result.map {
+      r => s"${r.step}," +
+        s"${scale(r.population,xMax=1.6e10)}," +
+        s"${scale(r.nonrenewableResourceFractionRemaining,xMax=1.0)}," +
+        s"${scale(r.foodPerCapita,xMax=1000)}," +
+        s"${scale(r.industrialOutputPerCapita,xMax=500)}," +
+        s"${scale(r.serviceOutput,xMax=1.0e13)}," +
+        s"${scale(r.indexOfPersistentPollution,xMax=32)}," +
+        s"${scale(r.lifeExpectancy,xMax=80)}," +
+        s"${scale(r.crudeBirthRate,xMax=50)}," +
+        s"${scale(r.crudeDeathRate,xMax=50)}," +
+        s"${scale(r.arableLand,xMax=3.0e9)}," +
+        s"${scale(r.landYield,xMax=3000)}"
+    }).mkString("\n")
+  }
+
+  def check(result: Vector[StepValues]): Unit = {
     assert(File("/tmp/results.csv").contentAsString == csv(result))
   }
 
   val w3 = new World3()
   val result = w3.fastRun()
 
-  check(result)
+  val writer = File("/tmp/results.csv").newFileWriter()
+  writer.write(csv(result))
+  writer.close()
+//  check(result)
 
 }
 
@@ -30,8 +48,13 @@ case class StepValues(
   nonrenewableResourceFractionRemaining: Double,
   foodPerCapita: Double,
   industrialOutputPerCapita: Double,
+  serviceOutput: Double,
   indexOfPersistentPollution: Double,
-  lifeExpectancy:Double)
+  lifeExpectancy: Double,
+  crudeBirthRate: Double,
+  crudeDeathRate: Double,
+  arableLand: Double,
+  landYield: Double)
 
 class World3 {
 
@@ -49,61 +72,59 @@ class World3 {
 
 
   object Constants {
-    val lifeExpectancyNormal = 32 // used in eqn 19
-    val subsistenceFoodPerCapitaK = 230 // kilograms per person-year, used in eqns 20, 127
-    var effectiveHealthServicesPerCapitaImpactDelay = 20 // years, used in eqn 22
+    val lifeExpectancyNormal = 32.0 // used in eqn 19
+    val subsistenceFoodPerCapitaK = 230.0 // kilograms per person-year, used in eqns 20, 127
+    var effectiveHealthServicesPerCapitaImpactDelay = 20.0 // years, used in eqn 22
     val potentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
     val industrialOutputValueIn1970 = 7.9e11 // for eqns 106 and 107
-    val averageLifetimeOfAgriculturalInputsK = 2; // years, eqn 99 (in lieu of 100)
+    val averageLifetimeOfAgriculturalInputsK = 2.0 // years, eqn 99 (in lieu of 100)
     val socialDiscount = 0.07 // eqn 109
-    val averageLifeOfLandNormal = 6000 // years, used in eqn 112
-    val inherentLandFertilityK = 600 // kilograms per hectare-year, used in eqns 114, 115 and 124
-    val developmentTime = 10;   // years, used in eqn 119
-    val foodShortagePerceptionDelayK = 2  // years, used in eqn 128
+    val averageLifeOfLandNormal = 6000.0 // years, used in eqn 112
+    val inherentLandFertilityK = 600.0 // kilograms per hectare-year, used in eqns 114, 115 and 124
+    val developmentTime = 10.0 // years, used in eqn 119
+    val foodShortagePerceptionDelayK = 2.0 // years, used in eqn 128
     val nonrenewableResourcesInitialK = 1.0e12 // resource units, used in eqns 129 and 133
     val fractionOfResourcesAsPersistentMaterial = 0.02 // dimensionless, used in eqn 139
     val industrialMaterialsEmissionFactor = 0.1 // dimensionless, used in eqn 139
-    val industrialMaterialsToxicityIndex = 10 // pollution units per resource unit, used in eqn 139
-    val persistentPollutionTransmissionDelayK = 20 // years, used in eqn 141
+    val industrialMaterialsToxicityIndex = 10.0 // pollution units per resource unit, used in eqn 139
+    val persistentPollutionTransmissionDelayK = 20.0 // years, used in eqn 141
     val fractionOfInputsAsPersistentMaterial = 0.001 // dimensionless, used in eqn 141
-    val agriculturalMaterialsToxicityIndex = 1 // pollution units per dollar, used in eqn 141
+    val agriculturalMaterialsToxicityIndex = 1.0 // pollution units per dollar, used in eqn 141
     val pollutionValueIn1970 = 1.36e8 // pollution units, used in eqn 143
-    val lifetimeMultiplierFromHealthServicesPolicyYear = 1940
-    val birthsPerYearReproductiveLifetime = 30;          // years
-    val birthsPerYearPopulationEquilibriumTime = 4000;   // year
-    val maxTotalFertilityNormal = 12;   // dimensionless
-    val lifetimePerceptionDelayK = 20;      // years, used in eqn 37
+    val lifetimeMultiplierFromHealthServicesPolicyYear = 1940.0
+    val birthsPerYearReproductiveLifetime = 30.0 // years
+    val birthsPerYearPopulationEquilibriumTime = 4000.0 // year
+    val maxTotalFertilityNormal = 12.0 // dimensionless
+    val lifetimePerceptionDelayK = 20.0 // years, used in eqn 37
     val desiredCompletedFamilySizeNormal = 4.0
-    val zeroPopulationGrowthTargetYear = 4000;
+    val zeroPopulationGrowthTargetYear = 4000.0
     val assimilationHalfLifeValueIn1970 = 1.5 // years, used in eqn 146
-    val socialAdjustmentDelayK = 20;    // years, used in eqn 40
-    val incomeExpectationAveragingTimeK = 3; // years, used in eqn 43
-    val healthServicesImpactDelayK = 20;    // years, for eqn 46
-    val industrialCapitalOutputRatioBefore = 3;
-    val industrialCapitalOutputRatioAfter = 3;
-    val averageLifetimeOfIndustrialCapitalBefore = 14;
-    val averageLifetimeOfIndustrialCapitalAfter = 14;
+    val socialAdjustmentDelayK = 20.0 // years, used in eqn 40
+    val incomeExpectationAveragingTimeK = 3.0 // years, used in eqn 43
+    val healthServicesImpactDelayK = 20.0 // years, for eqn 46
+    val industrialCapitalOutputRatioBefore = 3.0
+    val industrialCapitalOutputRatioAfter = 3.0
+    val averageLifetimeOfIndustrialCapitalBefore = 14.0
+    val averageLifetimeOfIndustrialCapitalAfter = 14.0
 
-    val fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime = 4000;  // year
-    val fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore = 0.43;
-    val fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter = 0.43;
-    val fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired = 400;
+    val fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime = 4000.0  // year
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore = 0.43
+    val fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter = 0.43
+    val fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired = 400.0
 
-    val averageLifetimeOfServiceCapitalBefore = 20;   // years
-    val averageLifetimeOfServiceCapitalAfter = 20;    // years
+    val averageLifetimeOfServiceCapitalBefore = 20.0 // years
+    val averageLifetimeOfServiceCapitalAfter = 20.0 // years
 
-    val serviceCapitalOutputRatioBefore = 1;
-    val serviceCapitalOutputRatioAfter = 1;
+    val serviceCapitalOutputRatioBefore = 1.0
+    val serviceCapitalOutputRatioAfter = 1.0
 
     val laborForceParticipationFraction = 0.75  // dimensionless
-    val laborUtilizationFractionDelayedDelayTime = 2   // years, eqn 82
+    val laborUtilizationFractionDelayedDelayTime = 2.0 // years, eqn 82
 
     val landFractionCultivatedPotentiallyArableLandTotal = 3.2e9   // hectares, used here and in eqn 97
 
-    val foodLandFractionHarvestedK = 0.7;   // dimensionless
-    val foodProcessingLossK = 0.1;          // dimensionless
-
-
+    val foodLandFractionHarvestedK = 0.7   // dimensionless
+    val foodProcessingLossK = 0.1          // dimensionless
   }
 
   // The DYNAMO clip function, a poor-man's conditional expression.
@@ -114,7 +135,8 @@ class World3 {
   //      return b
   //  }
 
-  def clip(a: () => Option[Double], b: () => Option[Double], x: Double, y: Double) = if(x >= y) a else b
+  def clip(a: Option[Double], b: Option[Double], x: Option[Double], y: Option[Double]): Option[Double] =
+    lift{ if (unlift(x) >= unlift(y)) unlift(a) else unlift(b) }
 
   sealed trait All {
     def j: Option[Double]
@@ -276,7 +298,7 @@ class World3 {
       }
     }
 
-    def warmup = init()
+    def warmup(): Unit = init()
     def tick() = { j = k }
   }
 
@@ -325,7 +347,7 @@ class World3 {
       gama = None
     }
 
-    def update = {
+    def update() = {
       val theInput = initFn()
       if(firstCall) {
         j = theInput.k
@@ -394,8 +416,11 @@ class World3 {
       if(v <= iMin) data(0)
       else if(v >= iMax) data(data.length - 1)
       else {
-        for ((i, j) <- (iMin to iMax by iDelta).zipWithIndex) {
-          if(i >= v) return interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)
+        for ((i, j) <- (BigDecimal(iMin) to iMax by iDelta).zipWithIndex) {
+          if(i >= v) {
+//            if (qName == "mortality0To14") println(s"$qName lookup ($v) > $j = ${interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)}")
+            return interpolate(j - 1, j, (v - (i.toDouble - iDelta)) / iDelta)
+          }
         }
         ???
       }
@@ -415,16 +440,16 @@ class World3 {
 
 
   // PARAMETERS THAT GOVERN THE RUNNING OF THE MODEL
-  val startTime = 1900.0;
-  val stopTime = 2100.0;
+  val startTime: Double = 1900.0
+  val stopTime: Double = 2100.0
 
-  var t = 1900.0
-  val dt = 1.0
-  var policyYear = 1975.0;                 // eqn 150.1
+  var t: Double = 1900.0
+  val dt: Double = 1.0
+  val policyYear: Double = 1975.0                 // eqn 150.1
 
   def resetModel() =  {
     t = startTime
-    all.foreach(_.reset)
+    all.foreach(_.reset())
   }
 
   def initSmoothsAndDelay3s() =
@@ -440,7 +465,7 @@ class World3 {
 
   def warmupAuxen() = auxSequence.foreach(_.warmup())
   def warmupRates() = rates.foreach(_.warmup())
-  def tock() = all.foreach(_.tick)
+  def tock() = all.foreach(_.tick())
 
   def initModel() =  {
     initSmoothsAndDelay3s()
@@ -459,7 +484,7 @@ class World3 {
     resetModel()
     initModel()
 
-    for (i <- 1 to 100) {
+    for (_ <- 1 to 100) {
       warmupAuxen()
       warmupRates()
       tock()
@@ -470,7 +495,7 @@ class World3 {
     val result = ListBuffer[StepValues]()
 
     while (t <= stopTime) {
-      result += StepValues(t, population.k.get, nonrenewableResourceFractionRemaining.k.get, foodPerCapita.k.get, industrialOutputPerCapita.k.get, indexOfPersistentPollution.k.get, lifeExpectancy.k.get )
+      result += StepValues(t, population.k.get, nonrenewableResourceFractionRemaining.k.get, foodPerCapita.k.get, industrialOutputPerCapita.k.get, serviceOutput.k.get, indexOfPersistentPollution.k.get, lifeExpectancy.k.get, crudeBirthRate.k.get, crudeDeathRate.k.get, arableLand.k.get, landYield.k.get)
       timeStep()
     }
 
@@ -485,8 +510,8 @@ class World3 {
     Aux(
       qName = "population",
       qNumber = 1,
-      units = "persons",
-      updateFn = () => lift { unlift(population0To14.k) + unlift(population15To44.k) + unlift(population45To64.k) + unlift(population65AndOver.k) }
+      updateFn = () => lift { unlift(population0To14.k) + unlift(population15To44.k) + unlift(population45To64.k) + unlift(population65AndOver.k) },
+      units = "persons"
     )
 
   val population0To14: Level =
@@ -687,7 +712,6 @@ class World3 {
       0,
       5,
       1,
-      units = "dimensionless",
       dependencies = Vector("foodPerCapita"),
       updateFn = () => lift { unlift(foodPerCapita.k) / Constants.subsistenceFoodPerCapitaK }
     )
@@ -719,9 +743,13 @@ class World3 {
     Aux(
       "lifetimeMultiplierFromHealthServices",
       23,
-      units = "dimensionless",
       dependencies = Vector("lifetimeMultiplierFromHealthServicesBefore", "lifetimeMultiplierFromHealthServicesAfter"),
-      updateFn = clip(() => lifetimeMultiplierFromHealthServicesAfter.k, () => lifetimeMultiplierFromHealthServicesBefore.k,  t, Constants.lifetimeMultiplierFromHealthServicesPolicyYear)
+      updateFn = () => clip(
+        lifetimeMultiplierFromHealthServicesAfter.k,
+        lifetimeMultiplierFromHealthServicesBefore.k,
+        Some(t),
+        Some(Constants.lifetimeMultiplierFromHealthServicesPolicyYear)
+      )
     )
 
   val lifetimeMultiplierFromHealthServicesBefore =
@@ -732,7 +760,6 @@ class World3 {
       0,
       100,
       20,
-      units = "dimensionless",
       dependencies = Vector("effectiveHealthServicesPerCapita"),
       updateFn = () => effectiveHealthServicesPerCapita.k
     )
@@ -745,7 +772,6 @@ class World3 {
       0,
       100,
       20,
-      units = "dimensionless",
       dependencies = Vector("effectiveHealthServicesPerCapita"),
       updateFn = () => effectiveHealthServicesPerCapita.k
     )
@@ -758,7 +784,6 @@ class World3 {
       0,
       1.6e10,
       2.0e9,
-      units = "dimensionless",
       dependencies = Vector("population"),
       updateFn = () => population.k
     )
@@ -771,7 +796,6 @@ class World3 {
       0,
       1600,
       200,
-      units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
     )
@@ -780,7 +804,6 @@ class World3 {
     Aux(
       "lifetimeMultiplierFromCrowding",
       28,
-      units = "dimensionless",
       updateFn = () => lift { 1 - (unlift(crowdingMultiplierFromIndustrialization.k) * unlift(fractionOfPopulationUrban.k)) }
     )
 
@@ -792,7 +815,6 @@ class World3 {
       0,
       100,
       10,
-      units = "dimensionless",
       dependencies = Vector("indexOfPersistentPollution"),
       updateFn = () => indexOfPersistentPollution.k
     )
@@ -802,10 +824,13 @@ class World3 {
         "birthsPerYear",
         30,
         units = "persons per year",
-        updateFn = {
-          def after() = deathsPerYear.k
-          def before() = lift { unlift(totalFertility.k) * unlift(population15To44.k) * 0.5 / Constants.birthsPerYearReproductiveLifetime }
-          clip(after, before, t, Constants.birthsPerYearPopulationEquilibriumTime)
+        updateFn = () => {
+          clip(
+            deathsPerYear.k,
+            lift { unlift(totalFertility.k) * unlift(population15To44.k) * 0.5 / Constants.birthsPerYearReproductiveLifetime },
+            Some(t),
+            Some(Constants.birthsPerYearPopulationEquilibriumTime)
+          )
         }
       )
 
@@ -822,12 +847,11 @@ class World3 {
     Aux(
       "totalFertility",
       32,
-      units = "dimensionless",
       dependencies = Vector("maxTotalFertility", "fertilityControlEffectiveness", "desiredTotalFertility"),
       updateFn = () => lift {
         math.min(
           unlift(maxTotalFertility.k),
-          (unlift(maxTotalFertility.k) * (1 - unlift(fertilityControlEffectiveness.k)) + unlift(desiredTotalFertility.k) * unlift(fertilityControlEffectiveness.k))
+          unlift(maxTotalFertility.k) * (1 - unlift(fertilityControlEffectiveness.k)) + unlift(desiredTotalFertility.k) * unlift(fertilityControlEffectiveness.k)
         )
       }
     )
@@ -836,7 +860,6 @@ class World3 {
     Aux(
       "maxTotalFertility",
       33,
-      units = "dimensionless",
       dependencies = Vector("fecundityMultiplier"),
       updateFn = () => lift { Constants.maxTotalFertilityNormal * unlift(fecundityMultiplier.k) }
     )
@@ -849,7 +872,6 @@ class World3 {
       0,
       80,
       10,
-      units = "dimensionless",
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lifeExpectancy.k
     )
@@ -858,7 +880,6 @@ class World3 {
     Aux(
       "desiredTotalFertility",
       35,
-      units = "dimensionless",
       dependencies = Vector("desiredCompletedFamilySize", "compensatoryMultiplierFromPerceivedLifeExpectancy"),
       updateFn = () => lift { unlift(desiredCompletedFamilySize.k) * unlift(compensatoryMultiplierFromPerceivedLifeExpectancy.k) }
     )
@@ -871,7 +892,6 @@ class World3 {
       0,
       80,
       10,
-      units = "dimensionless",
       dependencies = Vector("perceivedLifeExpectancy"),
       updateFn = () => perceivedLifeExpectancy.k
     )
@@ -890,11 +910,14 @@ class World3 {
     Aux(
       "desiredCompletedFamilySize",
       38,
-      units = "dimensionless",            // not persons?
+//      units = "dimensionless",            // not persons?
       dependencies = Vector("familyResponseToSocialNorm", "socialFamilySizeNorm"),
-      updateFn = clip(
-        () => Some(2.0),
-        () => lift { Constants.desiredCompletedFamilySizeNormal * unlift(familyResponseToSocialNorm.k) * unlift(socialFamilySizeNorm.k) }, t, Constants.zeroPopulationGrowthTargetYear)
+      updateFn = () => clip(
+        Some(2.0),
+        lift { Constants.desiredCompletedFamilySizeNormal * unlift(familyResponseToSocialNorm.k) * unlift(socialFamilySizeNorm.k) },
+        Some(t),
+        Some(Constants.zeroPopulationGrowthTargetYear)
+      )
     )
 
   val socialFamilySizeNorm =
@@ -905,7 +928,6 @@ class World3 {
       0,
       800,
       200,
-      units = "dimensionless",
       dependencies = Vector("delayedIndustrialOutputPerCapita"),
       updateFn = () => delayedIndustrialOutputPerCapita.k
     )
@@ -928,7 +950,6 @@ class World3 {
       -0.2,
       0.2,
       0.1,
-      units = "dimensionless",
       dependencies = Vector("familyIncomeExpectation"),
       updateFn = () => familyIncomeExpectation.k
     )
@@ -937,7 +958,6 @@ class World3 {
     Aux(
       "familyIncomeExpectation",
       42,
-      units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita", "averageIndustrialOutputPerCapita"),
       updateFn = () => lift { (unlift(industrialOutputPerCapita.k) - unlift(averageIndustrialOutputPerCapita.k)) / unlift(averageIndustrialOutputPerCapita.k) }
     )
@@ -956,7 +976,6 @@ class World3 {
     Aux(
       "needForFertilityControl",
       44,
-      units = "dimensionless",
       dependencies = Vector("maxTotalFertility", "desiredTotalFertility"),
       updateFn = () => lift { (unlift(maxTotalFertility.k) / unlift(desiredTotalFertility.k)) - 1 }
     )
@@ -969,7 +988,6 @@ class World3 {
       0,
       3,
       0.5,
-      units = "dimensionless",
       dependencies = Vector("fertilityControlFacilitiesPerCapita"),
       updateFn = () => fertilityControlFacilitiesPerCapita.k
     )
@@ -1001,7 +1019,6 @@ class World3 {
       0,
       10,
       2,
-      units = "dimensionless",
       dependencies = Vector("needForFertilityControl"),
       updateFn = () => needForFertilityControl.k
     )
@@ -1034,7 +1051,12 @@ class World3 {
       "industrialCapitalOutputRatio",
       51,
       units = "years",
-      updateFn = clip(() => Some(Constants.industrialCapitalOutputRatioAfter), () => Some(Constants.industrialCapitalOutputRatioBefore), t, policyYear)
+      updateFn = () => clip(
+        Some(Constants.industrialCapitalOutputRatioAfter),
+        Some(Constants.industrialCapitalOutputRatioBefore),
+        Some(t),
+        Some(policyYear)
+      )
     )
 
   val industrialCapital: Level =
@@ -1059,12 +1081,12 @@ class World3 {
       "averageLifetimeOfIndustrialCapital",
       54,
       units = "years",
-      updateFn =
-        clip(
-          () => Some(Constants.averageLifetimeOfIndustrialCapitalAfter),
-          () => Some(Constants.averageLifetimeOfIndustrialCapitalBefore),
-          t,
-          policyYear)
+      updateFn = () => clip(
+        Some(Constants.averageLifetimeOfIndustrialCapitalAfter),
+        Some(Constants.averageLifetimeOfIndustrialCapitalBefore),
+        Some(t),
+        Some(policyYear)
+      )
     )
 
   val industrialCapitalInvestmentRate =
@@ -1079,7 +1101,6 @@ class World3 {
     Aux(
       "fractionOfIndustrialOutputAllocatedToIndustry",
       56,
-      units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgriculture", "fractionOfIndustrialOutputAllocatedToServices", "fractionOfIndustrialOutputAllocatedToConsumption"),
       updateFn = () => lift { 1 - unlift(fractionOfIndustrialOutputAllocatedToAgriculture.k) - unlift(fractionOfIndustrialOutputAllocatedToServices.k) - unlift(fractionOfIndustrialOutputAllocatedToConsumption.k) }
     )
@@ -1088,26 +1109,23 @@ class World3 {
     Aux(
       "fractionOfIndustrialOutputAllocatedToConsumption",
       57,
-      units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToConsumptionVariable"),
-      updateFn = clip(
-        () => fractionOfIndustrialOutputAllocatedToConsumptionVariable.k,
-        () => fractionOfIndustrialOutputAllocatedToConsumptionConstant.k,
-        t,
-        Constants.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime)
+      updateFn = () => clip(
+        fractionOfIndustrialOutputAllocatedToConsumptionVariable.k,
+        fractionOfIndustrialOutputAllocatedToConsumptionConstant.k,
+        Some(t),
+        Some(Constants.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime))
     )
 
   val fractionOfIndustrialOutputAllocatedToConsumptionConstant =
     Aux(
       "fractionOfIndustrialOutputAllocatedToConsumptionConstant",
       58,
-      units = "dimensionless",
-      updateFn =
-        clip(
-          () => lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter),
-          () => lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore),
-          t,
-          policyYear)
+      updateFn = () => clip(
+        lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter),
+        lift(Constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore),
+        Some(t),
+        Some(policyYear))
     )
 
   val fractionOfIndustrialOutputAllocatedToConsumptionVariable =
@@ -1117,7 +1135,6 @@ class World3 {
       Vector(0.3, 0.32, 0.34, 0.36, 0.38, 0.43, 0.73, 0.77, 0.81, 0.82, 0.83),
       0, 2,
       0.2,
-      units = "dimensionless",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => lift { unlift(industrialOutputPerCapita.k) / Constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
     )
@@ -1131,18 +1148,21 @@ class World3 {
       60,
       units = "dollars per person-year",
       dependencies = Vector("indicatedServiceOutputPerCapitaAfter", "indicatedServiceOutputPerCapitaBefore"),
-      updateFn =
-        clip(() => indicatedServiceOutputPerCapitaAfter.k, () => indicatedServiceOutputPerCapitaBefore.k, t, policyYear)
+      updateFn = () => clip(
+        indicatedServiceOutputPerCapitaAfter.k,
+        indicatedServiceOutputPerCapitaBefore.k,
+        Some(t),
+        Some(policyYear))
     )
 
   val indicatedServiceOutputPerCapitaBefore =
     Table(
-      "indicatedServiceOutputPerCapitaBefore",
-      61,
-      Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
-      0,
-      1600,
-      200,
+      qName = "indicatedServiceOutputPerCapitaBefore",
+      qNumber = 61,
+      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+      iMin = 0,
+      iMax = 1600,
+      iDelta = 200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -1150,12 +1170,12 @@ class World3 {
 
   val indicatedServiceOutputPerCapitaAfter =
     Table(
-      "indicatedServiceOutputPerCapitaAfter",
-      62,
-      Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
-      0,
-      1600,
-      200,
+      qName = "indicatedServiceOutputPerCapitaAfter",
+      qNumber = 62,
+      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+      iMin = 0,
+      iMax = 1600,
+      iDelta = 200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -1163,39 +1183,33 @@ class World3 {
 
   val fractionOfIndustrialOutputAllocatedToServices =
     Aux(
-      "fractionOfIndustrialOutputAllocatedToServices",
-      63,
-      units = "dimensionless",
+      qName = "fractionOfIndustrialOutputAllocatedToServices",
+      qNumber = 63,
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToServicesBefore", "fractionOfIndustrialOutputAllocatedToServicesAfter"),
-      updateFn = clip(
-        () => fractionOfIndustrialOutputAllocatedToServicesAfter.k,
-        () => fractionOfIndustrialOutputAllocatedToServicesBefore.k,
-        t,
-        policyYear)
+      updateFn = () => clip(
+        fractionOfIndustrialOutputAllocatedToServicesAfter.k,
+        fractionOfIndustrialOutputAllocatedToServicesBefore.k,
+        Some(t),
+        Some(policyYear)
+      )
     )
 
   val fractionOfIndustrialOutputAllocatedToServicesBefore =
     Table(
-      "fractionOfIndustrialOutputAllocatedToServicesBefore",
-      64,
-      Vector(0.3, 0.2, 0.1, 0.05, 0),
-      0,
-      2,
-      0.5,
-      units = "dimensionless",
+      qName = "fractionOfIndustrialOutputAllocatedToServicesBefore",
+      qNumber = 64,
+      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
+      iMin = 0, iMax = 2, iDelta = 0.5,
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
       updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
 
   val fractionOfIndustrialOutputAllocatedToServicesAfter =
     Table(
-      "fractionOfIndustrialOutputAllocatedToServicesAfter",
-      65,
-      Vector(0.3, 0.2, 0.1, 0.05, 0),
-      0,
-      2,
-      0.5,
-      units = "dimensionless",
+      qName = "fractionOfIndustrialOutputAllocatedToServicesAfter",
+      qNumber = 65,
+      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
+      iMin = 0, iMax = 2, iDelta = 0.5,
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
       updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
@@ -1230,12 +1244,12 @@ class World3 {
       "averageLifetimeOfServiceCapital",
       69,
       units = "years",
-      updateFn =
-        clip(
-          () => Some(Constants.averageLifetimeOfServiceCapitalAfter),
-          () => Some(Constants.averageLifetimeOfServiceCapitalBefore),
-          t,
-          policyYear)
+      updateFn = () => clip(
+        Some(Constants.averageLifetimeOfServiceCapitalAfter),
+        Some(Constants.averageLifetimeOfServiceCapitalBefore),
+        Some(t),
+        Some(policyYear)
+      )
     )
 
   val serviceOutput =
@@ -1261,12 +1275,12 @@ class World3 {
       "serviceCapitalOutputRatio",
       72,
       units = "years",
-      updateFn =
-        clip(
-          () => Some(Constants.serviceCapitalOutputRatioAfter),
-          () => Some(Constants.serviceCapitalOutputRatioBefore),
-          t,
-          policyYear)
+      updateFn = () => clip(
+        Some(Constants.serviceCapitalOutputRatioAfter),
+        Some(Constants.serviceCapitalOutputRatioBefore),
+        Some(t),
+        Some(policyYear)
+      )
     )
 
  // The Jobs Subsector
@@ -1357,7 +1371,6 @@ class World3 {
     Aux(
       "laborUtilizationFraction",
       81,
-      units = "dimensionless",
       dependencies = Vector("jobs", "laborForce"),
       updateFn = () => lift { unlift(jobs.k) / unlift(laborForce.k) }
     )
@@ -1367,7 +1380,6 @@ class World3 {
       "laborUtilizationFractionDelayed",
       82,
       Constants.laborUtilizationFractionDelayedDelayTime,
-      units = "dimensionless",
       dependencies = Vector("laborUtilizationFraction"),
       initFn = () => laborUtilizationFraction
     )
@@ -1380,7 +1392,6 @@ class World3 {
       1,
       11,
       2,
-      units = "dimensionless",
       dependencies = Vector(),   // "laborUtilizationFractionDelayed" removed to break cycle
       updateFn = () => lift { laborUtilizationFractionDelayed.k.getOrElse(1.0) } // to break circularity
     )
@@ -1394,7 +1405,6 @@ class World3 {
     Aux(
       "landFractionCultivated",
       84,
-      units = "dimensionless",
       updateFn = () => lift {unlift(arableLand.k) / Constants.landFractionCultivatedPotentiallyArableLandTotal }
     )
 
@@ -1442,30 +1452,26 @@ class World3 {
       89,
       units = "kilograms per person-year",
       dependencies = Vector("indicatedFoodPerCapitaBefore", "indicatedFoodPerCapitaAfter"),
-      updateFn = clip(() => indicatedFoodPerCapitaAfter.k, () => indicatedFoodPerCapitaBefore.k, t, policyYear)
+      updateFn = () => clip(indicatedFoodPerCapitaAfter.k, indicatedFoodPerCapitaBefore.k, Some(t), Some(policyYear))
     )
 
   val indicatedFoodPerCapitaBefore =
     Table(
-      "indicatedFoodPerCapitaBefore",
-      90,
-      Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
-      0,
-      1600,
-      200,
+      qName = "indicatedFoodPerCapitaBefore",
+      qNumber = 90,
+      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+      iMin = 0, iMax = 1600, iDelta = 200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => { industrialOutputPerCapita.k }
+      updateFn = () => industrialOutputPerCapita.k
     )
 
   val indicatedFoodPerCapitaAfter =
     Table(
-      "indicatedFoodPerCapitaAfter",
-      91,
-      Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
-      0,
-      1600,
-      200,
+      qName = "indicatedFoodPerCapitaAfter",
+      qNumber = 91,
+      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+      iMin = 0, iMax = 1600, iDelta = 200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -1484,40 +1490,36 @@ class World3 {
     Aux(
       "fractionOfIndustrialOutputAllocatedToAgriculture",
       93,
-      units = "dimensionless",
       dependencies = Vector("fractionOfIndustrialOutputAllocatedToAgricultureBefore", "fractionOfIndustrialOutputAllocatedToAgricultureAfter"),
-      updateFn =
-        clip(
-          () => fractionOfIndustrialOutputAllocatedToAgricultureAfter.k,
-          () => fractionOfIndustrialOutputAllocatedToAgricultureBefore.k,
-          t,
-          policyYear)
+      updateFn = () => clip(
+        fractionOfIndustrialOutputAllocatedToAgricultureAfter.k,
+        fractionOfIndustrialOutputAllocatedToAgricultureBefore.k,
+        Some(t),
+        Some(policyYear))
     )
 
   val fractionOfIndustrialOutputAllocatedToAgricultureBefore =
     Table(
-      "fractionOfIndustrialOutputAllocatedToAgricultureBefore",
-      94,
-      Vector(0.4, 0.2, 0.1, 0.025, 0, 0),
-      0,
-      2.5,
-      0.5,
-      units = "dimensionless",
-      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
-      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k) }
+      qName = "fractionOfIndustrialOutputAllocatedToAgricultureBefore",
+      qNumber = 94,
+      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
+      iMin = 0,
+      iMax = 2.5,
+      iDelta = 0.5,
+      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k) },
+      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita")
     )
 
   val fractionOfIndustrialOutputAllocatedToAgricultureAfter =
     Table(
-      "fractionOfIndustrialOutputAllocatedToAgricultureAfter",
-      95,
-      Vector(0.4, 0.2, 0.1, 0.025, 0, 0),
-      0,
-      2.5,
-      0.5,
-      units = "dimensionless",
-      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita"),
-      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k)}
+      qName = "fractionOfIndustrialOutputAllocatedToAgricultureAfter",
+      qNumber = 95,
+      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
+      iMin = 0,
+      iMax = 2.5,
+      iDelta = 0.5,
+      updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k)},
+      dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita")
     )
 
   val landDevelopmentRate =
@@ -1560,7 +1562,7 @@ class World3 {
       "averageLifetimeOfAgriculturalInputs",
       100,
       units = "years",
-      updateFn = clip(() => Some(2), () => Some(2) , t, policyYear)
+      updateFn = () => clip(Some(2.0), Some(2.0) , Some(t), Some(policyYear))
   )
 
   val agriculturalInputsPerHectare: Aux =
@@ -1575,7 +1577,6 @@ class World3 {
       "landYieldMultiplierFromCapital", 102,
       data=Vector(1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10),
       iMin = 0, iMax = 1000, iDelta = 40,
-      units = "dimensionless",
       dependencies = Vector("agriculturalInputsPerHectare"),
       updateFn = () => agriculturalInputsPerHectare.k
     )
@@ -1592,29 +1593,25 @@ class World3 {
     Aux(
       "landYieldFactor",
       104,
-      units = "dimensionless",
-      updateFn = clip(() => Some(1),() => Some(1), t, policyYear)
+      updateFn = () => clip(Some(1.0), Some(1.0), Some(t), Some(policyYear))
     )
 
   val landYieldMultiplierFromAirPollution = Aux(
     "landYieldMultiplierFromAirPollution", 105,
-    units = "dimensionless",
     dependencies = Vector("landYieldMultiplierFromAirPollutionBefore", "landYieldMultiplierFromAirPollutionAfter"),
-    updateFn = clip(()=>landYieldMultiplierFromAirPollutionAfter.k, ()=>landYieldMultiplierFromAirPollutionBefore.k, t, policyYear)
+    updateFn = () => clip(landYieldMultiplierFromAirPollutionAfter.k, landYieldMultiplierFromAirPollutionBefore.k, Some(t), Some(policyYear))
   )
 
-  val landYieldMultiplierFromAirPollutionBefore = Table("landYieldMultiplierFromAirPollutionBefore", 106,
-    data = Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
-    units = "dimensionless",
+  val landYieldMultiplierFromAirPollutionBefore = Table("landYieldMultiplierFromAirPollutionBefore", qNumber = 106,
+    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
     updateFn = () => lift {unlift(industrialOutput.k) / Constants.industrialOutputValueIn1970}
   )
 
-  val landYieldMultiplierFromAirPollutionAfter = Table("landYieldMultiplierFromAirPollutionAfter", 107,
-    Vector(1, 1, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
-    units = "dimensionless",
+  val landYieldMultiplierFromAirPollutionAfter = Table("landYieldMultiplierFromAirPollutionAfter", qNumber = 107,
+    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
-    updateFn = () => lift {unlift(industrialOutput.k) / Constants.industrialCapitalOutputRatioAfter}
+    updateFn = () => lift {unlift(industrialOutput.k) / Constants.industrialOutputValueIn1970}
   )
 
 
@@ -1622,7 +1619,7 @@ class World3 {
   val fractionOfInputsAllocatedToLandDevelopment = Table(
     "fractionOfInputsAllocatedToLandDevelopment", 108,
     data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
-    units = "dimensionless", dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
+    dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
     updateFn = () => lift {unlift(marginalProductivityOfLandDevelopment.k) / unlift(marginalProductivityOfAgriculturalInputs.k)}
   )
 
@@ -1653,25 +1650,28 @@ class World3 {
     updateFn = () => lift {Constants.averageLifeOfLandNormal * unlift(landLifeMultiplierFromYield.k)}
   )
 
-  val landLifeMultiplierFromYield = Aux("landLifeMultiplierFromYield", 113,units = "dimensionless",
+  val landLifeMultiplierFromYield = Aux("landLifeMultiplierFromYield", 113,
     dependencies = Vector("landLifeMultiplierFromYieldBefore", "landLifeMultiplierFromYieldAfter"),
-    updateFn = clip(()=>landLifeMultiplierFromYieldAfter.k, ()=>landLifeMultiplierFromYieldBefore.k, t, policyYear)
+    updateFn = () => clip(landLifeMultiplierFromYieldAfter.k, landLifeMultiplierFromYieldBefore.k, Some(t), Some(policyYear))
   )
 
-  val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", 114,
-    data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01), iMin = 0, iMax = 9, iDelta = 1,units = "dimensionless",
+  val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", qNumber = 114,
+    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+    iMin = 0, iMax = 9, iDelta = 1,
     dependencies = Vector("landYield"),
     updateFn = () => lift {unlift(landYield.k) / Constants.inherentLandFertilityK}
   )
 
-  val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", 115,
-    data = Vector(1.2, 1, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
-    iMin = 0, iMax = 9, iDelta = 1, units = "dimensionless", dependencies = Vector("landYield"),
+  val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", qNumber = 115,
+    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+    iMin = 0, iMax = 9, iDelta = 1,
+    dependencies = Vector("landYield"),
     updateFn = () => lift {unlift(landYield.k) / Constants.inherentLandFertilityK}
   )
 
   val landErosionRate =
-    Rate("landErosionRate", 116, units = "hectares per year",
+    Rate("landErosionRate", 116,
+      units = "hectares per year",
       updateFn = () => lift { unlift(arableLand.k) / unlift(averageLifeOfLand.k) }
     )
 
@@ -1681,7 +1681,8 @@ class World3 {
   val urbanIndustrialLandPerCapita = Table(
     "urbanIndustrialLandPerCapita", 117,
     data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
-    iMin = 0, iMax = 1600, iDelta = 200, units = "hectares per person",
+    iMin = 0, iMax = 1600, iDelta = 200,
+    units = "hectares per person",
     dependencies = Vector("industrialOutputPerCapita"),
     updateFn = () => industrialOutputPerCapita.k
   )
@@ -1750,7 +1751,6 @@ class World3 {
     qNumber = 126,
     data = Vector(0, 0.04, 0.07, 0.09, 0.10),
     iMin=0, iMax=4, iDelta=1,
-    units = "dimensionless",
     dependencies = Vector("perceivedFoodRatio"),
     updateFn = () => perceivedFoodRatio.k
   )
@@ -1758,7 +1758,6 @@ class World3 {
   val foodRatio = Aux(
     qName = "foodRatio",
     qNumber= 127,
-    units = "dimensionless",
     dependencies = Vector("foodPerCapita"),
     updateFn = () => lift {unlift(foodPerCapita.k)/Constants.subsistenceFoodPerCapitaK}
   )
@@ -1790,8 +1789,7 @@ class World3 {
   val nonrenewableResourceUsageFactor = Aux(
     qName = "nonrenewableResourceUsageFactor",
     qNumber = 131,
-    units = "dimensionless",
-    updateFn = clip(()=>Some(1.0), ()=>Some(1.0), t, policyYear) // ???
+    updateFn = () => clip(Some(1.0), Some(1.0), Some(t), Some(policyYear)) // ???
   )
 
   val perCapitaResourceUsageMultiplier = Table(
@@ -1805,16 +1803,14 @@ class World3 {
   val nonrenewableResourceFractionRemaining = Aux(
     qName = "nonrenewableResourceFractionRemaining",
     qNumber = 133,
-    units = "dimensionless",
     updateFn = () => lift {unlift(nonrenewableResources.k) / Constants.nonrenewableResourcesInitialK}
   )
 
   val fractionOfCapitalAllocatedToObtainingResources = Aux(
     qName = "fractionOfCapitalAllocatedToObtainingResources",
     qNumber = 134,
-    units = "dimensionless",
     dependencies = Vector("fractionOfCapitalAllocatedToObtainingResourcesBefore", "fractionOfCapitalAllocatedToObtainingResourcesAfter"),
-    updateFn = clip(() => fractionOfCapitalAllocatedToObtainingResourcesAfter.k, () => fractionOfCapitalAllocatedToObtainingResourcesBefore.k, t, policyYear)
+    updateFn = () => clip(fractionOfCapitalAllocatedToObtainingResourcesAfter.k, fractionOfCapitalAllocatedToObtainingResourcesBefore.k, Some(t), Some(policyYear))
   )
 
   val fractionOfCapitalAllocatedToObtainingResourcesBefore = Table(
@@ -1822,7 +1818,6 @@ class World3 {
     qNumber = 135,
     data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
     iMin = 0, iMax = 1, iDelta = 0.1,
-    units = "dimensionless",
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
     updateFn = () => nonrenewableResourceFractionRemaining.k
   )
@@ -1832,7 +1827,6 @@ class World3 {
     qNumber = 136,
     data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
     iMin = 0, iMax = 1, iDelta = 0.1,
-    units = "dimensionless",
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
     updateFn = () => nonrenewableResourceFractionRemaining.k
   )
@@ -1851,8 +1845,7 @@ class World3 {
   val persistentPollutionGenerationFactor = Aux(
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
-    units = "dimensionless",
-    updateFn = clip(()=>Some(1.0),()=>Some(1.0),t,policyYear)
+    updateFn = () => clip(Some(1.0),Some(1.0),Some(t),Some(policyYear))
   )
 
   val persistentPollutionGeneratedByIndustrialOutput = Aux(
@@ -1892,7 +1885,6 @@ class World3 {
   val indexOfPersistentPollution = Aux(
     qName = "indexOfPersistentPollution",
     qNumber = 143,
-    units = "dimensionless",
     updateFn = () => lift {unlift(persistentPollution.k) / Constants.pollutionValueIn1970}
   )
 
@@ -1927,7 +1919,6 @@ class World3 {
   val fractionOfOutputInAgriculture = Aux(
       qName = "fractionOfOutputInAgriculture",
       qNumber = 147,
-      units = "dimensionless",
       dependencies = Vector("food", "serviceOutput", "industrialOutput"),
       updateFn = () => lift {0.22 * unlift(food.k) / ((0.22 * unlift(food.k)) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
     )
@@ -1935,7 +1926,6 @@ class World3 {
   val fractionOfOutputInIndustry = Aux(
     qName = "fractionOfOutputInIndustry",
     qNumber = 148,
-    units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
     updateFn = () => lift {unlift(industrialOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
@@ -1943,7 +1933,6 @@ class World3 {
   val fractionOfOutputInServices = Aux(
     qName = "fractionOfOutputInServices",
     qNumber = 149,
-    units = "dimensionless",
     dependencies = Vector("food", "serviceOutput", "industrialOutput"),
     updateFn = () => lift {unlift(serviceOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
