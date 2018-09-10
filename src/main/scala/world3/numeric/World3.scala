@@ -32,7 +32,7 @@ object World3 extends App {
     assert(File("/tmp/results.csv").contentAsString == csv(result))
   }
 
-  val w3 = new World3(Parameters())
+  val w3 = new World3(Constants())
   val result = w3.run()
 
   val writer = File("/tmp/results.csv").newFileWriter()
@@ -43,7 +43,7 @@ object World3 extends App {
 }
 
 
-case class Parameters(
+case class Constants(
   lifeExpectancyNormal: Double = 32.0, // used in eqn 19,
   subsistenceFoodPerCapitaK: Double = 230.0, // kilograms per person-year, used in eqns 20, 127
   effectiveHealthServicesPerCapitaImpactDelay: Double = 20.0, // years, used in eqn 22
@@ -113,7 +113,7 @@ case class StepValues(
   arableLand: Double,
   landYield: Double)
 
-class World3(parameters: Parameters) {
+class World3(constants: Constants) {
 
   /*  Limits to Growth: This is a re-implementation in JavaScript
     of World3, the social-economic-environmental model created by
@@ -684,7 +684,7 @@ class World3(parameters: Parameters) {
       units = "years",
       dependencies = Vector("lifetimeMultiplierFromFood", "lifetimeMultiplierFromHealthServices", "lifetimeMultiplierFromPollution", "lifetimeMultiplierFromCrowding"),
       updateFn = () => lift {
-       parameters.lifeExpectancyNormal *
+       constants.lifeExpectancyNormal *
         unlift(lifetimeMultiplierFromFood.k) *
         unlift(lifetimeMultiplierFromHealthServices.k) *
         unlift(lifetimeMultiplierFromPollution.k) *
@@ -700,7 +700,7 @@ class World3(parameters: Parameters) {
       5,
       1,
       dependencies = Vector("foodPerCapita"),
-      updateFn = () => lift { unlift(foodPerCapita.k) / parameters.subsistenceFoodPerCapitaK }
+      updateFn = () => lift { unlift(foodPerCapita.k) / constants.subsistenceFoodPerCapitaK }
     )
 
   val healthServicesAllocationsPerCapita =
@@ -720,7 +720,7 @@ class World3(parameters: Parameters) {
     Smooth(
       "effectiveHealthServicesPerCapita",
       22,
-      parameters.effectiveHealthServicesPerCapitaImpactDelay,
+      constants.effectiveHealthServicesPerCapitaImpactDelay,
       units = "dollars per person-year",
       dependencies = Vector("healthServicesAllocationsPerCapita"),
       initFn = () => healthServicesAllocationsPerCapita
@@ -735,7 +735,7 @@ class World3(parameters: Parameters) {
         lifetimeMultiplierFromHealthServicesAfter.k,
         lifetimeMultiplierFromHealthServicesBefore.k,
         Some(t),
-        Some(parameters.lifetimeMultiplierFromHealthServicesPolicyYear)
+        Some(constants.lifetimeMultiplierFromHealthServicesPolicyYear)
       )
     )
 
@@ -814,9 +814,9 @@ class World3(parameters: Parameters) {
         updateFn = () => {
           clip(
             deathsPerYear.k,
-            lift { unlift(totalFertility.k) * unlift(population15To44.k) * 0.5 / parameters.birthsPerYearReproductiveLifetime },
+            lift { unlift(totalFertility.k) * unlift(population15To44.k) * 0.5 / constants.birthsPerYearReproductiveLifetime },
             Some(t),
-            Some(parameters.birthsPerYearPopulationEquilibriumTime)
+            Some(constants.birthsPerYearPopulationEquilibriumTime)
           )
         }
       )
@@ -848,7 +848,7 @@ class World3(parameters: Parameters) {
       "maxTotalFertility",
       33,
       dependencies = Vector("fecundityMultiplier"),
-      updateFn = () => lift { parameters.maxTotalFertilityNormal * unlift(fecundityMultiplier.k) }
+      updateFn = () => lift { constants.maxTotalFertilityNormal * unlift(fecundityMultiplier.k) }
     )
 
   val fecundityMultiplier =
@@ -887,7 +887,7 @@ class World3(parameters: Parameters) {
     Delay3(
       "perceivedLifeExpectancy",
       37,
-      delay=parameters.lifetimePerceptionDelayK,
+      delay=constants.lifetimePerceptionDelayK,
       units = "years",
       dependencies = Vector("lifeExpectancy"),
       initFn = () => lifeExpectancy
@@ -901,9 +901,9 @@ class World3(parameters: Parameters) {
       dependencies = Vector("familyResponseToSocialNorm", "socialFamilySizeNorm"),
       updateFn = () => clip(
         Some(2.0),
-        lift { parameters.desiredCompletedFamilySizeNormal * unlift(familyResponseToSocialNorm.k) * unlift(socialFamilySizeNorm.k) },
+        lift { constants.desiredCompletedFamilySizeNormal * unlift(familyResponseToSocialNorm.k) * unlift(socialFamilySizeNorm.k) },
         Some(t),
-        Some(parameters.zeroPopulationGrowthTargetYear)
+        Some(constants.zeroPopulationGrowthTargetYear)
       )
     )
 
@@ -923,7 +923,7 @@ class World3(parameters: Parameters) {
     Delay3(
       "delayedIndustrialOutputPerCapita",
       40,
-      delay=parameters.socialAdjustmentDelayK,
+      delay=constants.socialAdjustmentDelayK,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       initFn = () => industrialOutputPerCapita
@@ -953,7 +953,7 @@ class World3(parameters: Parameters) {
     Smooth(
       "averageIndustrialOutputPerCapita",
       43,
-      parameters.incomeExpectationAveragingTimeK,
+      constants.incomeExpectationAveragingTimeK,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       initFn = () => industrialOutputPerCapita
@@ -983,7 +983,7 @@ class World3(parameters: Parameters) {
     Delay3(
       "fertilityControlFacilitiesPerCapita",
       46,
-      delay=parameters.healthServicesImpactDelayK,
+      delay=constants.healthServicesImpactDelayK,
       units = "dollars per person-year",
       dependencies = Vector("fertilityControlAllocationPerCapita"),
       initFn = () => fertilityControlAllocationPerCapita
@@ -1039,8 +1039,8 @@ class World3(parameters: Parameters) {
       51,
       units = "years",
       updateFn = () => clip(
-        Some(parameters.industrialCapitalOutputRatioAfter),
-        Some(parameters.industrialCapitalOutputRatioBefore),
+        Some(constants.industrialCapitalOutputRatioAfter),
+        Some(constants.industrialCapitalOutputRatioBefore),
         Some(t),
         Some(policyYear)
       )
@@ -1069,8 +1069,8 @@ class World3(parameters: Parameters) {
       54,
       units = "years",
       updateFn = () => clip(
-        Some(parameters.averageLifetimeOfIndustrialCapitalAfter),
-        Some(parameters.averageLifetimeOfIndustrialCapitalBefore),
+        Some(constants.averageLifetimeOfIndustrialCapitalAfter),
+        Some(constants.averageLifetimeOfIndustrialCapitalBefore),
         Some(t),
         Some(policyYear)
       )
@@ -1101,7 +1101,7 @@ class World3(parameters: Parameters) {
         fractionOfIndustrialOutputAllocatedToConsumptionVariable.k,
         fractionOfIndustrialOutputAllocatedToConsumptionConstant.k,
         Some(t),
-        Some(parameters.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime))
+        Some(constants.fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime))
     )
 
   val fractionOfIndustrialOutputAllocatedToConsumptionConstant =
@@ -1109,8 +1109,8 @@ class World3(parameters: Parameters) {
       "fractionOfIndustrialOutputAllocatedToConsumptionConstant",
       58,
       updateFn = () => clip(
-        lift(parameters.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter),
-        lift(parameters.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore),
+        lift(constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter),
+        lift(constants.fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore),
         Some(t),
         Some(policyYear))
     )
@@ -1123,7 +1123,7 @@ class World3(parameters: Parameters) {
       0, 2,
       0.2,
       dependencies = Vector("industrialOutputPerCapita"),
-      updateFn = () => lift { unlift(industrialOutputPerCapita.k) / parameters.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
+      updateFn = () => lift { unlift(industrialOutputPerCapita.k) / constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
     )
 
 
@@ -1232,8 +1232,8 @@ class World3(parameters: Parameters) {
       69,
       units = "years",
       updateFn = () => clip(
-        Some(parameters.averageLifetimeOfServiceCapitalAfter),
-        Some(parameters.averageLifetimeOfServiceCapitalBefore),
+        Some(constants.averageLifetimeOfServiceCapitalAfter),
+        Some(constants.averageLifetimeOfServiceCapitalBefore),
         Some(t),
         Some(policyYear)
       )
@@ -1263,8 +1263,8 @@ class World3(parameters: Parameters) {
       72,
       units = "years",
       updateFn = () => clip(
-        Some(parameters.serviceCapitalOutputRatioAfter),
-        Some(parameters.serviceCapitalOutputRatioBefore),
+        Some(constants.serviceCapitalOutputRatioAfter),
+        Some(constants.serviceCapitalOutputRatioBefore),
         Some(t),
         Some(policyYear)
       )
@@ -1351,7 +1351,7 @@ class World3(parameters: Parameters) {
       "laborForce",
       80,
       units = "persons",
-      updateFn = () => lift { (unlift(population15To44.k) + unlift(population45To64.k)) * parameters.laborForceParticipationFraction }
+      updateFn = () => lift { (unlift(population15To44.k) + unlift(population45To64.k)) * constants.laborForceParticipationFraction }
     )
 
   val laborUtilizationFraction =
@@ -1366,7 +1366,7 @@ class World3(parameters: Parameters) {
     Smooth(
       "laborUtilizationFractionDelayed",
       82,
-      parameters.laborUtilizationFractionDelayedDelayTime,
+      constants.laborUtilizationFractionDelayedDelayTime,
       dependencies = Vector("laborUtilizationFraction"),
       initFn = () => laborUtilizationFraction
     )
@@ -1392,7 +1392,7 @@ class World3(parameters: Parameters) {
     Aux(
       "landFractionCultivated",
       84,
-      updateFn = () => lift {unlift(arableLand.k) / parameters.landFractionCultivatedPotentiallyArableLandTotal }
+      updateFn = () => lift {unlift(arableLand.k) / constants.landFractionCultivatedPotentiallyArableLandTotal }
     )
 
   val arableLand: Level =
@@ -1422,7 +1422,7 @@ class World3(parameters: Parameters) {
       87,
       units = "kilograms per year",
       dependencies = Vector("landYield"),
-      updateFn = () => lift { unlift(landYield.k) * unlift(arableLand.k) * parameters.foodLandFractionHarvestedK * (1 - parameters.foodProcessingLossK) }
+      updateFn = () => lift { unlift(landYield.k) * unlift(arableLand.k) * constants.foodLandFractionHarvestedK * (1 - constants.foodProcessingLossK) }
     )
 
   val foodPerCapita:Aux = Aux(
@@ -1521,7 +1521,7 @@ class World3(parameters: Parameters) {
     qName = "developmentCostPerHectare",
     qNumber = 97,
     data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
-    updateFn = () => lift {unlift(potentiallyArableLand.k) / parameters.potentiallyArableLandTotal}
+    updateFn = () => lift {unlift(potentiallyArableLand.k) / constants.potentiallyArableLandTotal}
   )
 
 
@@ -1537,7 +1537,7 @@ class World3(parameters: Parameters) {
     )
 
   val agriculturalInputs =
-    Smooth("agriculturalInputs", 99, parameters.averageLifetimeOfAgriculturalInputsK,
+    Smooth("agriculturalInputs", 99, constants.averageLifetimeOfAgriculturalInputsK,
       units = "dollars per year",
       dependencies = Vector(),   // "currentAgriculturalInputs" removed to break cycle
       initFn = () => { currentAgriculturalInputs },
@@ -1592,13 +1592,13 @@ class World3(parameters: Parameters) {
   val landYieldMultiplierFromAirPollutionBefore = Table("landYieldMultiplierFromAirPollutionBefore", qNumber = 106,
     data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
-    updateFn = () => lift {unlift(industrialOutput.k) / parameters.industrialOutputValueIn1970}
+    updateFn = () => lift {unlift(industrialOutput.k) / constants.industrialOutputValueIn1970}
   )
 
   val landYieldMultiplierFromAirPollutionAfter = Table("landYieldMultiplierFromAirPollutionAfter", qNumber = 107,
     data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
-    updateFn = () => lift {unlift(industrialOutput.k) / parameters.industrialOutputValueIn1970}
+    updateFn = () => lift {unlift(industrialOutput.k) / constants.industrialOutputValueIn1970}
   )
 
 
@@ -1613,14 +1613,14 @@ class World3(parameters: Parameters) {
   val marginalProductivityOfLandDevelopment = Aux("marginalProductivityOfLandDevelopment", 109,
     units = "kilograms per dollar",
     dependencies = Vector("landYield", "developmentCostPerHectare"),
-    updateFn = () => lift { unlift(landYield.k) / (unlift(developmentCostPerHectare.k) * parameters.socialDiscount)}
+    updateFn = () => lift { unlift(landYield.k) / (unlift(developmentCostPerHectare.k) * constants.socialDiscount)}
   )
 
   val marginalProductivityOfAgriculturalInputs = Aux("marginalProductivityOfAgriculturalInputs", 110,
     units = "kilograms per dollar",
     dependencies = Vector("averageLifetimeOfAgriculturalInputs", "landYield", "marginalLandYieldMultiplierFromCapital", "landYieldMultiplierFromCapital"),
     updateFn = () => lift {
-      parameters.averageLifetimeOfAgriculturalInputsK * unlift(landYield.k) *
+      constants.averageLifetimeOfAgriculturalInputsK * unlift(landYield.k) *
         (unlift(marginalLandYieldMultiplierFromCapital.k) / unlift(landYieldMultiplierFromCapital.k))}
   )
 
@@ -1634,7 +1634,7 @@ class World3(parameters: Parameters) {
 
   // Loop 3: Land Erosion and Urban-Industrial Use
   val averageLifeOfLand = Aux("averageLifeOfLand", 112, units = "years", dependencies = Vector("landLifeMultiplierFromYield"),
-    updateFn = () => lift {parameters.averageLifeOfLandNormal * unlift(landLifeMultiplierFromYield.k)}
+    updateFn = () => lift {constants.averageLifeOfLandNormal * unlift(landLifeMultiplierFromYield.k)}
   )
 
   val landLifeMultiplierFromYield = Aux("landLifeMultiplierFromYield", 113,
@@ -1646,14 +1646,14 @@ class World3(parameters: Parameters) {
     data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
     iMin = 0, iMax = 9, iDelta = 1,
     dependencies = Vector("landYield"),
-    updateFn = () => lift {unlift(landYield.k) / parameters.inherentLandFertilityK}
+    updateFn = () => lift {unlift(landYield.k) / constants.inherentLandFertilityK}
   )
 
   val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", qNumber = 115,
     data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
     iMin = 0, iMax = 9, iDelta = 1,
     dependencies = Vector("landYield"),
-    updateFn = () => lift {unlift(landYield.k) / parameters.inherentLandFertilityK}
+    updateFn = () => lift {unlift(landYield.k) / constants.inherentLandFertilityK}
   )
 
   val landErosionRate =
@@ -1681,7 +1681,7 @@ class World3(parameters: Parameters) {
   )
 
   val landRemovalForUrbanIndustrialUse = Rate("landRemovalForUrbanIndustrialUse", 119, units = "hectares per year",
-    updateFn = () => lift {math.max(0, (unlift(urbanIndustrialLandRequired.k) - unlift(urbanIndustrialLand.k)) / parameters.developmentTime)}
+    updateFn = () => lift {math.max(0, (unlift(urbanIndustrialLandRequired.k) - unlift(urbanIndustrialLand.k)) / constants.developmentTime)}
   )
 
   val urbanIndustrialLand: Level = Level(
@@ -1720,7 +1720,7 @@ class World3(parameters: Parameters) {
     qName="landFertilityRegeneration",
     qNumber=124,
     units = "kilograms per hectare-year-year",
-    updateFn = () => lift {(parameters.inherentLandFertilityK - unlift(landFertility.k)) / unlift(landFertilityRegenerationTime.k)}
+    updateFn = () => lift {(constants.inherentLandFertilityK - unlift(landFertility.k)) / unlift(landFertilityRegenerationTime.k)}
   )
 
   val landFertilityRegenerationTime = Table(
@@ -1746,13 +1746,13 @@ class World3(parameters: Parameters) {
     qName = "foodRatio",
     qNumber= 127,
     dependencies = Vector("foodPerCapita"),
-    updateFn = () => lift {unlift(foodPerCapita.k)/parameters.subsistenceFoodPerCapitaK}
+    updateFn = () => lift {unlift(foodPerCapita.k)/constants.subsistenceFoodPerCapitaK}
   )
 
   val perceivedFoodRatio = Smooth(
     qName = "perceivedFoodRatio",
     qNumber = 128,
-    delay= parameters.foodShortagePerceptionDelayK,
+    delay= constants.foodShortagePerceptionDelayK,
     initVal = Some(1.0),
     initFn = () => foodRatio // ??? CHECK THAT!!!
   )
@@ -1761,7 +1761,7 @@ class World3(parameters: Parameters) {
   val nonrenewableResources: Level = Level(
     qName = "nonrenewableResources",
     qNumber = 129,
-    initVal = parameters.nonrenewableResourcesInitialK,
+    initVal = constants.nonrenewableResourcesInitialK,
     units = "resource units",
     updateFn = ()=> lift {unlift(nonrenewableResources.j) + dt * (-unlift(nonrenewableResourceUsageRate.j))}
   )
@@ -1790,7 +1790,7 @@ class World3(parameters: Parameters) {
   val nonrenewableResourceFractionRemaining = Aux(
     qName = "nonrenewableResourceFractionRemaining",
     qNumber = 133,
-    updateFn = () => lift {unlift(nonrenewableResources.k) / parameters.nonrenewableResourcesInitialK}
+    updateFn = () => lift {unlift(nonrenewableResources.k) / constants.nonrenewableResourcesInitialK}
   )
 
   val fractionOfCapitalAllocatedToObtainingResources = Aux(
@@ -1840,7 +1840,7 @@ class World3(parameters: Parameters) {
     qNumber = 139,
     units = "pollution units per year",
     dependencies = Vector("perCapitaResourceUsageMultiplier", "population"),
-    updateFn = () => lift {unlift(perCapitaResourceUsageMultiplier.k) * unlift(population.k) * parameters.fractionOfResourcesAsPersistentMaterial * parameters.industrialMaterialsEmissionFactor * parameters.industrialMaterialsToxicityIndex}
+    updateFn = () => lift {unlift(perCapitaResourceUsageMultiplier.k) * unlift(population.k) * constants.fractionOfResourcesAsPersistentMaterial * constants.industrialMaterialsEmissionFactor * constants.industrialMaterialsToxicityIndex}
   )
 
   val persistentPollutionGeneratedByAgriculturalOutput = Aux(
@@ -1848,14 +1848,14 @@ class World3(parameters: Parameters) {
     qNumber = 140,
     units = "pollution units per year",
     dependencies = Vector("agriculturalInputsPerHectare"),
-    updateFn = () => lift {unlift(agriculturalInputsPerHectare.k) * unlift(arableLand.k) * parameters.fractionOfInputsAsPersistentMaterial * parameters.agriculturalMaterialsToxicityIndex}
+    updateFn = () => lift {unlift(agriculturalInputsPerHectare.k) * unlift(arableLand.k) * constants.fractionOfInputsAsPersistentMaterial * constants.agriculturalMaterialsToxicityIndex}
   )
 
   val persistentPollutionAppearanceRate =
     Delay3(
       qName = "persistentPollutionAppearanceRate",
       qNumber = 141,
-      delay = parameters.persistentPollutionTransmissionDelayK,
+      delay = constants.persistentPollutionTransmissionDelayK,
       units = "pollution units per year",
       initFn = () => { persistentPollutionGenerationRate }
     )
@@ -1872,7 +1872,7 @@ class World3(parameters: Parameters) {
   val indexOfPersistentPollution = Aux(
     qName = "indexOfPersistentPollution",
     qNumber = 143,
-    updateFn = () => lift {unlift(persistentPollution.k) / parameters.pollutionValueIn1970}
+    updateFn = () => lift {unlift(persistentPollution.k) / constants.pollutionValueIn1970}
   )
 
   val persistenPollutionAssimilationRate = Rate(
@@ -1899,7 +1899,7 @@ class World3(parameters: Parameters) {
     qNumber = 146,
     units = "years",
     dependencies = Vector("assimilationHalfLifeMultiplier"),
-    updateFn = () => lift {unlift(assimilationHalfLifeMultiplier.k) * parameters.assimilationHalfLifeValueIn1970}
+    updateFn = () => lift {unlift(assimilationHalfLifeMultiplier.k) * constants.assimilationHalfLifeValueIn1970}
   )
 
   // SUPPLEMENTARY EQUATIONS
