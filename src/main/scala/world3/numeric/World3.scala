@@ -32,13 +32,22 @@ object World3 extends App {
     assert(File("/tmp/results.csv").contentAsString == csv(result))
   }
 
-  val w3 = new World3(Constants())
+  val s1 = Constants()
+  val s2 = Constants(nonrenewableResourcesInitialK = 2.0e12)
+  val s3 = Constants(nonrenewableResourcesInitialK = 2.0e12)
+
+  val w3 = new World3(s2)
   val result = w3.run()
 
   val writer = File("/tmp/results.csv").newFileWriter()
   writer.write(csv(result))
   writer.close()
 //  check(result)
+  val graphWriter = File("graph.dot").newFileWriter()
+  graphWriter.write("digraph G {\n")
+  graphWriter.write(w3.graph())
+  graphWriter.write("}")
+  graphWriter.close()
 
 }
 
@@ -56,6 +65,8 @@ case class Constants(
   developmentTime: Double = 10.0, // years, used in eqn 119
   foodShortagePerceptionDelayK: Double = 2.0, // years, used in eqn 128
   nonrenewableResourcesInitialK: Double = 1.0e12, // resource units, used in eqns 129 and 133
+  persistentPollutionGenerationFactorBefore: Double = 1.0, // Persistent pollution generation factor before policy, used in eqn 138.1
+  technologyDevelopmentDelay: Double = 20.0, //technology development delay, used in eqn 138.1
   fractionOfResourcesAsPersistentMaterial: Double = 0.02, // dimensionless, used in eqn 139
   industrialMaterialsEmissionFactor: Double = 0.1, // dimensionless, used in eqn 139
   industrialMaterialsToxicityIndex: Double = 10.0, // pollution units per resource unit, used in eqn 139
@@ -114,6 +125,7 @@ case class StepValues(
   landYield: Double)
 
 class World3(constants: Constants) {
+  def graph(nodes: Vector[All] = all): String = nodes.map(n=>if (n.dependencies.isEmpty) "" else n.qName + "-> {" + n.dependencies.mkString(" ") + "}").mkString("\n")
 
   /*  Limits to Growth: This is a re-implementation in JavaScript
     of World3, the social-economic-environmental model created by
@@ -133,6 +145,7 @@ class World3(constants: Constants) {
     def warmup()
     def tick()
     def update()
+    val dependencies: Vector[String]
   }
 
   object Level {
@@ -1829,10 +1842,31 @@ class World3(constants: Constants) {
       lift { (unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k)) * unlift(persistentPollutionGenerationFactor.k)}
   )
 
+//  val landYieldTechnology: Level =
+//    Level(
+//      "landYieldTechnology",
+//      138,
+//      1.0,
+//      units = "hectares",
+//      updateFn = () => lift { unlift(landYieldTechnology.j) + dt * (-unlift(landYieldTechnologyChangeRate.j)) }
+//    )
+//  val persistentPollutionTechnologyDevelopment = Delay3(
+//    qName = "persistentPollutionTechnologyDevelopment",
+//    qNumber = 138,
+//    delay = constants.technologyDevelopmentDelay,
+//    dependencies = Vector(""),
+//    initFn = () => landYieldTechnology,
+//  )
+
   val persistentPollutionGenerationFactor = Aux(
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
-    updateFn = () => clip(Some(1.0),Some(1.0),Some(t),Some(policyYear))
+    updateFn = () => clip(
+      //persistentPollutionTechnologyDevelopment.k,
+      Some(constants.persistentPollutionGenerationFactorBefore),
+      Some(constants.persistentPollutionGenerationFactorBefore),
+      Some(t),
+      Some(policyYear))
   )
 
   val persistentPollutionGeneratedByIndustrialOutput = Aux(
