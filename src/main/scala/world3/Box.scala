@@ -13,6 +13,7 @@ object Box {
   sealed trait All {
     def j: Option[Double]
     def k: Option[Double]
+    def k_=(v: Option[Double])
     def qName: String
     def reset()
     def warmup(dt: Double)

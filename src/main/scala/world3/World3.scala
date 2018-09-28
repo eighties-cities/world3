@@ -3,10 +3,11 @@ package world3
 import better.files._
 import io.monadless.stdlib.MonadlessOption._
 import Box._
-
+import monocle.macros._
 import scala.collection.mutable.ListBuffer
 
-object World3 extends App {
+
+object Run extends App {
 
   def scale(x: Double, xMin: Double = 0.0, xMax: Double): Double = (x - xMin) / (xMax - xMin)
 
@@ -44,7 +45,7 @@ object World3 extends App {
   val writer = File("/tmp/results.csv").newFileWriter()
   writer.write(csv(result))
   writer.close()
-//  check(result)
+  //  check(result)
   val graphWriter = File("graph.dot").newFileWriter()
   graphWriter.write("digraph G {\n")
   graphWriter.write(w3.graph())
@@ -53,8 +54,72 @@ object World3 extends App {
 
 }
 
+object World3 {
 
-case class Constants(
+  import Constants._
+
+  def parameters = Vector(
+    lifeExpectancyNormal,
+    subsistenceFoodPerCapitaK,
+    effectiveHealthServicesPerCapitaImpactDelay,
+    potentiallyArableLandTotal,
+    industrialOutputValueIn1970,
+    averageLifetimeOfAgriculturalInputsK,
+    socialDiscount,
+    averageLifeOfLandNormal,
+    inherentLandFertilityK,
+    developmentTime,
+    foodShortagePerceptionDelayK,
+    nonrenewableResourcesInitialK,
+    persistentPollutionGenerationFactorBefore,
+    technologyDevelopmentDelay,
+    fractionOfResourcesAsPersistentMaterial,
+    industrialMaterialsEmissionFactor,
+    industrialMaterialsToxicityIndex,
+    persistentPollutionTransmissionDelayK,
+    fractionOfInputsAsPersistentMaterial,
+    agriculturalMaterialsToxicityIndex,
+    pollutionValueIn1970,
+    lifetimeMultiplierFromHealthServicesPolicyYear,
+    birthsPerYearReproductiveLifetime,
+    birthsPerYearPopulationEquilibriumTime,
+    maxTotalFertilityNormal,
+    lifetimePerceptionDelayK,
+    desiredCompletedFamilySizeNormal,
+    zeroPopulationGrowthTargetYear,
+    assimilationHalfLifeValueIn1970,
+    socialAdjustmentDelayK,
+    incomeExpectationAveragingTimeK,
+    healthServicesImpactDelayK,
+    industrialCapitalOutputRatioBefore,
+    industrialCapitalOutputRatioAfter,
+    averageLifetimeOfIndustrialCapitalBefore,
+    averageLifetimeOfIndustrialCapitalAfter,
+
+    fractionOfIndustrialOutputAllocatedToConsumptionIndustrialEquilibriumTime,
+    fractionOfIndustrialOutputAllocatedToConsumptionConstantBefore,
+    fractionOfIndustrialOutputAllocatedToConsumptionConstantAfter,
+    fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired,
+
+    averageLifetimeOfServiceCapitalBefore,
+    averageLifetimeOfServiceCapitalAfter,
+
+    serviceCapitalOutputRatioBefore,
+    serviceCapitalOutputRatioAfter,
+
+    laborForceParticipationFraction,
+    laborUtilizationFractionDelayedDelayTime,
+
+    landFractionCultivatedPotentiallyArableLandTotal,
+
+    foodLandFractionHarvestedK,
+    foodProcessingLossK
+  )
+
+}
+
+
+@Lenses case class Constants(
   lifeExpectancyNormal: Double = 32.0, // used in eqn 19,
   subsistenceFoodPerCapitaK: Double = 230.0, // kilograms per person-year, used in eqns 20, 127
   effectiveHealthServicesPerCapitaImpactDelay: Double = 20.0, // years, used in eqn 22
@@ -182,7 +247,7 @@ class World3(constants: Constants) {
     t += dt
   }
 
-  def run() =  {
+  def init() = {
     resetModel()
     initModel()
 
@@ -193,7 +258,9 @@ class World3(constants: Constants) {
     }
 
     assert(all.forall(_.k.isDefined))
+  }
 
+  def exec() = {
     val result = ListBuffer[StepValues]()
 
     while (t <= stopTime) {
@@ -202,6 +269,11 @@ class World3(constants: Constants) {
     }
 
     result.toVector
+  }
+
+  def run() = {
+    init()
+    exec()
   }
 
 
@@ -1659,7 +1731,7 @@ class World3(constants: Constants) {
     updateFn = () => lift {unlift(serviceOutput.k) / (0.22 * unlift(food.k) + unlift(serviceOutput.k) + unlift(industrialOutput.k))}
   )
 
-  val auxSequence = Vector[All](
+  val auxSequence = Vector(
     population,
     deathsPerYear,
     lifetimeMultiplierFromCrowding,
