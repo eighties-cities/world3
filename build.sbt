@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
 enablePlugins(SbtOsgi)
 OsgiKeys.exportPackage := Seq("world3.*;-split-package:=merge-first")
 OsgiKeys.importPackage := Seq("*;resolution:=optional")
-OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*")
+OsgiKeys.privatePackage := Seq("!scala.*,!java.*,!monocle.*,!META-INF.*.RSA,!META-INF.*.SF,!META-INF.*.DSA,META-INF.services.*,META-INF.*,*")
 OsgiKeys.requireCapability := """osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))""""
 
 

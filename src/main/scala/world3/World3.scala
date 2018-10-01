@@ -5,7 +5,7 @@ import io.monadless.stdlib.MonadlessOption._
 import Box._
 import monocle.macros._
 import scala.collection.mutable.ListBuffer
-
+import monocle._
 
 object Run extends App {
 
@@ -114,7 +114,7 @@ object World3 {
 
     foodLandFractionHarvestedK,
     foodProcessingLossK
-  )
+  ).map { l => (f: Double => Double, c: Constants) => l.modify(f)(c) }
 
 }
 
