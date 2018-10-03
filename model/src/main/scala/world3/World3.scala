@@ -42,15 +42,15 @@ object Run extends App {
   val w3 = new World3(s2)
   val result = w3.run()
 
-  val writer = File("/tmp/results.csv").newFileWriter()
-  writer.write(csv(result))
-  writer.close()
-  //  check(result)
-  val graphWriter = File("graph.dot").newFileWriter()
-  graphWriter.write("digraph G {\n")
-  graphWriter.write(w3.graph())
-  graphWriter.write("}")
-  graphWriter.close()
+//  val writer = File("/tmp/results.csv").newFileWriter()
+//  writer.write(csv(result))
+//  writer.close()
+//  //  check(result)
+//  val graphWriter = File("graph.dot").newFileWriter()
+//  graphWriter.write("digraph G {\n")
+//  graphWriter.write(w3.graph())
+//  graphWriter.write("}")
+//  graphWriter.close()
 
 }
 

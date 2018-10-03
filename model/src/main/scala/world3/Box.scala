@@ -13,12 +13,12 @@ object Box {
   sealed trait All {
     def j: Option[Double]
     def k: Option[Double]
-    def k_=(v: Option[Double])
     def qName: String
     def reset()
     def warmup(dt: Double)
     def tick()
     def update(dt: Double)
+    def enabled_=(b: Boolean)
     val dependencies: Vector[String]
   }
 
@@ -38,6 +38,7 @@ object Box {
     val qType = "Level"
     var j: Option[Double] = Some(initVal)
     var k: Option[Double] = Some(initVal)
+    var enabled = true
 
     def reset() = {
       k = Some(initVal)
@@ -46,7 +47,7 @@ object Box {
 
     def warmup(dt: Double) = { k = updateFn() }
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       k = updateFn()
       k.get
     }
@@ -76,6 +77,7 @@ object Box {
     val qType = "Rate"
     var j: Option[Double] = None
     var k: Option[Double] = None
+    var enabled = true
 
     def reset() = {
       j = None
@@ -84,7 +86,7 @@ object Box {
 
     def warmup(dt: Double) = { k = updateFn() }
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       k = updateFn()
       k.get
     }
@@ -106,6 +108,7 @@ object Box {
     val qType = "Aux"
     var j: Option[Double] = None
     var k: Option[Double] = None
+    var enabled = true
 
     def reset() = {
       j = None
@@ -114,7 +117,7 @@ object Box {
 
     def warmup(dt: Double) = { k = updateFn() }
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       k = updateFn()
       k.get
     }
@@ -147,6 +150,7 @@ object Box {
     var j: Option[Double] = None
     var k: Option[Double] = None
     var firstCall = true
+    var enabled = true
 
     def init()  = {
       j = initFn().k orElse initVal
@@ -159,7 +163,7 @@ object Box {
       k = None
     }
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       val theInput = initFn()
       if (firstCall) {
         j = Some(theInput.k.orElse(initVal).get)
@@ -196,6 +200,7 @@ object Box {
     var j: Option[Double] = None
     var k: Option[Double] = None
     var firstCall = true
+    var enabled = true
 
     val delayPerStage = delay / 3
 
@@ -221,7 +226,7 @@ object Box {
       gama = None
     }
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       val theInput = initFn()
       if(firstCall) {
         j = theInput.k
@@ -279,6 +284,7 @@ object Box {
 
     var j: Option[Double] = None
     var k: Option[Double] = None
+    var enabled = true
 
     def interpolate(lower: Int, upper: Int, fraction: Double) = {
       val lowerVal = data(lower)
@@ -302,7 +308,7 @@ object Box {
 
     def reset() = {}
 
-    def update(dt: Double) = {
+    def update(dt: Double) = if(enabled) {
       k = updateFn().map(lookup)
     }
 
