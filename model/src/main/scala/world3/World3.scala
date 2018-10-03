@@ -39,19 +39,20 @@ object Run extends App {
   val s2 = Constants(nonrenewableResourcesInitialK = 2.0e12)
   val s3 = Constants(nonrenewableResourcesInitialK = 2.0e12)
 
-  val w3 = new World3(s2)
+  val w3 = new World3(s1)
   val result = w3.run()
 
-//  val writer = File("/tmp/results.csv").newFileWriter()
-//  writer.write(csv(result))
-//  writer.close()
-//  //  check(result)
-//  val graphWriter = File("graph.dot").newFileWriter()
-//  graphWriter.write("digraph G {\n")
-//  graphWriter.write(w3.graph())
-//  graphWriter.write("}")
-//  graphWriter.close()
-
+  val writer = File("/tmp/results.csv").newFileWriter()
+  writer.write(csv(result))
+  writer.close()
+  //  check(result)
+  /*
+  val graphWriter = File("graph.dot").newFileWriter()
+  graphWriter.write("digraph G {\n")
+  graphWriter.write(w3.graph())
+  graphWriter.write("}")
+  graphWriter.close()
+  */
 }
 
 object World3 {
@@ -132,8 +133,9 @@ object World3 {
   developmentTime: Double = 10.0, // years, used in eqn 119
   foodShortagePerceptionDelayK: Double = 2.0, // years, used in eqn 128
   nonrenewableResourcesInitialK: Double = 1.0e12, // resource units, used in eqns 129 and 133
-  persistentPollutionGenerationFactorBefore: Double = 1.0, // Persistent pollution generation factor before policy, used in eqn 138.1
+  persistentPollutionGenerationFactorBefore: Double = 1.0, // Persistent pollution generation factor before policy, used in eqn 138.1 (PPGF1#138.1)
   technologyDevelopmentDelay: Double = 20.0, //technology development delay, used in eqn 138.1
+  desiredFoodRatio: Double = 2.0, //desired food ratio (DFR#--)
   fractionOfResourcesAsPersistentMaterial: Double = 0.02, // dimensionless, used in eqn 139
   industrialMaterialsEmissionFactor: Double = 0.1, // dimensionless, used in eqn 139
   industrialMaterialsToxicityIndex: Double = 10.0, // pollution units per resource unit, used in eqn 139
@@ -171,10 +173,31 @@ object World3 {
   laborForceParticipationFraction: Double = 0.75,  // dimensionless
   laborUtilizationFractionDelayedDelayTime: Double = 2.0, // years, eqn 82
 
+  initialArableLand: Double = 0.9e9, // hectare, The initial amount of land that is arable. (ALI#85.2)
+  initialPotentiallyArableLand: Double = 2.3e9, //The initial amount of potentially arable land (PALI#86.2).
   landFractionCultivatedPotentiallyArableLandTotal: Double = 3.2e9,  // hectares, used here and in eqn 97
 
   foodLandFractionHarvestedK: Double = 0.7,   // dimensionless
-  foodProcessingLossK: Double = 0.1          // dimensionless
+  foodProcessingLossK: Double = 0.1,          // dimensionless
+
+  desiredPersistentPollutionIndex : Double = 1.2, //Desires persistent pollution index (DPOLX#--). dimensionless
+  initialPersistentPollutionTechnology: Double = 1.0, // initial value for Pollution control technology initiated (PTD#--)
+  initialServiceCapital: Double = 1.44e11, //The initial level of service capital (SCI#67.2)
+
+  initialPopulation0To14: Double = 6.5e8, //The initial number of people aged 0 to 14 (P1I#2.2).
+  initialPopulation15To44:Double = 7e8, //The initial number of people aged 15 to 44 (P2I#6.2).
+  initialPopulation45To64:Double = 1.9e8, //The initial number of people aged 45 to 64 (P3I#10.2).
+  initialPopulation65Plus:Double = 6e7, //The initial number of people aged 65 and over (P4I#14.2)
+
+  initialIndustrialCapital:Double = 2.1e11, //INDUSTRIAL CAPITAL INITIAL (ICI#52.1).
+
+  initialAgriculturalInputs:Double = 5.0e9,//initial value for CURRENT AGRICULTURAL INPUTS (CAI#98).
+  averageLifetimeOfAgriculturalInputsBeforePolicy: Double = 2.0, //The average life of agricultural inputs before policy time (ALAI1#100.1)
+  averageLifetimeOfAgriculturalInputsAfterPolicy: Double = 2.0, //The average life of agricultural inputs after policy time (ALAI2#100.2)
+  landYieldFactorBeforePolicy: Double = 1.0, //Land yield factor before policy year (LYF1#104.1).
+
+  initialUrbanIndustrialLand: Double = 8.2e6, //URBAN-INDUSTRIAL LAND INITIAL (UILI#120.1).
+  initialLandFertility: Double = 600, //LAND FERTILITY INITIAL (LFERTI#121.2)
 )
 
 case class StepValues(
@@ -291,7 +314,7 @@ class World3(constants: Constants) {
     Level(
       qName = "population0To14",
       qNumber = 2,
-      initVal = 6.5e8,
+      initVal = constants.initialPopulation0To14,
       units = "persons",
       updateFn = () => lift {
         unlift(population0To14.j) + dt *
@@ -332,7 +355,7 @@ class World3(constants: Constants) {
     Level(
       "population15To44",
       6,
-      7.0e8,
+      initVal = constants.initialPopulation15To44,
       units = "persons",
       updateFn = () => lift {
         unlift(population15To44.j) + dt * (unlift(maturationsPerYear14to15.j) - unlift(deathsPerYear15To44.j) - unlift(maturationsPerYear44to45.j))
@@ -372,7 +395,7 @@ class World3(constants: Constants) {
     Level(
       "population45To64",
       10,
-      1.9e8,
+      initVal = constants.initialPopulation45To64,
       units = "persons",
       updateFn = () => lift {
         unlift(population45To64.j) + dt * (unlift(maturationsPerYear44to45.j) - unlift(deathsPerYear45To64.j) - unlift(maturationsPerYear64to65.j))
@@ -412,7 +435,7 @@ class World3(constants: Constants) {
     Level(
       "population65AndOver",
       14,
-      6.0e7,
+      initVal = constants.initialPopulation65Plus,
       units = "persons",
       updateFn = () => lift {  unlift(population65AndOver.j) + dt * (unlift(maturationsPerYear64to65.j) - unlift(deathsPerYear65AndOver.j)) }
     )
@@ -705,10 +728,11 @@ class World3(constants: Constants) {
       updateFn = () => delayedIndustrialOutputPerCapita.k
     )
 
+  //(DIOPC#40)
   val delayedIndustrialOutputPerCapita =
     Delay3(
-      "delayedIndustrialOutputPerCapita",
-      40,
+      qName = "delayedIndustrialOutputPerCapita",
+      qNumber = 40,
       delay=constants.socialAdjustmentDelayK,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
@@ -836,7 +860,7 @@ class World3(constants: Constants) {
     Level(
       "industrialCapital",
       52,
-      2.1e11,
+      initVal = constants.initialIndustrialCapital,
       units = "dollars",
       updateFn = () => lift { unlift(industrialCapital.j) + dt * (unlift(industrialCapitalInvestmentRate.j) - unlift(industrialCapitalDepreciationRate.j)) }
     )
@@ -999,7 +1023,7 @@ class World3(constants: Constants) {
     Level(
       "serviceCapital",
       67,
-      1.44e11,
+      initVal = constants.initialServiceCapital,
       units = "dollars",
       updateFn = () => lift { unlift(serviceCapital.j) + dt * (unlift(serviceCapitalInvestmentRate.j) - unlift(serviceCapitalDepreciationRate.j)) }
     )
@@ -1185,11 +1209,10 @@ class World3(constants: Constants) {
     Level(
       "arableLand",
       85,
-      0.9e9,
+      constants.initialArableLand,
       units = "hectares",
       updateFn = () => lift {
-        unlift(arableLand.j) +
-          dt * (unlift(landDevelopmentRate.j) - unlift(landErosionRate.j) - unlift(landRemovalForUrbanIndustrialUse.j))
+        unlift(arableLand.j) + dt * (unlift(landDevelopmentRate.j) - unlift(landErosionRate.j) - unlift(landRemovalForUrbanIndustrialUse.j))
       }
     )
 
@@ -1197,7 +1220,7 @@ class World3(constants: Constants) {
     Level(
       "potentiallyArableLand",
       86,
-      2.3e9,
+      constants.initialPotentiallyArableLand,
       units = "hectares",
       updateFn = () => lift { unlift(potentiallyArableLand.j) + dt * (-unlift(landDevelopmentRate.j)) }
     )
@@ -1322,12 +1345,14 @@ class World3(constants: Constants) {
       updateFn = () => lift {unlift(totalAgriculturalInvestment.k) * (1 - unlift(fractionOfInputsAllocatedToLandDevelopment.k))}
     )
 
+  //AGRICULTURAL INPUTS (AI#99)
   val agriculturalInputs =
-    Smooth("agriculturalInputs", 99, constants.averageLifetimeOfAgriculturalInputsK,
+    Smooth("agriculturalInputs", 99,
+      delay = constants.averageLifetimeOfAgriculturalInputsK,
       units = "dollars per year",
       dependencies = Vector(),   // "currentAgriculturalInputs" removed to break cycle
       initFn = () => { currentAgriculturalInputs },
-      initVal = Some(5.0e9)
+      initVal = Some(constants.initialAgriculturalInputs)// simplification from complete model?
     )
 
   val averageLifetimeOfAgriculturalInputs =
@@ -1335,7 +1360,11 @@ class World3(constants: Constants) {
       "averageLifetimeOfAgriculturalInputs",
       100,
       units = "years",
-      updateFn = () => clip(Some(2.0), Some(2.0) , Some(t), Some(policyYear))
+      updateFn = () => clip(
+        Some(constants.averageLifetimeOfAgriculturalInputsAfterPolicy),
+        Some(constants.averageLifetimeOfAgriculturalInputsBeforePolicy),
+        Some(t),
+        Some(policyYear))
   )
 
   val agriculturalInputsPerHectare: Aux =
@@ -1366,7 +1395,11 @@ class World3(constants: Constants) {
     Aux(
       "landYieldFactor",
       104,
-      updateFn = () => clip(Some(1.0), Some(1.0), Some(t), Some(policyYear))
+      updateFn = () => clip(
+        Some(constants.landYieldFactorBeforePolicy),//TODO: Land yield factor after policy year (LYF2#104.2).
+        Some(constants.landYieldFactorBeforePolicy),
+        Some(t),
+        Some(policyYear))
     )
 
   val landYieldMultiplierFromAirPollution = Aux(
@@ -1419,7 +1452,9 @@ class World3(constants: Constants) {
   )
 
   // Loop 3: Land Erosion and Urban-Industrial Use
-  val averageLifeOfLand = Aux("averageLifeOfLand", 112, units = "years", dependencies = Vector("landLifeMultiplierFromYield"),
+  val averageLifeOfLand = Aux("averageLifeOfLand", 112,
+    units = "years",
+    dependencies = Vector("landLifeMultiplierFromYield"),
     updateFn = () => lift {constants.averageLifeOfLandNormal * unlift(landLifeMultiplierFromYield.k)}
   )
 
@@ -1442,17 +1477,13 @@ class World3(constants: Constants) {
     updateFn = () => lift {unlift(landYield.k) / constants.inherentLandFertilityK}
   )
 
-  val landErosionRate =
-    Rate("landErosionRate", 116,
+  val landErosionRate = Rate("landErosionRate", 116,
       units = "hectares per year",
       updateFn = () => lift { unlift(arableLand.k) / unlift(averageLifeOfLand.k) }
     )
 
-  // 2016-08-09: Neil S. Grant reported an error in the table of values
-  // for urbanIndustrialLandPerCapita. The third element of the array
-  // should be 0.015, not 0.15. Corrected.
-  val urbanIndustrialLandPerCapita = Table(
-    "urbanIndustrialLandPerCapita", 117,
+  // 2016-08-09: Neil S. Grant reported an error in the table of values for urbanIndustrialLandPerCapita. The third element of the array should be 0.015, not 0.15. Corrected.
+  val urbanIndustrialLandPerCapita = Table("urbanIndustrialLandPerCapita", 117,
     data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
     iMin = 0, iMax = 1600, iDelta = 200,
     units = "hectares per person",
@@ -1472,17 +1503,16 @@ class World3(constants: Constants) {
 
   val urbanIndustrialLand: Level = Level(
     "urbanIndustrialLand", 120,
-    initVal = 8.2e6,
+    initVal = constants.initialUrbanIndustrialLand,
     units = "hectares",
     updateFn = () => lift {unlift(urbanIndustrialLand.j) + dt * unlift(landRemovalForUrbanIndustrialUse.j)}
   )
-
 
   // Loop 4: Land fertility degradation
   val landFertility:Level = Level(
     qName="landFertility",
     qNumber = 121,
-    initVal = 600,
+    initVal = constants.initialLandFertility,
     units = "kilograms per hectare-year",
     updateFn = ()=> lift {unlift(landFertility.j) + dt * (unlift(landFertilityRegeneration.j) - unlift(landFertilityDegradation.j))}
   )
@@ -1539,7 +1569,7 @@ class World3(constants: Constants) {
     qName = "perceivedFoodRatio",
     qNumber = 128,
     delay= constants.foodShortagePerceptionDelayK,
-    initVal = Some(1.0),
+    initVal = Some(1.0),//TODO: add constant
     initFn = () => foodRatio // ??? CHECK THAT!!!
   )
 
@@ -1607,36 +1637,90 @@ class World3(constants: Constants) {
 
   // PERSISTENT POLLUTION SECTOR
 
-  val persistentPollutionGenerationRate = Rate(
-    qName = "persistentPollutionGenerationRate",
-    qNumber = 137,
+  val persistentPollutionGenerationRate = Rate(qName = "persistentPollutionGenerationRate", qNumber = 137,
     units = "pollution units per year",
     updateFn = () =>
       lift { (unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k)) * unlift(persistentPollutionGenerationFactor.k)}
   )
 
-//  val landYieldTechnology: Level =
-//    Level(
-//      "landYieldTechnology",
-//      138,
-//      1.0,
-//      units = "hectares",
-//      updateFn = () => lift { unlift(landYieldTechnology.j) + dt * (-unlift(landYieldTechnologyChangeRate.j)) }
-//    )
-//  val persistentPollutionTechnologyDevelopment = Delay3(
-//    qName = "persistentPollutionTechnologyDevelopment",
-//    qNumber = 138,
-//    delay = constants.technologyDevelopmentDelay,
-//    dependencies = Vector(""),
-//    initFn = () => landYieldTechnology,
-//  )
+  //Table relating the food ratio gap to the change in agricultural technology (LYCMT#--).
+  val landYieldTechnologyChangeRateMultiplier = Table(qName = "landYieldTechnologyChangeRateMultiplier", qNumber = 138,//NEW
+    units = "1/year",
+    dependencies = Vector("foodRatio"),
+    updateFn = () => lift { constants.desiredFoodRatio - unlift(foodRatio.k) },
+    data = Vector(0.1, 0.0),
+    iMin = 0,
+    iMax = 1,
+    iDelta = 1
+  )
+
+  val landYieldTechnologyChangeRate = Aux(qName = "landYieldTechnologyChangeRate", qNumber = 138,
+    units = "1/year",
+    updateFn = () => clip(
+      lift { unlift(landYieldTechnology.k) * unlift(landYieldTechnologyChangeRateMultiplier.k)},
+      Some(0),
+      Some(t),
+      Some(policyYear))
+  )
+
+  // LAND YIELD TECHNOLOGY INITIATED (LYTD#--)
+  val landYieldTechnology: Level = Level(//NEW
+    qName = "landYieldTechnology",
+    qNumber = 138,
+    initVal = 1.0,//TODO: add constant
+    units = "hectares",
+    updateFn = () => lift { unlift(landYieldTechnology.j) + dt * unlift(landYieldTechnologyChangeRate.j) }
+  )
+
+  // POLLUTION CONTROL TECHNOLOGY CHANGE MULTIPLIER (POLGFM#--)
+  val persistentPollutionTechnologyChangeRateMultiplier = Table(
+      qName = "persistentPollutionTechnologyChangeRateMultiplier",
+      qNumber = 138,
+      units = "1/year",
+      dependencies = Vector(""),//TODO
+      updateFn = () => lift{1 - unlift(indexOfPersistentPollution.k) / constants.desiredPersistentPollutionIndex},
+      data = Vector(0, 0),
+      iMin = -1,
+      iMax = 0,
+      iDelta = 1
+    )
+  //pollution control technology change rate (PTDR#--)
+  val persistentPollutionTechnologyChangeRate = Aux(
+    qName = "persistentPollutionTechnologyChangeRate",
+    qNumber = 138,
+    units = "1/year",
+    updateFn = () => clip(
+      lift {unlift(persistentPollutionTechnology.k) * unlift(persistentPollutionTechnologyChangeRateMultiplier.k)},
+      Some(0.0),
+      Some(t),
+      Some(policyYear)
+    )
+  )
+
+  //Pollution control technology initiated (PTD#--)
+  val persistentPollutionTechnology: Level = Level(
+      qName = "persistentPollutionTechnology",
+      qNumber = 138,
+      initVal = constants.initialPersistentPollutionTechnology,
+      updateFn = () => lift { unlift(persistentPollutionTechnology.j) + dt * unlift(persistentPollutionTechnologyChangeRate.j)}
+    )
+    //        INTEG( persistent pollution technology change rate , 1)
+
+  //(PPGF2#138.2)
+  val persistentPollutionTechnologyDevelopment = Delay3(
+    qName = "persistentPollutionTechnologyDevelopment",
+    qNumber = 138,
+    delay = constants.technologyDevelopmentDelay,
+    dependencies = Vector("persistentPollutionTechnology"),
+    initFn = () => persistentPollutionTechnology
+  )
 
   val persistentPollutionGenerationFactor = Aux(
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
     updateFn = () => clip(
-      //persistentPollutionTechnologyDevelopment.k,
-      Some(constants.persistentPollutionGenerationFactorBefore),
+      persistentPollutionTechnologyDevelopment.k,
+//      Some(constants.persistentPollutionGenerationFactorBefore),
       Some(constants.persistentPollutionGenerationFactorBefore),
       Some(t),
       Some(policyYear))
@@ -1671,9 +1755,9 @@ class World3(constants: Constants) {
     Level(
       qName = "persistentPollution",
       qNumber = 142,
-      initVal = 2.5e7,
+      initVal = 2.5e7,//TODO: add constant
       units = "pollution units",
-      updateFn = () => lift {unlift(persistentPollution.j) + dt * (unlift(persistentPollutionAppearanceRate.j) - unlift(persistenPollutionAssimilationRate.j))}
+      updateFn = () => lift {unlift(persistentPollution.j) + dt * (unlift(persistentPollutionAppearanceRate.j) - unlift(persistentPollutionAssimilationRate.j))}
     )
 
   val indexOfPersistentPollution = Aux(
@@ -1682,8 +1766,8 @@ class World3(constants: Constants) {
     updateFn = () => lift {unlift(persistentPollution.k) / constants.pollutionValueIn1970}
   )
 
-  val persistenPollutionAssimilationRate = Rate(
-    qName = "persistenPollutionAssimilationRate",
+  val persistentPollutionAssimilationRate = Rate(
+    qName = "persistentPollutionAssimilationRate",
     qNumber = 144,
     units = "pollution units per year",
     updateFn = () => lift {unlift(persistentPollution.k) / (unlift(assimilationHalfLife.k) * 1.4)}
@@ -1758,6 +1842,11 @@ class World3(constants: Constants) {
     fractionOfCapitalAllocatedToObtainingResourcesBefore,
     fractionOfCapitalAllocatedToObtainingResourcesAfter,
     fractionOfCapitalAllocatedToObtainingResources,
+    landYieldTechnologyChangeRateMultiplier,//new
+    landYieldTechnologyChangeRate,//new
+    persistentPollutionTechnologyChangeRateMultiplier,//new
+    persistentPollutionTechnologyChangeRate,//new
+    persistentPollutionTechnologyDevelopment,//new
     lifetimeMultiplierFromPollution,
     landFertilityDegradationRate,
     capitalUtilizationFraction,
@@ -1862,7 +1951,9 @@ class World3(constants: Constants) {
     urbanIndustrialLand,
     landFertility,
     nonrenewableResources,
-    persistentPollution
+    persistentPollution,
+    persistentPollutionTechnology,//new
+    landYieldTechnology//new
   )
 
 
@@ -1887,7 +1978,7 @@ class World3(constants: Constants) {
     nonrenewableResourceUsageRate,
     persistentPollutionGenerationRate,
     persistentPollutionAppearanceRate,
-    persistenPollutionAssimilationRate
+    persistentPollutionAssimilationRate
   )
 
 
@@ -2028,6 +2119,13 @@ class World3(constants: Constants) {
     fractionOfCapitalAllocatedToObtainingResources,
     fractionOfCapitalAllocatedToObtainingResourcesBefore,
     fractionOfCapitalAllocatedToObtainingResourcesAfter,
+    landYieldTechnologyChangeRateMultiplier,//new
+    landYieldTechnologyChangeRate,//new
+    persistentPollutionTechnologyChangeRateMultiplier,//new
+    persistentPollutionTechnologyChangeRate,//new
+    persistentPollutionTechnologyDevelopment,//new
+    persistentPollutionTechnology,//new
+    landYieldTechnology,//new
     persistentPollutionGenerationRate,
     persistentPollutionGenerationFactor,
     persistentPollutionGeneratedByIndustrialOutput,
@@ -2035,7 +2133,7 @@ class World3(constants: Constants) {
     persistentPollutionAppearanceRate,
     persistentPollution,
     indexOfPersistentPollution,
-    persistenPollutionAssimilationRate,
+    persistentPollutionAssimilationRate,
     assimilationHalfLifeMultiplier,
     assimilationHalfLife,
     fractionOfOutputInAgriculture,

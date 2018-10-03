@@ -6,7 +6,7 @@ object Box {
 
   object Equation {
     implicit def intToEquation(major: Int) = Equation(major, None)
-    implicit def tupleToEqation(t: (Int, Int)) = Equation(t._1, Some(t._2))
+    implicit def tupleToEquation(t: (Int, Int)) = Equation(t._1, Some(t._2))
   }
   case class Equation(major: Int, minor: Option[Int])
 
