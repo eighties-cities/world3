@@ -259,14 +259,14 @@ object Box {
     def apply(
                qName: String,
                qNumber: Equation,
-               data: Vector[Double],
-               iMin: Double,
-               iMax: Double,
-               iDelta: Double,
+               data: Vector[(Double, Double)],
+//               iMin: Double,
+//               iMax: Double,
+//               iDelta: Double,
                updateFn: () => Option[Double],
                units: String = "dimensionless",
                dependencies: Vector[String] = Vector()) =
-      new Table(qName, qNumber, data, iMin, iMax, iDelta, updateFn, units, dependencies)
+      new Table(qName, qNumber, data, /*iMin, iMax, iDelta, */updateFn, units, dependencies)
 
 
   }
@@ -274,10 +274,10 @@ object Box {
   class Table(
                val qName: String,
                val qNumber: Equation,
-               val data: Vector[Double],
-               val iMin: Double,
-               val iMax: Double,
-               val iDelta: Double,
+               val data: Vector[(Double,Double)],
+//               val iMin: Double,
+//               val iMax: Double,
+//               val iDelta: Double,
                val updateFn: () => Option[Double],
                val units: String,
                val dependencies: Vector[String]) extends All {
@@ -287,23 +287,37 @@ object Box {
     var enabled = true
 
     def interpolate(lower: Int, upper: Int, fraction: Double) = {
-      val lowerVal = data(lower)
-      val upperVal = data(upper)
+      val lowerVal = data(lower)._2
+      val upperVal = data(upper)._2
       lowerVal + (fraction * (upperVal - lowerVal))
     }
 
     def lookup(v: Double): Double = {
-      if(v <= iMin) data(0)
-      else if(v >= iMax) data(data.length - 1)
+//      if(v <= iMin) data(0)
+//      else if(v >= iMax) data(data.length - 1)
+//      else {
+//        for ((i, j) <- (BigDecimal(iMin) to iMax by iDelta).zipWithIndex) {
+//          if(i >= v) {
+//            //            if (qName == "mortality0To14") println(s"$qName lookup ($v) > $j = ${interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)}")
+//            return interpolate(j - 1, j, (v - (i.toDouble - iDelta)) / iDelta)
+//          }
+//        }
+//        ???
+//      }
+      if(v <= data.head._1) data.head._2
+      else if(v >= data.last._1) data.last._2
       else {
-        for ((i, j) <- (BigDecimal(iMin) to iMax by iDelta).zipWithIndex) {
-          if(i >= v) {
+        for ((i, j) <- data.zipWithIndex) {
+          if(i._1 >= v) {
             //            if (qName == "mortality0To14") println(s"$qName lookup ($v) > $j = ${interpolate(j - 1, j, (v - (i - iDelta)) / iDelta)}")
-            return interpolate(j - 1, j, (v - (i.toDouble - iDelta)) / iDelta)
+            val current = i._1
+            val previous = data(j-1)._1
+            return interpolate(j - 1, j, (v - previous) / (current - previous))
           }
         }
         ???
       }
+
     }
 
     def reset() = {}
@@ -316,8 +330,4 @@ object Box {
 
     def tick() = { j = k }
   }
-
-
-
-
 }

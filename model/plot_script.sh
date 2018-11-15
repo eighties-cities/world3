@@ -8,6 +8,7 @@ set title \"World3\"
 set xlabel \"Year\"
 #set size ratio 0.5
 #set size 0.5,0.5
+set yrange [0:1]
 set key outside
 plot \
 '/tmp/results.csv' using 1:2 title columnhead(2) w l lw 2 lc rgbcolor \"#e07154\", \

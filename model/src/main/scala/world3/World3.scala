@@ -36,8 +36,8 @@ object Run extends App {
   }
 
   val s1 = Constants()
-  val s2 = Constants(nonrenewableResourcesInitialK = 2.0e12)
-  val s3 = Constants(nonrenewableResourcesInitialK = 2.0e12)
+//  val s2 = Constants(nonrenewableResourcesInitialK = 2.0e12)
+  //val s3 = Constants(nonrenewableResourcesInitialK = 2.0e12, persistentpollutiontech)
 
   val w3 = new World3(s1)
   val result = w3.run()
@@ -215,6 +215,7 @@ case class StepValues(
   landYield: Double)
 
 class World3(constants: Constants) {
+
   def graph(nodes: Vector[All] = all): String = nodes.map(n=>if (n.dependencies.isEmpty) "" else n.qName + "-> {" + n.dependencies.mkString(" ") + "}").mkString("\n")
 
   /*  Limits to Growth: This is a re-implementation in JavaScript
@@ -334,10 +335,11 @@ class World3(constants: Constants) {
     Table(
       qName = "mortality0To14",
       qNumber = 4,
-      data = Vector(0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010),
-      iMin = 20,
-      iMax = 80,
-      iDelta = 10,
+      data = Vector((20,0.0567),(30,0.0366),(40,0.0243),(50,0.0155),(60,0.0082),(70,0.0023),(80,0.001)),
+//      data = Vector(0.0567, 0.0366, 0.0243, 0.0155, 0.0082, 0.0023, 0.0010),
+//      iMin = 20,
+//      iMax = 80,
+//      iDelta = 10,
       units =  "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lifeExpectancy.k
@@ -374,10 +376,11 @@ class World3(constants: Constants) {
     Table(
       "mortality15To44",
       8,
-      Vector(0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008),
-      20,
-      80,
-      10,
+      data = Vector((20,0.0266),(30,0.0171),(40,0.011),(50,0.0065),(60,0.004),(70,0.0016),(80,0.0008)),
+//      Vector(0.0266, 0.0171, 0.0110, 0.0065, 0.0040, 0.0016, 0.0008),
+//      20,
+//      80,
+//      10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lift { unlift(lifeExpectancy.k) }
@@ -414,10 +417,11 @@ class World3(constants: Constants) {
     Table(
       "mortality45To64",
       12,
-      Vector(0.0562, 0.0373, 0.0252, 0.0171, 0.0118, 0.0083, 0.0060),
-      20,
-      80,
-      10,
+      Vector((20,0.0562),(30,0.0373),(40,0.0252),(50,0.0171),(60,0.0118),(70,0.0083),(80,0.006)),
+//      Vector(0.0562, 0.0373, 0.0252, 0.0171, 0.0118, 0.0083, 0.0060),
+//      20,
+//      80,
+//      10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lift { unlift(lifeExpectancy.k) }
@@ -452,10 +456,11 @@ class World3(constants: Constants) {
     Table(
       "mortality65AndOver",
       16,
-      Vector(0.13, 0.11, 0.09, 0.07, 0.06, 0.05, 0.04),
-      20,
-      80,
-      10,
+      Vector((20,0.13),(30,0.11),(40,0.09),(50,0.07),(60,0.06),(70,0.05),(80,0.04)),
+//      Vector(0.13, 0.11, 0.09, 0.07, 0.06, 0.05, 0.04),
+//      20,
+//      80,
+//      10,
       units = "deaths per person-year",
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lifeExpectancy.k
@@ -504,10 +509,12 @@ class World3(constants: Constants) {
     Table(
       "lifetimeMultiplierFromFood",
       20,
-      Vector(0, 1, 1.2, 1.3, 1.35, 1.4),
-      0,
-      5,
-      1,
+//      data = Vector((0,0),(1,1),(2,1.43),(3,1.5),(4,1.5),(5,1.5)),//TODO : check that : tables very different
+      data = Vector((0,0),(1,1),(2,1.2),(3,1.3),(4,1.35),(5,1.4)),//TODO : check that : tables very different
+//      Vector(0, 1, 1.2, 1.3, 1.35, 1.4),
+//      0,
+//      5,
+//      1,
       dependencies = Vector("foodPerCapita"),
       updateFn = () => lift { unlift(foodPerCapita.k) / constants.subsistenceFoodPerCapitaK }
     )
@@ -516,10 +523,11 @@ class World3(constants: Constants) {
     Table(
       "healthServicesAllocationsPerCapita",
       21,
-      Vector(0, 20, 50, 95, 140, 175, 200, 220, 230),
-      0,
-      2000,
-      250,
+      data = Vector((0,0),(250,20),(500,50),(750,95),(1000,140),(1250,175),(1500,200),(1750,220),(2000,230)),
+//      Vector(0, 20, 50, 95, 140, 175, 200, 220, 230),
+//      0,
+//      2000,
+//      250,
       units = "dollars per person-year",
       dependencies = Vector("serviceOutputPerCapita"),
       updateFn = () => serviceOutputPerCapita.k
@@ -552,10 +560,11 @@ class World3(constants: Constants) {
     Table(
       "lifetimeMultiplierFromHealthServicesBefore",
       24,
-      Vector(1, 1.1, 1.4, 1.6, 1.7, 1.8),
-      0,
-      100,
-      20,
+      data = Vector((0,1),(20,1.1),(40,1.4),(60,1.6),(80,1.7),(100,1.8)),
+//      Vector(1, 1.1, 1.4, 1.6, 1.7, 1.8),
+//      0,
+//      100,
+//      20,
       dependencies = Vector("effectiveHealthServicesPerCapita"),
       updateFn = () => effectiveHealthServicesPerCapita.k
     )
@@ -564,10 +573,12 @@ class World3(constants: Constants) {
     Table(
       "lifetimeMultiplierFromHealthServicesAfter",
       25,
-      Vector(1, 1.4, 1.6, 1.8, 1.95, 2.0),
-      0,
-      100,
-      20,
+//      data = Vector((0,1),(20,1.5),(40,1.9),(60,2),(80,2),(100,2)),//todo: check different tables
+      data = Vector((0,1),(20,1.4),(40,1.6),(60,1.8),(80,1.95),(100,2)),//todo: check different tables
+//      Vector(1, 1.4, 1.6, 1.8, 1.95, 2.0),
+//      0,
+//      100,
+//      20,
       dependencies = Vector("effectiveHealthServicesPerCapita"),
       updateFn = () => effectiveHealthServicesPerCapita.k
     )
@@ -576,10 +587,11 @@ class World3(constants: Constants) {
     Table(
       "fractionOfPopulationUrban",
       26,
-      Vector(0, 0.2, 0.4, 0.5, 0.58, 0.65, 0.72, 0.78, 0.80),
-      0,
-      1.6e10,
-      2.0e9,
+      data = Vector((0,0),(2e+09,0.2),(4e+09,0.4),(6e+09,0.5),(8e+09,0.58),(1e+10,0.65),(1.2e+10,0.72),(1.4e+10,0.78),(1.6e+10,0.8)),
+//      Vector(0, 0.2, 0.4, 0.5, 0.58, 0.65, 0.72, 0.78, 0.80),
+//      0,
+//      1.6e10,
+//      2.0e9,
       dependencies = Vector("population"),
       updateFn = () => population.k
     )
@@ -588,10 +600,11 @@ class World3(constants: Constants) {
     Table(
       "crowdingMultiplierFromIndustrialization",
       27,
-      Vector(0.5, 0.05, -0.1, -0.08, -0.02, 0.05, 0.1, 0.15, 0.2),
-      0,
-      1600,
-      200,
+      data = Vector((0,0.5),(200,0.05),(400,-0.1),(600,-0.08),(800,-0.02),(1000,0.05),(1200,0.1),(1400,0.15),(1600,0.2)),
+//      Vector(0.5, 0.05, -0.1, -0.08, -0.02, 0.05, 0.1, 0.15, 0.2),
+//      0,
+//      1600,
+//      200,
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
     )
@@ -607,10 +620,11 @@ class World3(constants: Constants) {
     Table(
       "lifetimeMultiplierFromPollution",
       29,
-      Vector(1.0, 0.99, 0.97, 0.95, 0.90, 0.85, 0.75, 0.65, 0.55, 0.40, 0.20),
-      0,
-      100,
-      10,
+      data = Vector((0,1),(10,0.99),(20,0.97),(30,0.95),(40,0.9),(50,0.85),(60,0.75),(70,0.65),(80,0.55),(90,0.4),(100,0.2)),
+//      Vector(1.0, 0.99, 0.97, 0.95, 0.90, 0.85, 0.75, 0.65, 0.55, 0.40, 0.20),
+//      0,
+//      100,
+//      10,
       dependencies = Vector("indexOfPersistentPollution"),
       updateFn = () => indexOfPersistentPollution.k
     )
@@ -664,10 +678,12 @@ class World3(constants: Constants) {
     Table(
       "fecundityMultiplier",
       34,
-      Vector(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.05, 1.1),
-      0,
-      80,
-      10,
+//      data = Vector((0,0),(10,0.2),(20,0.4),(30,0.6),(40,0.7),(50,0.75),(60,0.79),(70,0.84),(80,0.87)),//todo: check different tables!!!
+      data = Vector((0,0),(10,0.2),(20,0.4),(30,0.6),(40,0.8),(50,0.9),(60,1.0),(70,1.05),(80,1.1)),//todo: check different tables!!!
+      //      Vector(0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0, 1.05, 1.1),
+//      0,
+//      80,
+//      10,
       dependencies = Vector("lifeExpectancy"),
       updateFn = () => lifeExpectancy.k
     )
@@ -684,10 +700,11 @@ class World3(constants: Constants) {
     Table(
       "compensatoryMultiplierFromPerceivedLifeExpectancy",
       36,
-      Vector(3.0, 2.1, 1.6, 1.4, 1.3, 1.2, 1.1, 1.05, 1.0),
-      0,
-      80,
-      10,
+      data = Vector((0,3),(10,2.1),(20,1.6),(30,1.4),(40,1.3),(50,1.2),(60,1.1),(70,1.05),(80,1)),
+//      Vector(3.0, 2.1, 1.6, 1.4, 1.3, 1.2, 1.1, 1.05, 1.0),
+//      0,
+//      80,
+//      10,
       dependencies = Vector("perceivedLifeExpectancy"),
       updateFn = () => perceivedLifeExpectancy.k
     )
@@ -720,10 +737,12 @@ class World3(constants: Constants) {
     Table(
       "socialFamilySizeNorm",
       39,
-      Vector(1.25, 1, 0.9, 0.8, 0.75),
-      0,
-      800,
-      200,
+//      data = Vector((0,1.25),(200,0.94),(400,0.715),(600,0.59),(800,0.5)),//TODO:check different tables
+      data = Vector((0,1.25),(200,1),(400,0.9),(600,0.8),(800,0.75)),//TODO:check different tables
+      //      Vector(1.25, 1, 0.9, 0.8, 0.75),
+//      0,
+//      800,
+//      200,
       dependencies = Vector("delayedIndustrialOutputPerCapita"),
       updateFn = () => delayedIndustrialOutputPerCapita.k
     )
@@ -743,10 +762,11 @@ class World3(constants: Constants) {
     Table(
       "familyResponseToSocialNorm",
       41,
-      Vector(0.5, 0.6, 0.7, 0.85, 1.0),
-      -0.2,
-      0.2,
-      0.1,
+      data = Vector((-0.2,0.5),(-0.1,0.6),(0,0.7),(0.1,0.85),(0.2,1)),
+//      Vector(0.5, 0.6, 0.7, 0.85, 1.0),
+//      -0.2,
+//      0.2,
+//      0.1,
       dependencies = Vector("familyIncomeExpectation"),
       updateFn = () => familyIncomeExpectation.k
     )
@@ -781,10 +801,11 @@ class World3(constants: Constants) {
     Table(
       "fertilityControlEffectiveness",
       45,
-      Vector(0.75, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0),
-      0,
-      3,
-      0.5,
+      data = Vector((0,0.75),(0.5,0.85),(1,0.9),(1.5,0.95),(2,0.98),(2.5,0.99),(3,1)),
+//      Vector(0.75, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0),
+//      0,
+//      3,
+//      0.5,
       dependencies = Vector("fertilityControlFacilitiesPerCapita"),
       updateFn = () => fertilityControlFacilitiesPerCapita.k
     )
@@ -812,10 +833,11 @@ class World3(constants: Constants) {
     Table(
       "fractionOfServicesAllocatedToFertilityControl",
       48,
-      Vector(0.0, 0.005, 0.015, 0.025, 0.030, 0.035),
-      0,
-      10,
-      2,
+      data = Vector((0,0),(2,0.005),(4,0.015),(6,0.025),(8,0.03),(10,0.035)),
+//      Vector(0.0, 0.005, 0.015, 0.025, 0.030, 0.035),
+//      0,
+//      10,
+//      2,
       dependencies = Vector("needForFertilityControl"),
       updateFn = () => needForFertilityControl.k
     )
@@ -929,9 +951,10 @@ class World3(constants: Constants) {
     Table(
       "fractionOfIndustrialOutputAllocatedToConsumptionVariable",
       59,
-      Vector(0.3, 0.32, 0.34, 0.36, 0.38, 0.43, 0.73, 0.77, 0.81, 0.82, 0.83),
-      0, 2,
-      0.2,
+      data = Vector((0,0.3),(0.2,0.32),(0.4,0.34),(0.6,0.36),(0.8,0.38),(1,0.43),(1.2,0.73),(1.4,0.77),(1.6,0.81),(1.8,0.82),(2,0.83)),
+//      Vector(0.3, 0.32, 0.34, 0.36, 0.38, 0.43, 0.73, 0.77, 0.81, 0.82, 0.83),
+//      0, 2,
+//      0.2,
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => lift { unlift(industrialOutputPerCapita.k) / constants.fractionOfIndustrialOutputAllocatedToConsumptionVariableIndustrialOutputPerCapitaDesired }
     )
@@ -956,10 +979,11 @@ class World3(constants: Constants) {
     Table(
       qName = "indicatedServiceOutputPerCapitaBefore",
       qNumber = 61,
-      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
-      iMin = 0,
-      iMax = 1600,
-      iDelta = 200,
+      data = Vector((0,40),(200,300),(400,640),(600,1000),(800,1220),(1000,1450),(1200,1650),(1400,1800),(1600,2000)),
+//      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+//      iMin = 0,
+//      iMax = 1600,
+//      iDelta = 200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -969,10 +993,11 @@ class World3(constants: Constants) {
     Table(
       qName = "indicatedServiceOutputPerCapitaAfter",
       qNumber = 62,
-      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
-      iMin = 0,
-      iMax = 1600,
-      iDelta = 200,
+      data = Vector((0,40),(200,300),(400,640),(600,1000),(800,1220),(1000,1450),(1200,1650),(1400,1800),(1600,2000)),
+//      data = Vector(40, 300, 640, 1000, 1220, 1450, 1650, 1800, 2000),
+//      iMin = 0,
+//      iMax = 1600,
+//      iDelta = 200,
       units = "dollars per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -995,8 +1020,9 @@ class World3(constants: Constants) {
     Table(
       qName = "fractionOfIndustrialOutputAllocatedToServicesBefore",
       qNumber = 64,
-      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
-      iMin = 0, iMax = 2, iDelta = 0.5,
+      data = Vector((0,0.3),(0.5,0.2),(1,0.1),(1.5,0.05),(2,0)),
+//      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
+//      iMin = 0, iMax = 2, iDelta = 0.5,
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
       updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
@@ -1005,8 +1031,9 @@ class World3(constants: Constants) {
     Table(
       qName = "fractionOfIndustrialOutputAllocatedToServicesAfter",
       qNumber = 65,
-      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
-      iMin = 0, iMax = 2, iDelta = 0.5,
+      data = Vector((0,0.3),(0.5,0.2),(1,0.1),(1.5,0.05),(2,0)),
+//      data = Vector(0.3, 0.2, 0.1, 0.05, 0),
+//      iMin = 0, iMax = 2, iDelta = 0.5,
       dependencies = Vector("serviceOutputPerCapita", "indicatedServiceOutputPerCapita"),
       updateFn = () => lift { unlift(serviceOutputPerCapita.k) / unlift(indicatedServiceOutputPerCapita.k) }
     )
@@ -1103,10 +1130,11 @@ class World3(constants: Constants) {
     Table(
       "jobsPerIndustrialCapitalUnit",
       75,
-      Vector(0.00037, 0.00018, 0.00012, 0.00009, 0.00007, 0.00006),
-      50,
-      800,
-      150,
+      data = Vector((50,0.00037),(200,0.00018),(350,0.00012),(500,0.00009),(650,0.00007),(800,0.00006)),
+//      Vector(0.00037, 0.00018, 0.00012, 0.00009, 0.00007, 0.00006),
+//      50,
+//      800,
+//      150,
       units = "persons per dollar",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => { industrialOutputPerCapita.k }
@@ -1125,10 +1153,11 @@ class World3(constants: Constants) {
     Table(
       "jobsPerServiceCapitalUnit",
       77,
-      Vector(0.0011, 0.0006, 0.00035, 0.0002, 0.00015, 0.00015),
-      50,
-      800,
-      150,
+      data = Vector((50,0.0011),(200,0.0006),(350,0.00035),(500,0.0002),(650,0.00015),(800,0.00015)),
+//      Vector(0.0011, 0.0006, 0.00035, 0.0002, 0.00015, 0.00015),
+//      50,
+//      800,
+//      150,
       units = "persons per dollar",
       dependencies = Vector("serviceOutputPerCapita"),
       updateFn = () => { serviceOutputPerCapita.k }
@@ -1147,10 +1176,11 @@ class World3(constants: Constants) {
     Table(
       "jobsPerHectare",
       79,
-      Vector(2, 0.5, 0.4, 0.3, 0.27, 0.24, 0.2, 0.2),
-      2,
-      30,
-      4,
+      data = Vector((2,2),(6,0.5),(10,0.4),(14,0.3),(18,0.27),(22,0.24),(26,0.2),(30,0.2)),
+//      Vector(2, 0.5, 0.4, 0.3, 0.27, 0.24, 0.2, 0.2),
+//      2,
+//      30,
+//      4,
       units = "persons per hectare",
       dependencies = Vector("agriculturalInputsPerHectare"),
       updateFn = () => { agriculturalInputsPerHectare.k }
@@ -1185,10 +1215,11 @@ class World3(constants: Constants) {
     Table(
       "capitalUtilizationFraction",
       83,
-      Vector(1.0, 0.9, 0.7, 0.3, 0.1, 0.1),
-      1,
-      11,
-      2,
+      data = Vector((1,1),(3,0.9),(5,0.7),(7,0.3),(9,0.1),(11,0.1)),
+//      Vector(1.0, 0.9, 0.7, 0.3, 0.1, 0.1),
+//      1,
+//      11,
+//      2,
       dependencies = Vector(),   // "laborUtilizationFractionDelayed" removed to break cycle
       updateFn = () => lift { laborUtilizationFractionDelayed.k.getOrElse(1.0) } // to break circularity
     )
@@ -1255,8 +1286,9 @@ class World3(constants: Constants) {
     Table(
       qName = "indicatedFoodPerCapitaBefore",
       qNumber = 90,
-      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
-      iMin = 0, iMax = 1600, iDelta = 200,
+      data = Vector((0,230),(200,480),(400,690),(600,850),(800,970),(1000,1070),(1200,1150),(1400,1210),(1600,1250)),
+//      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+//      iMin = 0, iMax = 1600, iDelta = 200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -1266,8 +1298,9 @@ class World3(constants: Constants) {
     Table(
       qName = "indicatedFoodPerCapitaAfter",
       qNumber = 91,
-      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
-      iMin = 0, iMax = 1600, iDelta = 200,
+      data = Vector((0,230),(200,480),(400,690),(600,850),(800,970),(1000,1070),(1200,1150),(1400,1210),(1600,1250)),
+//      data = Vector(230, 480, 690, 850, 970, 1070, 1150, 1210, 1250),
+//      iMin = 0, iMax = 1600, iDelta = 200,
       units = "kilograms per person-year",
       dependencies = Vector("industrialOutputPerCapita"),
       updateFn = () => industrialOutputPerCapita.k
@@ -1298,10 +1331,11 @@ class World3(constants: Constants) {
     Table(
       qName = "fractionOfIndustrialOutputAllocatedToAgricultureBefore",
       qNumber = 94,
-      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
-      iMin = 0,
-      iMax = 2.5,
-      iDelta = 0.5,
+      data = Vector((0,0.4),(0.5,0.2),(1,0.1),(1.5,0.025),(2,0),(2.5,0)),
+//      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
+//      iMin = 0,
+//      iMax = 2.5,
+//      iDelta = 0.5,
       updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k) },
       dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita")
     )
@@ -1310,10 +1344,11 @@ class World3(constants: Constants) {
     Table(
       qName = "fractionOfIndustrialOutputAllocatedToAgricultureAfter",
       qNumber = 95,
-      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
-      iMin = 0,
-      iMax = 2.5,
-      iDelta = 0.5,
+      data = Vector((0,0.4),(0.5,0.2),(1,0.1),(1.5,0.025),(2,0),(2.5,0)),
+//      data = Vector(0.4, 0.2, 0.1, 0.025, 0.0, 0.0),
+//      iMin = 0,
+//      iMax = 2.5,
+//      iDelta = 0.5,
       updateFn = () => lift { unlift(foodPerCapita.k) / unlift(indicatedFoodPerCapita.k)},
       dependencies = Vector("foodPerCapita", "indicatedFoodPerCapita")
     )
@@ -1329,7 +1364,9 @@ class World3(constants: Constants) {
   val developmentCostPerHectare = Table(
     qName = "developmentCostPerHectare",
     qNumber = 97,
-    data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1, units = "dollars per hectare",
+    data = Vector((0,100000),(0.1,7400),(0.2,5200),(0.3,3500),(0.4,2400),(0.5,1500),(0.6,750),(0.7,300),(0.8,150),(0.9,75),(1,50)),
+//    data = Vector(100000, 7400, 5200, 3500, 2400, 1500, 750, 300, 150, 75, 50), iMin = 0, iMax = 1.0, iDelta = 0.1,
+    units = "dollars per hectare",
     updateFn = () => lift {unlift(potentiallyArableLand.k) / constants.potentiallyArableLandTotal}
   )
 
@@ -1377,8 +1414,20 @@ class World3(constants: Constants) {
   val landYieldMultiplierFromCapital =
     Table(
       "landYieldMultiplierFromCapital", 102,
-      data=Vector(1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10),
-      iMin = 0, iMax = 1000, iDelta = 40,
+//      data = Vector(
+//        (0,1),(40,3),(80,4.5),(120,5),(160,5.3),(200,5.6),(240,5.9)
+//        ,(280,6.1),(320,6.35),(360,6.6),(400,6.9),(440,7.2),(480,7.4)
+//        ,(520,7.6),(560,7.8),(600,8),(640,8.2),(680,8.4),(720,8.6)
+//        ,(760,8.8),(800,9),(840,9.2),(880,9.4),(920,9.6),(960,9.8)
+//        ,(1000,10)),//TODO : check different tables!
+      data = Vector(
+        (0,1),(40,3),(80,3.8),(120,4.4),(160,4.9),(200,5.4),(240,5.7)
+        ,(280,6),(320,6.3),(360,6.6),(400,6.9),(440,7.2),(480,7.4)
+        ,(520,7.6),(560,7.8),(600,8),(640,8.2),(680,8.4),(720,8.6)
+        ,(760,8.8),(800,9),(840,9.2),(880,9.4),(920,9.6),(960,9.8)
+        ,(1000,10)),//TODO : check different tables!
+      //      data=Vector(1, 3, 3.8, 4.4, 4.9, 5.4, 5.7, 6, 6.3, 6.6, 6.9, 7.2, 7.4, 7.6, 7.8, 8, 8.2, 8.4, 8.6, 8.8, 9, 9.2, 9.4, 9.6, 9.8, 10),
+//      iMin = 0, iMax = 1000, iDelta = 40,
       dependencies = Vector("agriculturalInputsPerHectare"),
       updateFn = () => agriculturalInputsPerHectare.k
     )
@@ -1409,13 +1458,15 @@ class World3(constants: Constants) {
   )
 
   val landYieldMultiplierFromAirPollutionBefore = Table("landYieldMultiplierFromAirPollutionBefore", qNumber = 106,
-    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
+    data = Vector((0,1),(10,1),(20,0.7),(30,0.4)),
+//    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
     updateFn = () => lift {unlift(industrialOutput.k) / constants.industrialOutputValueIn1970}
   )
 
   val landYieldMultiplierFromAirPollutionAfter = Table("landYieldMultiplierFromAirPollutionAfter", qNumber = 107,
-    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
+    data = Vector((0,1),(10,1),(20,0.98),(30,0.95)),
+//    data = Vector(1.0, 1.0, 0.7, 0.4), iMin = 0, iMax = 30, iDelta = 10,
     dependencies = Vector("industrialOutput"),
     updateFn = () => lift {unlift(industrialOutput.k) / constants.industrialOutputValueIn1970}
   )
@@ -1424,7 +1475,8 @@ class World3(constants: Constants) {
   // Loops 1 and 2: The Investment Allocation Decision
   val fractionOfInputsAllocatedToLandDevelopment = Table(
     "fractionOfInputsAllocatedToLandDevelopment", 108,
-    data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
+    data = Vector((0,0),(0.25,0.05),(0.5,0.15),(0.75,0.3),(1,0.5),(1.25,0.7),(1.5,0.85),(1.75,0.95),(2,1)),
+//    data = Vector(0, 0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1), iMin = 0, iMax = 2, iDelta = 0.25,
     dependencies = Vector("marginalProductivityOfLandDevelopment", "marginalProductivityOfAgriculturalInputs"),
     updateFn = () => lift {unlift(marginalProductivityOfLandDevelopment.k) / unlift(marginalProductivityOfAgriculturalInputs.k)}
   )
@@ -1445,8 +1497,13 @@ class World3(constants: Constants) {
 
   val marginalLandYieldMultiplierFromCapital = Table(
     "marginalLandYieldMultiplierFromCapital", 111,
-    data = Vector(0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005),
-    iMin = 0, iMax = 600, iDelta = 40, units = "hectares per dollar",
+    data = Vector(
+      (0,0.075),(40,0.03),(80,0.015),(120,0.011),(160,0.009),(200,0.008)
+      ,(240,0.007),(280,0.006),(320,0.005),(360,0.005),(400,0.005)
+      ,(440,0.005),(480,0.005),(520,0.005),(560,0.005),(600,0.005)),
+//    data = Vector(0.075, 0.03, 0.015, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005),
+//    iMin = 0, iMax = 600, iDelta = 40,
+    units = "hectares per dollar",
     dependencies = Vector("agriculturalInputsPerHectare"),
     updateFn = () => agriculturalInputsPerHectare.k
   )
@@ -1464,15 +1521,18 @@ class World3(constants: Constants) {
   )
 
   val landLifeMultiplierFromYieldBefore = Table("landLifeMultiplierFromYieldBefore", qNumber = 114,
-    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
-    iMin = 0, iMax = 9, iDelta = 1,
+    data = Vector((0,1.2),(1,1),(2,0.63),(3,0.36),(4,0.16),(5,0.055),(6,0.04),(7,0.025),(8,0.015),(9,0.01)),
+//    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+//    iMin = 0, iMax = 9, iDelta = 1,
     dependencies = Vector("landYield"),
     updateFn = () => lift {unlift(landYield.k) / constants.inherentLandFertilityK}
   )
 
   val landLifeMultiplierFromYieldAfter = Table("landLifeMultiplierFromYieldAfter", qNumber = 115,
-    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
-    iMin = 0, iMax = 9, iDelta = 1,
+//    data = Vector((0,1.2),(1,1),(2,0.63),(3,0.36),(4,0.29),(5,0.26),(6,0.24),(7,0.22),(8,0.21),(9,0.2)),//TODO: check different tables!
+    data = Vector((0,1.2),(1,1),(2,0.63),(3,0.36),(4,0.16),(5,0.055),(6,0.04),(7,0.025),(8,0.015),(9,0.01)),//TODO: check different tables!
+//    data = Vector(1.2, 1.0, 0.63, 0.36, 0.16, 0.055, 0.04, 0.025, 0.015, 0.01),
+//    iMin = 0, iMax = 9, iDelta = 1,
     dependencies = Vector("landYield"),
     updateFn = () => lift {unlift(landYield.k) / constants.inherentLandFertilityK}
   )
@@ -1484,8 +1544,9 @@ class World3(constants: Constants) {
 
   // 2016-08-09: Neil S. Grant reported an error in the table of values for urbanIndustrialLandPerCapita. The third element of the array should be 0.015, not 0.15. Corrected.
   val urbanIndustrialLandPerCapita = Table("urbanIndustrialLandPerCapita", 117,
-    data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
-    iMin = 0, iMax = 1600, iDelta = 200,
+    data = Vector((0,0.005),(200,0.008),(400,0.015),(600,0.025),(800,0.04),(1000,0.055),(1200,0.07),(1400,0.08),(1600,0.09)),
+//    data = Vector(0.005, 0.008, 0.015, 0.025, 0.04, 0.055, 0.07, 0.08, 0.09),
+//    iMin = 0, iMax = 1600, iDelta = 200,
     units = "hectares per person",
     dependencies = Vector("industrialOutputPerCapita"),
     updateFn = () => industrialOutputPerCapita.k
@@ -1518,7 +1579,9 @@ class World3(constants: Constants) {
   )
 
   val landFertilityDegradationRate = Table(
-    qName="landFertilityDegradationRate", qNumber=122, data=Vector(0, 0.1, 0.3, 0.5), iMin=0, iMax = 30, iDelta = 10,
+    qName="landFertilityDegradationRate", qNumber=122,
+    data = Vector((0,0),(10,0.1),(20,0.3),(30,0.5)),
+//    data=Vector(0, 0.1, 0.3, 0.5), iMin=0, iMax = 30, iDelta = 10,
     units = "inverse years",
     dependencies = Vector("indexOfPersistentPollution"),
     updateFn = () => indexOfPersistentPollution.k
@@ -1541,7 +1604,8 @@ class World3(constants: Constants) {
 
   val landFertilityRegenerationTime = Table(
     qName= "landFertilityRegenerationTime", qNumber=125,
-    data = Vector(20, 13, 8, 4, 2, 2), iMin=0, iMax=0.1, iDelta=0.02,
+    data = Vector((0,20),(0.02,13),(0.04,8),(0.06,4),(0.08,2),(0.1,2)),
+//    data = Vector(20, 13, 8, 4, 2, 2), iMin=0, iMax=0.1, iDelta=0.02,
     units = "years",
     dependencies = Vector("fractionOfInputsAllocatedToLandMaintenance"),
     updateFn = () => fractionOfInputsAllocatedToLandMaintenance.k
@@ -1550,10 +1614,10 @@ class World3(constants: Constants) {
 
   // Loop 6: Discontinuing land maintenance
   val fractionOfInputsAllocatedToLandMaintenance = Table(
-    qName = "fractionOfInputsAllocatedToLandMaintenance",
-    qNumber = 126,
-    data = Vector(0, 0.04, 0.07, 0.09, 0.10),
-    iMin=0, iMax=4, iDelta=1,
+    qName = "fractionOfInputsAllocatedToLandMaintenance", qNumber = 126,
+    data = Vector((0,0),(1,0.04),(2,0.07),(3,0.09),(4,0.1)),
+//    data = Vector(0, 0.04, 0.07, 0.09, 0.10),
+//    iMin=0, iMax=4, iDelta=1,
     dependencies = Vector("perceivedFoodRatio"),
     updateFn = () => perceivedFoodRatio.k
   )
@@ -1597,7 +1661,9 @@ class World3(constants: Constants) {
 
   val perCapitaResourceUsageMultiplier = Table(
     qName = "perCapitaResourceUsageMultiplier",qNumber = 132,
-    data = Vector(0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7), iMin = 0, iMax = 1600, iDelta = 200,
+//    data = Vector((0,0),(200,0.85),(400,2.6),(600,3.4),(800,3.8),(1000,4.1),(1200,4.4),(1400,4.7),(1600,5)),//TODO:check different tables!
+    data = Vector((0,0),(200,0.85),(400,2.6),(600,4.4),(800,5.4),(1000,6.2),(1200,6.8),(1400,7),(1600,7)),//TODO:check different tables!
+//    data = Vector(0, 0.85, 2.6, 4.4, 5.4, 6.2, 6.8, 7, 7), iMin = 0, iMax = 1600, iDelta = 200,
     units = "resource units per person-year",
     dependencies = Vector("industrialOutputPerCapita"),
     updateFn = () => industrialOutputPerCapita.k
@@ -1619,8 +1685,9 @@ class World3(constants: Constants) {
   val fractionOfCapitalAllocatedToObtainingResourcesBefore = Table(
     qName = "fractionOfCapitalAllocatedToObtainingResourcesBefore",
     qNumber = 135,
-    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
-    iMin = 0, iMax = 1, iDelta = 0.1,
+    data = Vector((0,1),(0.1,0.9),(0.2,0.7),(0.3,0.5),(0.4,0.2),(0.5,0.1),(0.6,0.05),(0.7,0.05),(0.8,0.05),(0.9,0.05),(1,0.05)),
+//    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
+//    iMin = 0, iMax = 1, iDelta = 0.1,
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
     updateFn = () => nonrenewableResourceFractionRemaining.k
   )
@@ -1628,8 +1695,9 @@ class World3(constants: Constants) {
   val fractionOfCapitalAllocatedToObtainingResourcesAfter = Table(
     qName = "fractionOfCapitalAllocatedToObtainingResourcesAfter",
     qNumber = 136,
-    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
-    iMin = 0, iMax = 1, iDelta = 0.1,
+    data = Vector((0,1),(0.1,0.2),(0.2,0.1),(0.3,0.05),(0.4,0.05),(0.5,0.05),(0.6,0.05),(0.7,0.05),(0.8,0.05),(0.9,0.05),(1,0.05)),
+//    data = Vector(1, 0.9, 0.7, 0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05),
+//    iMin = 0, iMax = 1, iDelta = 0.1,
     dependencies = Vector("nonrenewableResourceFractionRemaining"),
     updateFn = () => nonrenewableResourceFractionRemaining.k
   )
@@ -1643,84 +1711,87 @@ class World3(constants: Constants) {
       lift { (unlift(persistentPollutionGeneratedByIndustrialOutput.k) + unlift(persistentPollutionGeneratedByAgriculturalOutput.k)) * unlift(persistentPollutionGenerationFactor.k)}
   )
 
-  //Table relating the food ratio gap to the change in agricultural technology (LYCMT#--).
-  val landYieldTechnologyChangeRateMultiplier = Table(qName = "landYieldTechnologyChangeRateMultiplier", qNumber = 138,//NEW
-    units = "1/year",
-    dependencies = Vector("foodRatio"),
-    updateFn = () => lift { constants.desiredFoodRatio - unlift(foodRatio.k) },
-    data = Vector(0.1, 0.0),
-    iMin = 0,
-    iMax = 1,
-    iDelta = 1
-  )
-
-  val landYieldTechnologyChangeRate = Aux(qName = "landYieldTechnologyChangeRate", qNumber = 138,
-    units = "1/year",
-    updateFn = () => clip(
-      lift { unlift(landYieldTechnology.k) * unlift(landYieldTechnologyChangeRateMultiplier.k)},
-      Some(0),
-      Some(t),
-      Some(policyYear))
-  )
-
-  // LAND YIELD TECHNOLOGY INITIATED (LYTD#--)
-  val landYieldTechnology: Level = Level(//NEW
-    qName = "landYieldTechnology",
-    qNumber = 138,
-    initVal = 1.0,//TODO: add constant
-    units = "hectares",
-    updateFn = () => lift { unlift(landYieldTechnology.j) + dt * unlift(landYieldTechnologyChangeRate.j) }
-  )
-
-  // POLLUTION CONTROL TECHNOLOGY CHANGE MULTIPLIER (POLGFM#--)
-  val persistentPollutionTechnologyChangeRateMultiplier = Table(
-      qName = "persistentPollutionTechnologyChangeRateMultiplier",
-      qNumber = 138,
-      units = "1/year",
-      dependencies = Vector(""),//TODO
-      updateFn = () => lift{1 - unlift(indexOfPersistentPollution.k) / constants.desiredPersistentPollutionIndex},
-      data = Vector(0, 0),
-      iMin = -1,
-      iMax = 0,
-      iDelta = 1
-    )
-  //pollution control technology change rate (PTDR#--)
-  val persistentPollutionTechnologyChangeRate = Aux(
-    qName = "persistentPollutionTechnologyChangeRate",
-    qNumber = 138,
-    units = "1/year",
-    updateFn = () => clip(
-      lift {unlift(persistentPollutionTechnology.k) * unlift(persistentPollutionTechnologyChangeRateMultiplier.k)},
-      Some(0.0),
-      Some(t),
-      Some(policyYear)
-    )
-  )
-
-  //Pollution control technology initiated (PTD#--)
-  val persistentPollutionTechnology: Level = Level(
-      qName = "persistentPollutionTechnology",
-      qNumber = 138,
-      initVal = constants.initialPersistentPollutionTechnology,
-      updateFn = () => lift { unlift(persistentPollutionTechnology.j) + dt * unlift(persistentPollutionTechnologyChangeRate.j)}
-    )
-    //        INTEG( persistent pollution technology change rate , 1)
-
-  //(PPGF2#138.2)
-  val persistentPollutionTechnologyDevelopment = Delay3(
-    qName = "persistentPollutionTechnologyDevelopment",
-    qNumber = 138,
-    delay = constants.technologyDevelopmentDelay,
-    dependencies = Vector("persistentPollutionTechnology"),
-    initFn = () => persistentPollutionTechnology
-  )
+//  //Table relating the food ratio gap to the change in agricultural technology (LYCMT#--).
+//  val landYieldTechnologyChangeRateMultiplier = Table(qName = "landYieldTechnologyChangeRateMultiplier", qNumber = 138,//NEW
+//    units = "1/year",
+//    dependencies = Vector("foodRatio"),
+//    updateFn = () => lift { constants.desiredFoodRatio - unlift(foodRatio.k) },
+////    data = Vector((0,0),(1,0))//TODO:check different tables
+//    data = Vector((0,0.1),(1,0.0))//TODO:check different tables
+////    data = Vector(0.1, 0.0),
+////    iMin = 0,
+////    iMax = 1,
+////    iDelta = 1
+//  )
+//
+//  val landYieldTechnologyChangeRate = Aux(qName = "landYieldTechnologyChangeRate", qNumber = 138,
+//    units = "1/year",
+//    updateFn = () => clip(
+//      lift { unlift(landYieldTechnology.k) * unlift(landYieldTechnologyChangeRateMultiplier.k)},
+//      Some(0),
+//      Some(t),
+//      Some(policyYear))
+//  )
+//
+//  // LAND YIELD TECHNOLOGY INITIATED (LYTD#--)
+//  val landYieldTechnology: Level = Level(//NEW
+//    qName = "landYieldTechnology",
+//    qNumber = 138,
+//    initVal = 1.0,//TODO: add constant
+//    units = "hectares",
+//    updateFn = () => lift { unlift(landYieldTechnology.j) + dt * unlift(landYieldTechnologyChangeRate.j) }
+//  )
+//
+//  // POLLUTION CONTROL TECHNOLOGY CHANGE MULTIPLIER (POLGFM#--)
+//  val persistentPollutionTechnologyChangeRateMultiplier = Table(
+//    qName = "persistentPollutionTechnologyChangeRateMultiplier",
+//    qNumber = 138,
+//    units = "1/year",
+//    dependencies = Vector(""),//TODO
+//    updateFn = () => lift{1 - unlift(indexOfPersistentPollution.k) / constants.desiredPersistentPollutionIndex},
+//    data = Vector((-1,0),(0,0))
+////      data = Vector(0, 0),
+////      iMin = -1,
+////      iMax = 0,
+////      iDelta = 1
+//  )
+//  //pollution control technology change rate (PTDR#--)
+//  val persistentPollutionTechnologyChangeRate = Aux(
+//    qName = "persistentPollutionTechnologyChangeRate",
+//    qNumber = 138,
+//    units = "1/year",
+//    updateFn = () => clip(
+//      lift {unlift(persistentPollutionTechnology.k) * unlift(persistentPollutionTechnologyChangeRateMultiplier.k)},
+//      Some(0.0),
+//      Some(t),
+//      Some(policyYear)
+//    )
+//  )
+//
+//  //Pollution control technology initiated (PTD#--)
+//  val persistentPollutionTechnology: Level = Level(
+//      qName = "persistentPollutionTechnology",
+//      qNumber = 138,
+//      initVal = constants.initialPersistentPollutionTechnology,
+//      updateFn = () => lift { unlift(persistentPollutionTechnology.j) + dt * unlift(persistentPollutionTechnologyChangeRate.j)}
+//    )
+//    //        INTEG( persistent pollution technology change rate , 1)
+//
+//  //(PPGF2#138.2)
+//  val persistentPollutionTechnologyDevelopment = Delay3(
+//    qName = "persistentPollutionTechnologyDevelopment",
+//    qNumber = 138,
+//    delay = constants.technologyDevelopmentDelay,
+//    dependencies = Vector("persistentPollutionTechnology"),
+//    initFn = () => persistentPollutionTechnology
+//  )
 
   val persistentPollutionGenerationFactor = Aux(
     qName = "persistentPollutionGenerationFactor",
     qNumber = 138,
     updateFn = () => clip(
-      persistentPollutionTechnologyDevelopment.k,
-//      Some(constants.persistentPollutionGenerationFactorBefore),
+//      persistentPollutionTechnologyDevelopment.k,
+      Some(constants.persistentPollutionGenerationFactorBefore),
       Some(constants.persistentPollutionGenerationFactorBefore),
       Some(t),
       Some(policyYear))
@@ -1779,10 +1850,11 @@ class World3(constants: Constants) {
     units = "years",
     dependencies = Vector("indexOfPersistentPollution"),
     updateFn = () => indexOfPersistentPollution.k,
-    data = Vector(1, 11, 21, 31, 41),
-    iMin = 1,
-    iMax = 1001,
-    iDelta = 250
+    data = Vector((1,1),(251,11),(501,21),(751,31),(1001,41))
+//    data = Vector(1, 11, 21, 31, 41),
+//    iMin = 1,
+//    iMax = 1001,
+//    iDelta = 250
   )
 
   val assimilationHalfLife = Aux(
@@ -1842,11 +1914,11 @@ class World3(constants: Constants) {
     fractionOfCapitalAllocatedToObtainingResourcesBefore,
     fractionOfCapitalAllocatedToObtainingResourcesAfter,
     fractionOfCapitalAllocatedToObtainingResources,
-    landYieldTechnologyChangeRateMultiplier,//new
-    landYieldTechnologyChangeRate,//new
-    persistentPollutionTechnologyChangeRateMultiplier,//new
-    persistentPollutionTechnologyChangeRate,//new
-    persistentPollutionTechnologyDevelopment,//new
+//    landYieldTechnologyChangeRateMultiplier,//new
+//    landYieldTechnologyChangeRate,//new
+//    persistentPollutionTechnologyChangeRateMultiplier,//new
+//    persistentPollutionTechnologyChangeRate,//new
+//    persistentPollutionTechnologyDevelopment,//new
     lifetimeMultiplierFromPollution,
     landFertilityDegradationRate,
     capitalUtilizationFraction,
@@ -1951,9 +2023,9 @@ class World3(constants: Constants) {
     urbanIndustrialLand,
     landFertility,
     nonrenewableResources,
-    persistentPollution,
-    persistentPollutionTechnology,//new
-    landYieldTechnology//new
+    persistentPollution
+//    persistentPollutionTechnology,//new
+//    landYieldTechnology//new
   )
 
 
@@ -2119,13 +2191,13 @@ class World3(constants: Constants) {
     fractionOfCapitalAllocatedToObtainingResources,
     fractionOfCapitalAllocatedToObtainingResourcesBefore,
     fractionOfCapitalAllocatedToObtainingResourcesAfter,
-    landYieldTechnologyChangeRateMultiplier,//new
-    landYieldTechnologyChangeRate,//new
-    persistentPollutionTechnologyChangeRateMultiplier,//new
-    persistentPollutionTechnologyChangeRate,//new
-    persistentPollutionTechnologyDevelopment,//new
-    persistentPollutionTechnology,//new
-    landYieldTechnology,//new
+//    landYieldTechnologyChangeRateMultiplier,//new
+//    landYieldTechnologyChangeRate,//new
+//    persistentPollutionTechnologyChangeRateMultiplier,//new
+//    persistentPollutionTechnologyChangeRate,//new
+//    persistentPollutionTechnologyDevelopment,//new
+//    persistentPollutionTechnology,//new
+//    landYieldTechnology,//new
     persistentPollutionGenerationRate,
     persistentPollutionGenerationFactor,
     persistentPollutionGeneratedByIndustrialOutput,
