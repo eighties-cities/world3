@@ -1,18 +1,18 @@
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.10"
 name := "world3"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.sonatypeRepo("staging")
 
-libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6.1"
-libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0"
+libraryDependencies += "org.apache.commons" % "commons-math3" % "3.6"
+libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0"
 
 def monadLessVersion = "0.0.13"
 libraryDependencies += "io.monadless" %% "monadless-stdlib" % monadLessVersion
 
 
-val monocleVersion = "1.5.0" // 1.5.0-cats based on cats 1.0.x
+val monocleVersion = "2.0.0" // 1.5.0-cats based on cats 1.0.x
 
 libraryDependencies ++= Seq(
   "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
