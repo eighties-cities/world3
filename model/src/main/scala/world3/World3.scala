@@ -281,7 +281,10 @@ class World3(constants: Constants) {
       tock()
     }
 
-    assert(all.forall(_.k.isDefined))
+
+    lazy val wrong = all.filter(!_.k.isDefined)
+
+    assert(wrong.isEmpty, s"Some variables have not been properly initialized: ${wrong.map(_.qName)}")
   }
 
   def exec() = {
